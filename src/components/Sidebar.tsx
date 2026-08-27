@@ -87,10 +87,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             />
             {(!isCollapsed || isMobileOpen) && (
               <div className="transition-opacity duration-300">
-                <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
+                <span className="font-bold text-base tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
                   Finanças <span className="text-teal-400">Pessoal</span>
                 </span>
-                <span className="text-[9px] font-bold text-emerald-400 block -mt-0.5 uppercase tracking-wider">
+                <span className="text-[9px] font-semibold text-emerald-400 block -mt-0.5 uppercase tracking-wider">
                   Organize • Planeje • Realize
                 </span>
               </div>
@@ -129,9 +129,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div key={item.id} className="relative group">
                 <button
                   onClick={() => handleItemClick(item.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-bold transition-all duration-200 cursor-pointer min-h-[44px] ${
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-200 cursor-pointer min-h-[44px] ${
                     isActive
-                      ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md shadow-teal-600/20'
+                      ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-sm shadow-teal-600/20'
                       : darkMode
                       ? 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
@@ -147,7 +147,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                   {(!isCollapsed || isMobileOpen) && item.badge !== undefined && (
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
                         isActive
                           ? 'bg-white/20 text-white'
                           : darkMode
@@ -171,7 +171,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               if (onLogout) onLogout();
               if (onCloseMobile) onCloseMobile();
             }}
-            className={`w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer min-h-[44px] ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-xs font-semibold transition-all cursor-pointer min-h-[44px] ${
               darkMode
                 ? 'text-rose-400 hover:bg-rose-950/40 hover:text-rose-300'
                 : 'text-rose-600 hover:bg-rose-50 hover:text-rose-700'

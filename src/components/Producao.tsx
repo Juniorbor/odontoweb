@@ -295,7 +295,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode }) => {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setSubAba('producao')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
               subAba === 'producao'
                 ? 'bg-teal-600 text-white shadow-md'
                 : 'text-slate-400 hover:text-white hover:bg-slate-900'
@@ -306,7 +306,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode }) => {
 
           <button
             onClick={() => setSubAba('whatsapp')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
               subAba === 'whatsapp'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'text-slate-400 hover:text-white hover:bg-slate-900'
@@ -316,7 +316,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode }) => {
           </button>
         </div>
 
-        <span className="text-[11px] font-extrabold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-xl border border-emerald-500/20 hidden lg:flex items-center gap-1.5">
+        <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-xl border border-emerald-500/20 hidden lg:flex items-center gap-1.5">
           📱 Disparo Agendado (69) 993649158 às 18:30h
         </span>
       </div>
@@ -329,13 +329,13 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode }) => {
         darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
       }`}>
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-md border border-teal-500/20 flex items-center gap-1 w-fit">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-md border border-teal-500/20 flex items-center gap-1 w-fit">
             <FileSpreadsheet className="w-3.5 h-3.5" /> Módulo de Gestão de Produção (Fernando & Bernardo - Sincronizado)
           </span>
-          <h2 className="text-xl font-extrabold flex items-center gap-2 mt-1">
+          <h2 className="text-xl font-bold flex items-center gap-2 mt-1">
             <BarChart3 className="w-6 h-6 text-teal-500" /> Controle de Produção
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-400 font-normal">
             Acompanhamento unificado e separado por proprietário (Fernando e Bernardo) com persistência de dados.
           </p>
         </div>
@@ -345,7 +345,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode }) => {
             type="button"
             onClick={handleManualSync}
             disabled={sincronizando}
-            className="bg-slate-800 hover:bg-slate-700 text-teal-400 font-bold px-3.5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition-all cursor-pointer shadow w-full sm:w-auto"
+            className="bg-slate-800 hover:bg-slate-700 text-teal-400 font-semibold px-3.5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition-all cursor-pointer shadow w-full sm:w-auto"
             title="Sincronizar dados em tempo real com a nuvem"
           >
             <RefreshCw className={`w-4 h-4 ${sincronizando ? 'animate-spin' : ''}`} />
@@ -356,7 +356,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode }) => {
             <button
               type="button"
               onClick={() => setModalZerarAberto(true)}
-              className="bg-rose-950/60 hover:bg-rose-900 text-rose-300 font-bold px-3.5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-rose-800 transition-all cursor-pointer shadow w-full sm:w-auto"
+              className="bg-rose-950/60 hover:bg-rose-900 text-rose-300 font-semibold px-3.5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-rose-800 transition-all cursor-pointer shadow w-full sm:w-auto"
             >
               <Trash2 className="w-4 h-4 text-rose-400" /> Excluir Todos os Registros
             </button>
@@ -365,7 +365,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode }) => {
           <button
             type="button"
             onClick={() => window.print()}
-            className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3.5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition-all cursor-pointer shadow w-full sm:w-auto"
+            className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-3.5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition-all cursor-pointer shadow w-full sm:w-auto"
           >
             <Download className="w-4 h-4 text-teal-400" /> Exportar Relatório (PDF)
           </button>
@@ -373,7 +373,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode }) => {
           <button
             type="button"
             onClick={() => setModalAberto(true)}
-            className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-extrabold px-5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-teal-600/25 transition-all cursor-pointer w-full sm:w-auto"
+            className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-semibold px-5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-teal-600/25 transition-all cursor-pointer w-full sm:w-auto"
           >
             <Plus className="w-4.5 h-4.5" /> + Registrar Exame de Tomografia
           </button>
@@ -389,10 +389,10 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode }) => {
         }`}>
           <div className="flex items-center justify-between border-b border-sky-900/40 pb-3">
             <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
                 Proprietário
               </span>
-              <h3 className="text-lg font-extrabold flex items-center gap-2 mt-0.5 text-sky-400">
+              <h3 className="text-lg font-bold flex items-center gap-2 mt-0.5 text-sky-400">
                 <UserCheck className="w-5 h-5 text-sky-500" /> FERNANDO
               </h3>
             </div>

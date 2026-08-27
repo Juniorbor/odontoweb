@@ -29,7 +29,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onNavigate,
   darkMode
 }) => {
-  // Carrega registros da Produção e do Financeiro do localStorage
   const [itensProducao, setItensProducao] = useState<ItemProducaoTomo[]>(() => {
     const salvo = localStorage.getItem(PRODUCAO_KEY);
     if (salvo) {
@@ -50,7 +49,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return [];
   });
 
-  // Atualização em tempo real caso os dados mudem
   useEffect(() => {
     const handleStorageChange = () => {
       const p = localStorage.getItem(PRODUCAO_KEY);
@@ -66,7 +64,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // --- 1. ESTATÍSTICAS DE PRODUÇÃO ---
+  // --- ESTATÍSTICAS DE PRODUÇÃO ---
   const totalFaturamentoProducao = itensProducao.reduce((acc, i) => acc + i.valor, 0);
   const totalExamesProducao = itensProducao.length;
 
@@ -76,7 +74,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const totalFernandoR$ = itensFernando.reduce((acc, i) => acc + i.valor, 0);
   const totalBernardoR$ = itensBernardo.reduce((acc, i) => acc + i.valor, 0);
 
-  // Unidades da Produção
   const UNIDADES_PRODUCAO = [
     { nome: 'Ariquemes', owner: 'Fernando', cor: '#0EA5E9' },
     { nome: 'Porto Velho', owner: 'Fernando', cor: '#0EA5E9' },
@@ -99,7 +96,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const maxClinicaVal = Math.max(1, ...resumoClinicasProducao.map((c) => c.valor));
 
-  // --- 2. ESTATÍSTICAS DO FINANCEIRO ---
+  // --- ESTATÍSTICAS DO FINANCEIRO ---
   const totalEntradasOutras = transacoesFinanceiras
     .filter((t) => t.tipo === 'Entrada')
     .reduce((acc, t) => acc + t.valor, 0);
@@ -122,10 +119,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const totalContasPendentes = transacoesFinanceiras.filter((t) => t.status === 'Pendente').length;
 
   return (
-    <div className="space-y-6 w-full max-w-full animate-fadeIn">
+    <div className="space-y-6 w-full max-w-full animate-fadeIn font-sans text-slate-200">
       
       {/* Banner de Boas-Vindas Executivo */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-slate-950 to-teal-950 text-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-800">
+      <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-slate-950 to-teal-950 text-white rounded-3xl p-6 sm:p-7 shadow-xl border border-slate-800/80">
         <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
@@ -133,17 +130,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <img
               src={LOGO_BASE64}
               alt="Finanças Pessoal"
-              className="w-14 h-14 object-contain rounded-full border-2 border-emerald-500/50 shadow-xl bg-white p-1 shrink-0 hidden sm:block"
+              className="w-13 h-13 object-contain rounded-full border border-emerald-500/40 shadow-md bg-white p-1 shrink-0 hidden sm:block"
             />
             <div className="space-y-1">
-              <span className="inline-flex items-center gap-1.5 bg-emerald-500/20 text-emerald-300 text-[11px] font-extrabold px-3 py-0.5 rounded-full uppercase tracking-wider border border-emerald-500/30">
+              <span className="inline-flex items-center gap-1.5 bg-emerald-500/15 text-emerald-300 text-[11px] font-semibold px-3 py-0.5 rounded-full uppercase tracking-wider border border-emerald-500/30">
                 <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Painel Executivo Integrado
               </span>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight flex items-center gap-2">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2">
                 Painel de Atendimento & Gestão
               </h1>
-              <p className="text-slate-400 text-xs sm:text-sm max-w-xl">
-                Consolidado exclusivo das operações de <strong className="text-teal-400">Produção</strong> (Tomografia & Traçados) e <strong className="text-emerald-400">Financeiro</strong>.
+              <p className="text-slate-400 text-xs sm:text-sm font-normal max-w-xl">
+                Consolidado exclusivo das operações de <strong className="font-semibold text-teal-400">Produção</strong> (Tomografia & Traçados) e <strong className="font-semibold text-emerald-400">Financeiro</strong>.
               </p>
             </div>
           </div>
@@ -151,14 +148,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => onNavigate('producao')}
-              className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-extrabold px-4 py-3 rounded-2xl text-xs shadow-lg shadow-teal-600/25 transition-all flex items-center gap-2 cursor-pointer"
+              className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-semibold px-4 py-2.5 rounded-2xl text-xs shadow-md shadow-teal-600/20 transition-all flex items-center gap-2 cursor-pointer"
             >
               <BarChart3 className="w-4 h-4 text-teal-300" /> Ir para Produção
             </button>
 
             <button
               onClick={() => onNavigate('financeiro')}
-              className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-extrabold px-4 py-3 rounded-2xl text-xs shadow-lg shadow-emerald-600/25 transition-all flex items-center gap-2 cursor-pointer"
+              className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold px-4 py-2.5 rounded-2xl text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 cursor-pointer"
             >
               <Wallet className="w-4 h-4 text-emerald-300" /> Ir para Financeiro
             </button>
@@ -166,77 +163,77 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      {/* 4 Cards KPI Principais (Foco em Produção e Financeiro) */}
+      {/* 4 Cards KPI Principais */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         
         {/* KPI 1: Faturamento Produção */}
-        <div className={`p-5 rounded-3xl border shadow-xl transition-all hover:scale-[1.01] ${
-          darkMode ? 'bg-slate-900 border-teal-900/40 text-white' : 'bg-white border-teal-100 text-slate-800'
+        <div className={`p-5 rounded-3xl border shadow-md transition-all hover:border-teal-500/40 ${
+          darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
         }`}>
           <div className="flex items-center justify-between">
-            <p className="text-xs font-extrabold text-teal-400 uppercase tracking-wider">Faturamento Produção</p>
-            <div className="bg-teal-500/10 p-3 rounded-2xl text-teal-400 border border-teal-500/20">
+            <p className="text-xs font-semibold text-teal-400 uppercase tracking-wider">Faturamento Produção</p>
+            <div className="bg-teal-500/10 p-2.5 rounded-2xl text-teal-400 border border-teal-500/20">
               <BarChart3 className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black mt-2 text-white">
+          <p className="text-2xl sm:text-3xl font-bold mt-2 text-white tracking-tight">
             R$ {totalFaturamentoProducao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
-          <div className="mt-2 flex items-center gap-1 text-[11px] font-bold text-teal-400">
+          <div className="mt-2 flex items-center gap-1 text-[11px] font-medium text-teal-400">
             <ArrowUpRight className="w-3.5 h-3.5" /> 7 Clínicas Monitoradas
           </div>
         </div>
 
         {/* KPI 2: Pacientes / Exames Produção */}
-        <div className={`p-5 rounded-3xl border shadow-xl transition-all hover:scale-[1.01] ${
-          darkMode ? 'bg-slate-900 border-sky-900/40 text-white' : 'bg-white border-sky-100 text-slate-800'
+        <div className={`p-5 rounded-3xl border shadow-md transition-all hover:border-sky-500/40 ${
+          darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
         }`}>
           <div className="flex items-center justify-between">
-            <p className="text-xs font-extrabold text-sky-400 uppercase tracking-wider">Exames Produzidos</p>
-            <div className="bg-sky-500/10 p-3 rounded-2xl text-sky-400 border border-sky-500/20">
+            <p className="text-xs font-semibold text-sky-400 uppercase tracking-wider">Exames Produzidos</p>
+            <div className="bg-sky-500/10 p-2.5 rounded-2xl text-sky-400 border border-sky-500/20">
               <Users className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black mt-2 text-white">
-            {totalExamesProducao} <span className="text-sm font-bold text-slate-400">exames</span>
+          <p className="text-2xl sm:text-3xl font-bold mt-2 text-white tracking-tight">
+            {totalExamesProducao} <span className="text-sm font-normal text-slate-400">exames</span>
           </p>
-          <div className="mt-2 flex items-center gap-1 text-[11px] font-bold text-sky-400">
+          <div className="mt-2 flex items-center gap-1 text-[11px] font-medium text-sky-400">
             <TrendingUp className="w-3.5 h-3.5" /> Fernando ({itensFernando.length}) • Bernardo ({itensBernardo.length})
           </div>
         </div>
 
         {/* KPI 3: Receitas & Salário Financeiro */}
-        <div className={`p-5 rounded-3xl border shadow-xl transition-all hover:scale-[1.01] ${
-          darkMode ? 'bg-slate-900 border-emerald-900/40 text-white' : 'bg-white border-emerald-100 text-slate-800'
+        <div className={`p-5 rounded-3xl border shadow-md transition-all hover:border-emerald-500/40 ${
+          darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
         }`}>
           <div className="flex items-center justify-between">
-            <p className="text-xs font-extrabold text-emerald-400 uppercase tracking-wider">Entradas & Renda Total</p>
-            <div className="bg-emerald-500/10 p-3 rounded-2xl text-emerald-400 border border-emerald-500/20">
+            <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Entradas & Renda Total</p>
+            <div className="bg-emerald-500/10 p-2.5 rounded-2xl text-emerald-400 border border-emerald-500/20">
               <DollarSign className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black mt-2 text-emerald-400">
+          <p className="text-2xl sm:text-3xl font-bold mt-2 text-emerald-400 tracking-tight">
             R$ {totalEntradasFinanceiro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
-          <div className="mt-2 flex items-center gap-1 text-[11px] font-bold text-emerald-400">
+          <div className="mt-2 flex items-center gap-1 text-[11px] font-medium text-emerald-400">
             <ShieldCheck className="w-3.5 h-3.5" /> Produção + Entradas Pessoais
           </div>
         </div>
 
         {/* KPI 4: Despesas Domésticas */}
-        <div className={`p-5 rounded-3xl border shadow-xl transition-all hover:scale-[1.01] ${
-          darkMode ? 'bg-slate-900 border-rose-900/40 text-white' : 'bg-white border-rose-100 text-slate-800'
+        <div className={`p-5 rounded-3xl border shadow-md transition-all hover:border-rose-500/40 ${
+          darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
         }`}>
           <div className="flex items-center justify-between">
-            <p className="text-xs font-extrabold text-rose-400 uppercase tracking-wider">Despesas do Lar</p>
-            <div className="bg-rose-500/10 p-3 rounded-2xl text-rose-400 border border-rose-500/20">
+            <p className="text-xs font-semibold text-rose-400 uppercase tracking-wider">Despesas do Lar</p>
+            <div className="bg-rose-500/10 p-2.5 rounded-2xl text-rose-400 border border-rose-500/20">
               <TrendingUp className="w-5 h-5" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-black mt-2 text-rose-400">
+          <p className="text-2xl sm:text-3xl font-bold mt-2 text-rose-400 tracking-tight">
             R$ {totalDespesasGerais.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
-          <div className="mt-2 flex items-center gap-1 text-[11px] font-bold text-rose-400">
+          <div className="mt-2 flex items-center gap-1 text-[11px] font-medium text-rose-400">
             <ArrowDownRight className="w-3.5 h-3.5" /> Comprometimento de {comprometimentoRenda}%
           </div>
         </div>
@@ -248,21 +245,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* SEÇÃO 1: PAINEL EXECUTIVO DE PRODUÇÃO */}
         <div className={`p-6 rounded-3xl border shadow-xl space-y-5 ${
-          darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+          darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
         }`}>
           <div className="flex justify-between items-center pb-3 border-b border-slate-800/40">
             <div>
-              <span className="text-[10px] font-extrabold uppercase text-teal-400 bg-teal-500/10 px-2.5 py-0.5 rounded border border-teal-500/20 tracking-wider">
+              <span className="text-[10px] font-medium uppercase text-teal-400 bg-teal-500/10 px-2.5 py-0.5 rounded border border-teal-500/20 tracking-wider">
                 MÓDULO DE PRODUÇÃO
               </span>
-              <h2 className="font-extrabold text-base flex items-center gap-2 text-white mt-1">
+              <h2 className="font-semibold text-base flex items-center gap-2 text-white mt-1">
                 <BarChart3 className="w-5 h-5 text-teal-400" /> Desempenho Faturado por Clínica
               </h2>
             </div>
 
             <button
               onClick={() => onNavigate('producao')}
-              className="text-xs font-extrabold text-teal-400 hover:text-teal-300 flex items-center gap-1 hover:underline cursor-pointer"
+              className="text-xs font-semibold text-teal-400 hover:text-teal-300 flex items-center gap-1 hover:underline cursor-pointer"
             >
               Ver Tabela Completa <ChevronRight className="w-4 h-4" />
             </button>
@@ -270,26 +267,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
           {/* Cards Rápidos Fernando vs Bernardo */}
           <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
-              <span className="text-[10px] font-extrabold uppercase text-sky-400 block">Fernando (4 Clínicas)</span>
-              <span className="text-base font-black text-white block">
+            <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
+              <span className="text-[10px] font-medium uppercase text-sky-400 block">Fernando (4 Clínicas)</span>
+              <span className="text-base font-bold text-white block">
                 R$ {totalFernandoR$.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </span>
-              <span className="text-[10px] text-slate-400 font-bold">{itensFernando.length} exames faturados</span>
+              <span className="text-[10px] text-slate-400 font-normal">{itensFernando.length} exames faturados</span>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
-              <span className="text-[10px] font-extrabold uppercase text-indigo-400 block">Bernardo (3 Clínicas)</span>
-              <span className="text-base font-black text-white block">
+            <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
+              <span className="text-[10px] font-medium uppercase text-indigo-400 block">Bernardo (3 Clínicas)</span>
+              <span className="text-base font-bold text-white block">
                 R$ {totalBernardoR$.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </span>
-              <span className="text-[10px] text-slate-400 font-bold">{itensBernardo.length} exames faturados</span>
+              <span className="text-[10px] text-slate-400 font-normal">{itensBernardo.length} exames faturados</span>
             </div>
           </div>
 
           {/* Ranking em Barras das Clínicas */}
           <div className="space-y-3 pt-1">
-            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">
+            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block">
               Distribuição por Unidade (Extraído da Produção):
             </span>
 
@@ -297,23 +294,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
               {resumoClinicasProducao.map((c) => {
                 const pct = Math.round((c.valor / maxClinicaVal) * 100);
                 return (
-                  <div key={c.nome} className="p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-1.5">
-                    <div className="flex justify-between items-center text-xs font-bold">
+                  <div key={c.nome} className="p-3 rounded-2xl bg-slate-950/50 border border-slate-800/70 space-y-1.5">
+                    <div className="flex justify-between items-center text-xs font-normal">
                       <div className="flex items-center gap-2">
                         <Building2 className="w-4 h-4 text-teal-400 shrink-0" />
-                        <span className="text-white font-extrabold">{c.nome}</span>
-                        <span className="text-[10px] text-slate-400">({c.owner})</span>
+                        <span className="text-white font-semibold">{c.nome}</span>
+                        <span className="text-[10px] text-slate-400 font-normal">({c.owner})</span>
                       </div>
 
                       <div className="text-right">
-                        <span className="text-emerald-400 font-black">
+                        <span className="text-emerald-400 font-bold">
                           R$ {c.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </span>
-                        <span className="text-[10px] text-slate-400 block">{c.count} exames</span>
+                        <span className="text-[10px] text-slate-400 block font-normal">{c.count} exames</span>
                       </div>
                     </div>
 
-                    <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                    <div className="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-teal-500 to-emerald-400"
                         style={{ width: `${Math.max(5, pct)}%` }}
@@ -328,21 +325,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* SEÇÃO 2: PAINEL EXECUTIVO DO FINANCEIRO PESSOAL */}
         <div className={`p-6 rounded-3xl border shadow-xl space-y-5 ${
-          darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+          darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
         }`}>
           <div className="flex justify-between items-center pb-3 border-b border-slate-800/40">
             <div>
-              <span className="text-[10px] font-extrabold uppercase text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20 tracking-wider">
+              <span className="text-[10px] font-medium uppercase text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20 tracking-wider">
                 MÓDULO FINANCEIRO PESSOAL
               </span>
-              <h2 className="font-extrabold text-base flex items-center gap-2 text-white mt-1">
+              <h2 className="font-semibold text-base flex items-center gap-2 text-white mt-1">
                 <Wallet className="w-5 h-5 text-emerald-400" /> Saúde Financeira & Orçamento do Lar
               </h2>
             </div>
 
             <button
               onClick={() => onNavigate('financeiro')}
-              className="text-xs font-extrabold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 hover:underline cursor-pointer"
+              className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 hover:underline cursor-pointer"
             >
               Ver Extrato Pessoal <ChevronRight className="w-4 h-4" />
             </button>
@@ -351,43 +348,43 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {/* Saldo Líquido e Comprometimento */}
           <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950 border border-emerald-500/30 text-white space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-xs font-extrabold uppercase text-emerald-400 tracking-wider">Saldo Líquido do Mês</span>
-              <span className="text-[10px] font-extrabold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30">
+              <span className="text-xs font-medium uppercase text-emerald-400 tracking-wider">Saldo Líquido do Mês</span>
+              <span className="text-[10px] font-semibold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30">
                 {comprometimentoRenda}% da renda comprometida
               </span>
             </div>
 
-            <h3 className={`text-2xl font-black ${saldoLiquidoGeral >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <h3 className={`text-2xl font-bold tracking-tight ${saldoLiquidoGeral >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               R$ {saldoLiquidoGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </h3>
 
-            <div className="flex justify-between text-[11px] text-slate-300 pt-1 border-t border-slate-800">
-              <span>Fixas do Lar: <strong>R$ {totalDespesasFixas.toLocaleString('pt-BR')}</strong></span>
-              <span>Cartões / Variáveis: <strong>R$ {totalDespesasVariaveis.toLocaleString('pt-BR')}</strong></span>
+            <div className="flex justify-between text-[11px] text-slate-300 pt-1 border-t border-slate-800/80 font-normal">
+              <span>Fixas do Lar: <strong className="font-semibold text-white">R$ {totalDespesasFixas.toLocaleString('pt-BR')}</strong></span>
+              <span>Cartões / Variáveis: <strong className="font-semibold text-white">R$ {totalDespesasVariaveis.toLocaleString('pt-BR')}</strong></span>
             </div>
           </div>
 
           {/* Status de Contas Pagas vs Pendentes */}
           <div className="space-y-3 pt-1">
-            <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">
+            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block">
               Controle de Pagamentos das Contas do Lar:
             </span>
 
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 space-y-1">
-                <div className="flex items-center gap-1.5 font-bold">
+                <div className="flex items-center gap-1.5 font-medium">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Contas Liquidadas
                 </div>
-                <span className="text-lg font-black text-white block">{totalContasPagas} contas</span>
-                <span className="text-[10px] text-emerald-400 block font-semibold">Sem atrasos registrados</span>
+                <span className="text-lg font-bold text-white block">{totalContasPagas} contas</span>
+                <span className="text-[10px] text-emerald-400 block font-normal">Sem atrasos registrados</span>
               </div>
 
               <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 space-y-1">
-                <div className="flex items-center gap-1.5 font-bold">
+                <div className="flex items-center gap-1.5 font-medium">
                   <Clock className="w-4 h-4 text-amber-400" /> Pendentes a Pagar
                 </div>
-                <span className="text-lg font-black text-white block">{totalContasPendentes} contas</span>
-                <span className="text-[10px] text-amber-400 block font-semibold">Agendadas em carteira</span>
+                <span className="text-lg font-bold text-white block">{totalContasPendentes} contas</span>
+                <span className="text-[10px] text-amber-400 block font-normal">Agendadas em carteira</span>
               </div>
             </div>
           </div>
@@ -395,7 +392,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {/* Botão de Atalho */}
           <button
             onClick={() => onNavigate('financeiro')}
-            className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold py-3 rounded-2xl text-xs border border-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-2xl text-xs border border-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <DollarSign className="w-4 h-4 text-emerald-400" /> Lançar Nova Conta ou Entrada no Financeiro
           </button>

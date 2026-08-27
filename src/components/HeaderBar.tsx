@@ -97,7 +97,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             alt="Finanças Pessoal Logo"
             className="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-full border-2 border-teal-500/60 shadow-md shrink-0 bg-white p-0.5"
           />
-          <span className="font-extrabold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
+          <span className="font-bold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
             Finanças <span className="text-teal-400">Pessoal</span>
           </span>
         </div>

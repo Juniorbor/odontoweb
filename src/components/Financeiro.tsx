@@ -397,13 +397,13 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
         darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
       }`}>
         <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-md border border-teal-500/20 flex items-center gap-1 w-fit">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-md border border-teal-500/20 flex items-center gap-1 w-fit">
             <Wallet className="w-3.5 h-3.5" /> Módulo de Controle Orçamentário Familiar & Pessoal (Sincronizado)
           </span>
-          <h2 className="text-xl font-extrabold flex items-center gap-2 mt-1">
+          <h2 className="text-xl font-bold flex items-center gap-2 mt-1">
             <DollarSign className="w-6 h-6 text-teal-500" /> Gestão Financeira Pessoal & Despesas do Lar
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-400 font-normal">
             Controle de entradas (Salário/Renda), contas fixas da casa, cartões de crédito e despesas domésticas.
           </p>
         </div>
@@ -412,7 +412,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
           <button
             onClick={handleManualSync}
             disabled={sincronizando}
-            className="bg-slate-800 hover:bg-slate-700 text-teal-400 font-bold px-3.5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition-all cursor-pointer shadow w-full sm:w-auto"
+            className="bg-slate-800 hover:bg-slate-700 text-teal-400 font-semibold px-3.5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition-all cursor-pointer shadow w-full sm:w-auto"
             title="Sincronizar dados em tempo real com a nuvem"
           >
             <RefreshCw className={`w-4 h-4 ${sincronizando ? 'animate-spin' : ''}`} />
@@ -421,14 +421,14 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
 
           <button
             onClick={() => window.print()}
-            className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3.5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition-all cursor-pointer shadow w-full sm:w-auto"
+            className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-3.5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition-all cursor-pointer shadow w-full sm:w-auto"
           >
             <Download className="w-4 h-4 text-teal-400" /> Exportar Extrato (PDF)
           </button>
 
           <button
             onClick={handleAbrirNovoModal}
-            className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-extrabold px-5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-teal-600/25 transition-all cursor-pointer w-full sm:w-auto"
+            className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-semibold px-5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-teal-600/25 transition-all cursor-pointer w-full sm:w-auto"
           >
             <Plus className="w-4.5 h-4.5" /> + Lançar Entrada ou Despesa do Lar
           </button>
@@ -444,10 +444,10 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
         }`}>
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1 w-fit">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 flex items-center gap-1 w-fit">
                 <Sparkles className="w-3 h-3 text-amber-400" /> Baseado na Produção
               </span>
-              <h3 className="text-2xl font-extrabold text-emerald-400 mt-1">
+              <h3 className="text-2xl font-bold text-emerald-400 mt-1">
                 R$ {totalEntradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </h3>
             </div>
