@@ -90,22 +90,30 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, userRole = 'ad
     if (salvo !== null) {
       try {
         const parsed: TransacaoPessoal[] = JSON.parse(salvo);
-        const limpas = parsed.filter(t => t.valor !== 50 && t.valor !== 50.00);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(limpas));
-        return limpas;
+        if (parsed.length > 0) {
+          return parsed;
+        }
       } catch (e) {
         console.error('Erro ao ler transações pessoais do localStorage:', e);
       }
     }
-    return isCliente ? [] : TRANSACOES_INICIAIS.filter(t => t.valor !== 50 && t.valor !== 50.00);
+    return isCliente ? [] : TRANSACOES_INICIAIS;
   });
 
   const [sincronizando, setSincronizando] = useState<boolean>(false);
 
-  // Salvamento automático permanente no dispositivo local
+  // Restauração Automática: se o Admin não tiver transações cadastradas no localStorage, restaura os lançamentos
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(transacoes));
-  }, [transacoes]);
+    if (!isCliente && transacoes.length === 0) {
+      updateTransacoesECloud(TRANSACOES_INICIAIS);
+    }
+  }, [isCliente, transacoes.length]);
+
+  const handleRestaurarDadosPadraoAdmin = () => {
+    if (window.confirm('Deseja restaurar todos os lançamentos financeiros padrão (Salário, Aluguel, Faculdade, Contas e Cartões)?')) {
+      updateTransacoesECloud(TRANSACOES_INICIAIS);
+    }
+  };
 
   // Função central para salvar e sincronizar instantaneamente na nuvem para todos os dispositivos
   const updateTransacoesECloud = (novas: TransacaoPessoal[]) => {
@@ -520,6 +528,16 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, userRole = 'ad
           >
             <Download className="w-4 h-4 text-teal-400" /> Exportar Extrato (PDF)
           </button>
+
+          {!isCliente && (
+            <button
+              onClick={handleRestaurarDadosPadraoAdmin}
+              className="bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold px-4 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-amber-500/30 transition-all cursor-pointer shadow-md w-full sm:w-auto"
+              title="Restaurar lançamentos financeiros originais do Admin"
+            >
+              <RefreshCw className="w-4 h-4 text-amber-400" /> Restaurar Lançamentos Padrão
+            </button>
+          )}
 
           <button
             onClick={handleAbrirNovoModal}
