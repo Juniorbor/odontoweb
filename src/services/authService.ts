@@ -13,6 +13,10 @@ export interface UsuarioSistema {
   totalAcessos: number;
   dispositivo?: string;
   status: 'Ativo' | 'Bloqueado';
+  statusPlano?: 'teste' | 'ativo' | 'expirado' | 'bloqueado';
+  dataExpiraTeste?: string; // YYYY-MM-DD
+  valorAdesao?: number; // 300.00
+  valorMensalidade?: number; // 30.00
 }
 
 export interface LogAuditoriaAcesso {
@@ -21,7 +25,7 @@ export interface LogAuditoriaAcesso {
   nomeUsuario: string;
   emailUsuario: string;
   dataHora: string;
-  tipoEvento: 'LOGIN_SUCESSO' | 'LOGIN_FALHA' | 'CONTA_CRIADA' | 'ERRO_SISTEMA' | 'ALTERACAO_SENHA';
+  tipoEvento: 'LOGIN_SUCESSO' | 'LOGIN_FALHA' | 'CONTA_CRIADA' | 'ERRO_SISTEMA' | 'ALTERACAO_SENHA' | 'PLANO_ATIVADO' | 'TESTE_PRORROGADO';
   dispositivoInfo: string;
   mensagemDetalhe: string;
   status: 'Sucesso' | 'Alerta' | 'Erro';
@@ -41,7 +45,40 @@ export const ADMIN_PADRAO: UsuarioSistema = {
   ultimoAcesso: new Date().toISOString(),
   totalAcessos: 154,
   dispositivo: 'Windows / Chrome',
-  status: 'Ativo'
+  status: 'Ativo',
+  statusPlano: 'ativo',
+  dataExpiraTeste: '2099-12-31',
+  valorAdesao: 0,
+  valorMensalidade: 0
+};
+
+export const calcularDiasRestantesEStatusPlano = (usuario: UsuarioSistema): {
+  diasRestantes: number;
+  expirado: boolean;
+  statusCalculado: 'teste' | 'ativo' | 'expirado' | 'bloqueado';
+} => {
+  if (usuario.role === 'admin' || usuario.statusPlano === 'ativo') {
+    return { diasRestantes: 999, expirado: false, statusCalculado: 'ativo' };
+  }
+
+  if (usuario.status === 'Bloqueado' || usuario.statusPlano === 'bloqueado') {
+    return { diasRestantes: 0, expirado: true, statusCalculado: 'bloqueado' };
+  }
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const dataBase = usuario.dataExpiraTeste ? new Date(usuario.dataExpiraTeste) : new Date();
+  dataBase.setHours(0, 0, 0, 0);
+
+  const diffMs = dataBase.getTime() - hoje.getTime();
+  const diasRestantes = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diasRestantes <= 0) {
+    return { diasRestantes: 0, expirado: true, statusCalculado: 'expirado' };
+  }
+
+  return { diasRestantes, expirado: false, statusCalculado: 'teste' };
 };
 
 export const getUsuariosCadastrados = (): UsuarioSistema[] => {
@@ -56,6 +93,13 @@ export const getUsuariosCadastrados = (): UsuarioSistema[] => {
   if (indexAdmin === -1) {
     usuarios.unshift(ADMIN_PADRAO);
     localStorage.setItem(STORAGE_USUARIOS, JSON.stringify(usuarios));
+  } else {
+    // Atualizar campos do Admin padrão
+    usuarios[indexAdmin] = {
+      ...usuarios[indexAdmin],
+      role: 'admin',
+      statusPlano: 'ativo'
+    };
   }
   return usuarios;
 };
@@ -88,7 +132,7 @@ export const registrarLogAuditoria = (log: Omit<LogAuditoriaAcesso, 'id'>) => {
     ...log,
     id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`
   };
-  const listaAtualizada = [novoLog, ...logs].slice(0, 100); // Mantém os últimos 100 registros
+  const listaAtualizada = [novoLog, ...logs].slice(0, 100);
   localStorage.setItem(STORAGE_LOGS, JSON.stringify(listaAtualizada));
 };
 
@@ -114,6 +158,9 @@ export const registrarNovoUsuario = (dados: {
     return { sucesso: false, mensagem: 'Este e-mail já está cadastrado no sistema. Faça login.' };
   }
 
+  const dataHoje = new Date();
+  const dataExpira = new Date(dataHoje.getTime() + 7 * 24 * 60 * 60 * 1000);
+
   const novoUsuario: UsuarioSistema = {
     id: `usr-cli-${Date.now()}`,
     nome: dados.nome,
@@ -121,11 +168,15 @@ export const registrarNovoUsuario = (dados: {
     senhaHash: dados.senha,
     funcao: 'Cliente / Finanças Pessoais',
     role: 'cliente',
-    dataCriacao: new Date().toLocaleDateString('pt-BR'),
+    dataCriacao: dataHoje.toISOString().split('T')[0],
     ultimoAcesso: new Date().toLocaleString('pt-BR'),
     totalAcessos: 1,
     dispositivo: `${navigator.platform || 'Desktop'} / Browser`,
-    status: 'Ativo'
+    status: 'Ativo',
+    statusPlano: 'teste',
+    dataExpiraTeste: dataExpira.toISOString().split('T')[0],
+    valorAdesao: 300,
+    valorMensalidade: 30
   };
 
   const listaAtualizada = [...usuarios, novoUsuario];
@@ -138,11 +189,11 @@ export const registrarNovoUsuario = (dados: {
     dataHora: new Date().toLocaleString('pt-BR'),
     tipoEvento: 'CONTA_CRIADA',
     dispositivoInfo: novoUsuario.dispositivo || 'Dispositivo Móvel/Web',
-    mensagemDetalhe: 'Novo cliente cadastrado com sucesso. Painel pessoal inicializado.',
+    mensagemDetalhe: `Novo cliente cadastrado com teste grátis de 7 dias (Expira em ${novoUsuario.dataExpiraTeste}).`,
     status: 'Sucesso'
   });
 
-  return { sucesso: true, mensagem: 'Conta criada com sucesso!', usuario: novoUsuario };
+  return { sucesso: true, mensagem: 'Conta criada com 7 dias de teste grátis!', usuario: novoUsuario };
 };
 
 export const autenticarUsuario = (email: string, senha: string): {
@@ -198,6 +249,12 @@ export const autenticarUsuario = (email: string, senha: string): {
     return { sucesso: false, mensagem: 'E-mail ou senha incorretos. Por favor, tente novamente.' };
   }
 
+  // Atualizar cálculo do plano no login
+  const calc = calcularDiasRestantesEStatusPlano(usuario);
+  if (usuario.role !== 'admin' && usuario.statusPlano !== 'ativo') {
+    usuario.statusPlano = calc.statusCalculado;
+  }
+
   // Login com Sucesso: Atualiza estatísticas do usuário
   usuario.ultimoAcesso = new Date().toLocaleString('pt-BR');
   usuario.totalAcessos = (usuario.totalAcessos || 0) + 1;
@@ -212,9 +269,74 @@ export const autenticarUsuario = (email: string, senha: string): {
     dataHora: new Date().toLocaleString('pt-BR'),
     tipoEvento: 'LOGIN_SUCESSO',
     dispositivoInfo: infoDispositivo,
-    mensagemDetalhe: `Sessão iniciada com sucesso. Acessos acumulados: ${usuario.totalAcessos}.`,
+    mensagemDetalhe: `Sessão iniciada (${usuario.role === 'admin' ? 'Master' : 'Cliente Plano: ' + usuario.statusPlano}).`,
     status: 'Sucesso'
   });
 
   return { sucesso: true, mensagem: 'Autenticado com sucesso!', usuario };
+};
+
+export const ativarPlanoDefinitivoCliente = (usuarioId: string): UsuarioSistema[] => {
+  const usuarios = getUsuariosCadastrados();
+  const atualizados = usuarios.map((u) => {
+    if (u.id === usuarioId) {
+      return {
+        ...u,
+        status: 'Ativo' as const,
+        statusPlano: 'ativo' as const
+      };
+    }
+    return u;
+  });
+  localStorage.setItem(STORAGE_USUARIOS, JSON.stringify(atualizados));
+
+  const uTarget = atualizados.find((u) => u.id === usuarioId);
+  if (uTarget) {
+    registrarLogAuditoria({
+      usuarioId: uTarget.id,
+      nomeUsuario: uTarget.nome,
+      emailUsuario: uTarget.email,
+      dataHora: new Date().toLocaleString('pt-BR'),
+      tipoEvento: 'PLANO_ATIVADO',
+      dispositivoInfo: 'Admin Console',
+      mensagemDetalhe: 'Acesso definitivo ativado pelo Administrador Master (Adesão R$ 300 + R$ 30/mês).',
+      status: 'Sucesso'
+    });
+  }
+
+  return atualizados;
+};
+
+export const prorrogarTesteCliente = (usuarioId: string, diasAdicionais: number = 7): UsuarioSistema[] => {
+  const usuarios = getUsuariosCadastrados();
+  const atualizados = usuarios.map((u) => {
+    if (u.id === usuarioId) {
+      const dataHoje = new Date();
+      const novaExpira = new Date(dataHoje.getTime() + diasAdicionais * 24 * 60 * 60 * 1000);
+      return {
+        ...u,
+        status: 'Ativo' as const,
+        statusPlano: 'teste' as const,
+        dataExpiraTeste: novaExpira.toISOString().split('T')[0]
+      };
+    }
+    return u;
+  });
+  localStorage.setItem(STORAGE_USUARIOS, JSON.stringify(atualizados));
+
+  const uTarget = atualizados.find((u) => u.id === usuarioId);
+  if (uTarget) {
+    registrarLogAuditoria({
+      usuarioId: uTarget.id,
+      nomeUsuario: uTarget.nome,
+      emailUsuario: uTarget.email,
+      dataHora: new Date().toLocaleString('pt-BR'),
+      tipoEvento: 'TESTE_PRORROGADO',
+      dispositivoInfo: 'Admin Console',
+      mensagemDetalhe: `Período de teste grátis prorrogado por mais ${diasAdicionais} dias. Nova expiração: ${uTarget.dataExpiraTeste}.`,
+      status: 'Sucesso'
+    });
+  }
+
+  return atualizados;
 };

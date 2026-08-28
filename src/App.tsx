@@ -16,6 +16,7 @@ import { Login } from './components/Login';
 import { Sidebar } from './components/Sidebar';
 import { HeaderBar } from './components/HeaderBar';
 import { CentralNotificacoes } from './components/CentralNotificacoes';
+import { ModalPlanoEExpiracao } from './components/ModalPlanoEExpiracao';
 import { ToastContainer, type ToastMessage } from './components/Toast';
 import LOGO_BASE64 from './assets/logoData';
 
@@ -354,7 +355,7 @@ export function App() {
     setActiveTab('odontograma');
   };
 
-  if (!isAutenticado) {
+  if (!isAutenticado || !usuarioLogado) {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
@@ -366,6 +367,8 @@ export function App() {
     <div className={`min-h-screen font-sans transition-colors duration-300 ${
       darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
     }`}>
+      {/* Banner / Tela de Bloqueio por Teste Expirado (7 Dias) */}
+      <ModalPlanoEExpiracao usuarioLogado={usuarioLogado} darkMode={darkMode} />
       {/* Sidebar Retrátil & Menu Mobile */}
       <Sidebar
         activeTab={activeTab === 'perfil_paciente' ? 'pacientes' : activeTab}

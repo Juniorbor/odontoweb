@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { TransacaoPessoal } from '../types';
-import { pushToCloud, pullFromCloud, subscribeLocalBroadcast } from '../services/cloudSync';
+import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, getUserKeys } from '../services/cloudSync';
 import { LeitorComprovanteOCR } from './LeitorComprovanteOCR';
 import { DREGerencial } from './DREGerencial';
 import { CartoesEMetas } from './CartoesEMetas';
@@ -40,8 +40,6 @@ interface FinanceiroProps {
   usuarioId?: string;
 }
 
-const STORAGE_KEY_ADMIN = 'odonto_financeiro_pessoal_v1';
-
 const CATEGORIAS_PESSOAIS = [
   'Salário & Renda',
   'Aluguel & Moradia',
@@ -57,9 +55,9 @@ const CATEGORIAS_PESSOAIS = [
 
 
 
-export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, userRole = 'admin', usuarioId }) => {
-  const isCliente = userRole === 'cliente';
-  const STORAGE_KEY = isCliente && usuarioId ? `odonto_financeiro_pessoal_${usuarioId}` : STORAGE_KEY_ADMIN;
+export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) => {
+  const userKeys = getUserKeys(usuarioId);
+  const STORAGE_KEY = userKeys.FINANCEIRO;
 
   const [transacoes, setTransacoes] = useState<TransacaoPessoal[]>(() => {
     const salvo = localStorage.getItem(STORAGE_KEY);
@@ -79,7 +77,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, userRole = 'ad
   const updateTransacoesECloud = (novas: TransacaoPessoal[]) => {
     setTransacoes(novas);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(novas));
-    pushToCloud({ financeiro: novas });
+    pushToCloud({ financeiro: novas }, usuarioId);
   };
 
   const handleZerarTodasTransacoes = () => {
@@ -97,12 +95,14 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, userRole = 'ad
         setTransacoes(payload.financeiro);
       }
       setSincronizando(false);
-    }, true);
+    }, true, usuarioId);
 
     // 2. Escuta alterações locais de abas simultâneas via BroadcastChannel
     const unsubscribeBroadcast = subscribeLocalBroadcast((payload) => {
-      if (payload.financeiro) {
-        setTransacoes(payload.financeiro);
+      if (payload.usuarioId === usuarioId || !payload.usuarioId) {
+        if (payload.financeiro) {
+          setTransacoes(payload.financeiro);
+        }
       }
     });
 
@@ -112,7 +112,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, userRole = 'ad
         if (payload.financeiro) {
           setTransacoes(payload.financeiro);
         }
-      });
+      }, false, usuarioId);
     }, 2000);
 
     const handleFocus = () => {

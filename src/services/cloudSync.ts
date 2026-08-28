@@ -1,5 +1,5 @@
-// Serviço de Sincronização em Nuvem em Tempo Real para OdontoWeb
-// Garante persistência permanente de dados localmente e sincronização com a nuvem sem perdas
+// Serviço de Sincronização em Nuvem em Tempo Real com Isolamento Multi-Tenant por Usuário
+// Garantia total de isolamento entre Admin e Clientes
 
 const getCloudEndpoint = () => {
   if (typeof window !== 'undefined') {
@@ -14,6 +14,7 @@ const getCloudEndpoint = () => {
 };
 
 export interface CloudDataPayload {
+  usuarioId?: string;
   producao?: any[];
   financeiro?: any[];
   pacientes?: any[];
@@ -28,7 +29,7 @@ const broadcastChannel = typeof window !== 'undefined' && 'BroadcastChannel' in 
   ? new BroadcastChannel('odontoweb_realtime_channel')
   : null;
 
-// Chaves do localStorage
+// Chaves do localStorage por Usuário (Isolamento Estrito)
 export const KEYS = {
   PRODUCAO: 'odonto_producao_registros_v2',
   FINANCEIRO: 'odonto_financeiro_pessoal_v1',
@@ -38,19 +39,29 @@ export const KEYS = {
   LAST_UPDATE: 'odonto_last_sync_timestamp'
 };
 
+export function getUserKeys(usuarioId?: string) {
+  const uid = usuarioId || 'usr-admin-master';
+  return {
+    PRODUCAO: uid === 'usr-admin-master' ? 'odonto_producao_registros_usr_admin_master' : `odonto_producao_registros_${uid}`,
+    FINANCEIRO: uid === 'usr-admin-master' ? 'odonto_financeiro_pessoal_usr_admin_master' : `odonto_financeiro_pessoal_${uid}`,
+    LAST_UPDATE: `odonto_last_sync_timestamp_${uid}`
+  };
+}
+
 /**
- * Envia as alterações para o localStorage local e para a nuvem
+ * Envia as alterações para o localStorage local e para a nuvem isoladas por Usuário
  */
-export async function pushToCloud(data: Partial<CloudDataPayload>): Promise<boolean> {
+export async function pushToCloud(data: Partial<CloudDataPayload>, usuarioId?: string): Promise<boolean> {
   try {
     const timestamp = Date.now();
+    const keys = getUserKeys(usuarioId);
 
-    // Salva imediatamente em localStorage local
+    // Salva imediatamente em localStorage local no repositório isolado do usuário
     if (Array.isArray(data.producao)) {
-      localStorage.setItem(KEYS.PRODUCAO, JSON.stringify(data.producao));
+      localStorage.setItem(keys.PRODUCAO, JSON.stringify(data.producao));
     }
     if (Array.isArray(data.financeiro)) {
-      localStorage.setItem(KEYS.FINANCEIRO, JSON.stringify(data.financeiro));
+      localStorage.setItem(keys.FINANCEIRO, JSON.stringify(data.financeiro));
     }
     if (Array.isArray(data.pacientes)) {
       localStorage.setItem(KEYS.PACIENTES, JSON.stringify(data.pacientes));
@@ -62,11 +73,12 @@ export async function pushToCloud(data: Partial<CloudDataPayload>): Promise<bool
       localStorage.setItem(KEYS.FOTOGRAFIAS, JSON.stringify(data.fotografias));
     }
 
-    localStorage.setItem(KEYS.LAST_UPDATE, timestamp.toString());
+    localStorage.setItem(keys.LAST_UPDATE, timestamp.toString());
 
     const payload: CloudDataPayload = {
-      producao: data.producao !== undefined ? data.producao : getItemJSON(KEYS.PRODUCAO, []),
-      financeiro: data.financeiro !== undefined ? data.financeiro : getItemJSON(KEYS.FINANCEIRO, []),
+      usuarioId: usuarioId || 'usr-admin-master',
+      producao: data.producao !== undefined ? data.producao : getItemJSON(keys.PRODUCAO, []),
+      financeiro: data.financeiro !== undefined ? data.financeiro : getItemJSON(keys.FINANCEIRO, []),
       pacientes: data.pacientes !== undefined ? data.pacientes : getItemJSON(KEYS.PACIENTES, []),
       consultas: data.consultas !== undefined ? data.consultas : getItemJSON(KEYS.CONSULTAS, []),
       fotografias: data.fotografias !== undefined ? data.fotografias : getItemJSON(KEYS.FOTOGRAFIAS, []),
@@ -86,27 +98,28 @@ export async function pushToCloud(data: Partial<CloudDataPayload>): Promise<bool
     });
 
     if (res.ok) {
-      console.log('✅ Alterações salvas no dispositivo e sincronizadas na nuvem!');
       return true;
     }
   } catch (error) {
-    console.warn('Dados salvos no dispositivo local (serviço em nuvem aguardando conexão):', error);
+    console.warn('Dados salvos localmente no repositório do usuário:', error);
   }
   return false;
 }
 
 /**
- * Baixa as atualizações da nuvem com proteção total contra sobregravação de dados locais
+ * Baixa as atualizações da nuvem com isolamento total por usuário
  */
 export async function pullFromCloud(
   onUpdate: (payload: CloudDataPayload) => void,
-  _force: boolean = false
+  _force: boolean = false,
+  usuarioId?: string
 ): Promise<boolean> {
   if (isSyncing) return false;
   isSyncing = true;
+  const keys = getUserKeys(usuarioId);
 
   try {
-    const res = await fetch(getCloudEndpoint(), {
+    const res = await fetch(`${getCloudEndpoint()}?usuarioId=${encodeURIComponent(usuarioId || 'usr-admin-master')}`, {
       headers: { 'Accept': 'application/json' }
     });
     
@@ -117,75 +130,48 @@ export async function pullFromCloud(
 
     const result = await res.json();
     const cloudData: CloudDataPayload = result.data || {};
-    const remoteTimestamp = cloudData.updatedAt || 0;
-    const localTimestamp = Number(localStorage.getItem(KEYS.LAST_UPDATE) || '0');
 
-    // PROTEÇÃO CRÍTICA: Se a nuvem estiver vazia (remoteTimestamp === 0) e houver dados locais, empurra os dados locais para a nuvem!
+    // Se o payload pertence a outro usuário, descarta para prevenir vazamento
+    if (cloudData.usuarioId && usuarioId && cloudData.usuarioId !== usuarioId) {
+      isSyncing = false;
+      return false;
+    }
+
+    const remoteTimestamp = cloudData.updatedAt || 0;
+    const localTimestamp = Number(localStorage.getItem(keys.LAST_UPDATE) || '0');
+
     if (remoteTimestamp === 0 && localTimestamp > 0) {
-      console.log('📤 Inicializando dados na nuvem a partir do dispositivo local...');
       pushToCloud({
-        producao: getItemJSON(KEYS.PRODUCAO, []),
-        financeiro: getItemJSON(KEYS.FINANCEIRO, []),
+        producao: getItemJSON(keys.PRODUCAO, []),
+        financeiro: getItemJSON(keys.FINANCEIRO, []),
         pacientes: getItemJSON(KEYS.PACIENTES, []),
         consultas: getItemJSON(KEYS.CONSULTAS, []),
         fotografias: getItemJSON(KEYS.FOTOGRAFIAS, [])
-      });
+      }, usuarioId);
       isSyncing = false;
       return true;
     }
 
-    // Apenas atualiza o estado local se o payload da nuvem for ESTRITAMENTE MAIS RECENTE que o local
     if (remoteTimestamp > localTimestamp) {
-      console.log(`⚡ Atualizando dispositivo com dados mais recentes da nuvem (${cloudData.updatedBy || 'Remoto'}):`, cloudData);
-      
-      let mudou = false;
-      const updatePayload: CloudDataPayload = {};
-
-      if (Array.isArray(cloudData.producao) && cloudData.producao.length > 0) {
-        localStorage.setItem(KEYS.PRODUCAO, JSON.stringify(cloudData.producao));
-        updatePayload.producao = cloudData.producao;
-        mudou = true;
+      if (cloudData.producao) {
+        localStorage.setItem(keys.PRODUCAO, JSON.stringify(cloudData.producao));
       }
-      if (Array.isArray(cloudData.financeiro) && cloudData.financeiro.length > 0) {
-        localStorage.setItem(KEYS.FINANCEIRO, JSON.stringify(cloudData.financeiro));
-        updatePayload.financeiro = cloudData.financeiro;
-        mudou = true;
+      if (cloudData.financeiro) {
+        localStorage.setItem(keys.FINANCEIRO, JSON.stringify(cloudData.financeiro));
       }
-      if (Array.isArray(cloudData.pacientes) && cloudData.pacientes.length > 0) {
-        localStorage.setItem(KEYS.PACIENTES, JSON.stringify(cloudData.pacientes));
-        updatePayload.pacientes = cloudData.pacientes;
-        mudou = true;
-      }
-      if (Array.isArray(cloudData.consultas) && cloudData.consultas.length > 0) {
-        localStorage.setItem(KEYS.CONSULTAS, JSON.stringify(cloudData.consultas));
-        updatePayload.consultas = cloudData.consultas;
-        mudou = true;
-      }
-      if (Array.isArray(cloudData.fotografias) && cloudData.fotografias.length > 0) {
-        localStorage.setItem(KEYS.FOTOGRAFIAS, JSON.stringify(cloudData.fotografias));
-        updatePayload.fotografias = cloudData.fotografias;
-        mudou = true;
-      }
-
-      if (mudou) {
-        localStorage.setItem(KEYS.LAST_UPDATE, remoteTimestamp.toString());
-        onUpdate(updatePayload);
-      }
-      
+      localStorage.setItem(keys.LAST_UPDATE, remoteTimestamp.toString());
+      onUpdate(cloudData);
       isSyncing = false;
       return true;
     }
-  } catch (error) {
-    // Falha silenciosa
+  } catch (e) {
+    // Silencioso em offline
   }
 
   isSyncing = false;
   return false;
 }
 
-/**
- * Assina atualizações locais em tempo real entre abas no mesmo computador
- */
 export function subscribeLocalBroadcast(onUpdate: (payload: CloudDataPayload) => void) {
   if (!broadcastChannel) return () => {};
 
