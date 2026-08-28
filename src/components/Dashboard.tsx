@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { ItemProducaoTomo, TransacaoPessoal } from '../types';
 import LOGO_BASE64 from '../assets/logoData';
+import { AIFinBot } from './AIFinBot';
+import { GamificacaoFinanceira } from './GamificacaoFinanceira';
 import {
   BarChart3,
   DollarSign,
@@ -237,8 +239,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <ArrowDownRight className="w-3.5 h-3.5" /> Comprometimento de {comprometimentoRenda}%
           </div>
         </div>
-
       </div>
+
+      {/* ASSISTENTE DE IA FINBOT & GAMIFICAÇÃO */}
+      <AIFinBot itensProducao={itensProducao} transacoesFinanceiras={transacoesFinanceiras} darkMode={darkMode} />
+      <GamificacaoFinanceira transacoes={transacoesFinanceiras} itensProducao={itensProducao} darkMode={darkMode} />
 
       {/* GRADE ORGANIZADA EM 2 COLUNAS: PRODUÇÃO E FINANCEIRO */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

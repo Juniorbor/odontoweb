@@ -7,6 +7,7 @@ import { CartoesEMetas } from './CartoesEMetas';
 import { CalendarioVencimentos } from './CalendarioVencimentos';
 import { Regra503020 } from './Regra503020';
 import { GeradorReciboPessoal } from './GeradorReciboPessoal';
+import { ComandoVozModal } from './ComandoVozModal';
 import {
   DollarSign,
   Plus,
@@ -27,7 +28,8 @@ import {
   BarChart3,
   Camera,
   Calendar,
-  Compass
+  Compass,
+  Mic
 } from 'lucide-react';
 
 interface FinanceiroProps {
@@ -184,6 +186,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
 
   const [subAbaFinanceiro, setSubAbaFinanceiro] = useState<'lancamentos' | 'calendario' | '503020' | 'recibo' | 'dre' | 'cartoes'>('lancamentos');
   const [modalOCRAberto, setModalOCRAberto] = useState<boolean>(false);
+  const [modalVozAberto, setModalVozAberto] = useState<boolean>(false);
 
   const [filtroTipo, setFiltroTipo] = useState<string>('Todos');
   const [filtroCategoria, setFiltroCategoria] = useState<string>('Todas');
@@ -474,12 +477,21 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
           </button>
         </div>
 
-        <button
-          onClick={() => setModalOCRAberto(true)}
-          className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md cursor-pointer"
-        >
-          <Camera className="w-4 h-4" /> Ler Comprovante / Foto (OCR IA)
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setModalVozAberto(true)}
+            className="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md cursor-pointer"
+          >
+            <Mic className="w-4 h-4" /> Lançar por Voz
+          </button>
+
+          <button
+            onClick={() => setModalOCRAberto(true)}
+            className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md cursor-pointer"
+          >
+            <Camera className="w-4 h-4" /> Ler Foto (OCR IA)
+          </button>
+        </div>
       </div>
 
       {subAbaFinanceiro === 'calendario' ? (
@@ -1147,6 +1159,20 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
         <LeitorComprovanteOCR
           darkMode={darkMode}
           onFechar={() => setModalOCRAberto(false)}
+          onAdicionarTransacao={(novaTransacao) => {
+            const item: TransacaoPessoal = {
+              ...novaTransacao,
+              id: `fin-${Date.now()}`
+            };
+            updateTransacoesECloud([item, ...transacoes]);
+          }}
+        />
+      )}
+
+      {modalVozAberto && (
+        <ComandoVozModal
+          darkMode={darkMode}
+          onFechar={() => setModalVozAberto(false)}
           onAdicionarTransacao={(novaTransacao) => {
             const item: TransacaoPessoal = {
               ...novaTransacao,
