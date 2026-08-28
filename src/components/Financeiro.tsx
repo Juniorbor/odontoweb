@@ -62,7 +62,6 @@ const TRANSACOES_INICIAIS: TransacaoPessoal[] = [
   
   // Despesas Fixas do Lar
   { id: 'fin-3', descricao: 'Aluguel Residencial', tipo: 'Despesa Fixa', valor: 800.00, data: '2026-08-05', categoria: 'Aluguel & Moradia', status: 'Pago', observacao: 'Vencimento dia 05' },
-  { id: 'fin-4', descricao: 'Conta de Água', tipo: 'Despesa Fixa', valor: 50.00, data: '2026-08-10', categoria: 'Contas de Consumo (Água/Luz/Net)', status: 'Pago' },
   { id: 'fin-5', descricao: 'Conta de Luz / Energia Elétrica', tipo: 'Despesa Fixa', valor: 500.00, data: '2026-08-12', categoria: 'Contas de Consumo (Água/Luz/Net)', status: 'Pago' },
   { id: 'fin-6', descricao: 'Internet Residencial', tipo: 'Despesa Fixa', valor: 119.90, data: '2026-08-15', categoria: 'Contas de Consumo (Água/Luz/Net)', status: 'Pago' },
   { id: 'fin-7', descricao: 'Mensalidade Faculdade', tipo: 'Despesa Fixa', valor: 1393.82, data: '2026-08-10', categoria: 'Educação & Faculdade', status: 'Pago' },
@@ -90,12 +89,15 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, userRole = 'ad
     const salvo = localStorage.getItem(STORAGE_KEY);
     if (salvo !== null) {
       try {
-        return JSON.parse(salvo);
+        const parsed: TransacaoPessoal[] = JSON.parse(salvo);
+        const limpas = parsed.filter(t => t.valor !== 50 && t.valor !== 50.00);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(limpas));
+        return limpas;
       } catch (e) {
         console.error('Erro ao ler transações pessoais do localStorage:', e);
       }
     }
-    return isCliente ? [] : TRANSACOES_INICIAIS;
+    return isCliente ? [] : TRANSACOES_INICIAIS.filter(t => t.valor !== 50 && t.valor !== 50.00);
   });
 
   const [sincronizando, setSincronizando] = useState<boolean>(false);
