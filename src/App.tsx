@@ -94,6 +94,17 @@ export function App() {
     localStorage.setItem(KEYS.FOTOGRAFIAS, JSON.stringify(fotografias));
   }, [fotografias]);
 
+  // Garantir que a conta do Admin e o sistema iniciem 100% ZERADOS para Produção e Financeiro
+  useEffect(() => {
+    const RESET_ZERADO_KEY = 'odonto_reset_100pct_zerado_v4';
+    if (!localStorage.getItem(RESET_ZERADO_KEY)) {
+      localStorage.setItem(KEYS.FINANCEIRO, JSON.stringify([]));
+      localStorage.setItem(KEYS.PRODUCAO, JSON.stringify([]));
+      localStorage.setItem(RESET_ZERADO_KEY, 'true');
+      pushToCloud({ financeiro: [], producao: [] });
+    }
+  }, []);
+
   // Sincronização em nuvem e local entre dispositivos (celular e notebook)
   useEffect(() => {
     // 1. Carregamento prioritário na nuvem ao abrir a aplicação
