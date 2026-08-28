@@ -4,20 +4,16 @@ import type { TransacaoPessoal } from '../types';
 
 interface Regra503020Props {
   transacoes: TransacaoPessoal[];
-  faturamentoProducaoTotal: number;
   darkMode?: boolean;
 }
 
 export const Regra503020: React.FC<Regra503020Props> = ({
   transacoes,
-  faturamentoProducaoTotal,
   darkMode
 }) => {
-  const outrasEntradas = transacoes
+  const rendaTotalFamiliar = transacoes
     .filter((t) => t.tipo === 'Entrada')
     .reduce((acc, t) => acc + t.valor, 0);
-
-  const rendaTotalFamiliar = faturamentoProducaoTotal + outrasEntradas;
 
   // 1. Necessidades Básicas (50%): Despesas Fixas (Moradia, Alimentação, Água/Luz)
   const gastosNecessidades = transacoes
@@ -52,113 +48,114 @@ export const Regra503020: React.FC<Regra503020Props> = ({
             <Compass className="w-7 h-7" />
           </div>
           <div>
-            <span className="text-[10px] font-semibold text-teal-400 bg-teal-500/10 px-2.5 py-0.5 rounded-full border border-teal-500/30 uppercase tracking-widest">
+            <span className="text-[10px] font-extrabold text-teal-400 bg-teal-500/10 px-2.5 py-0.5 rounded-full border border-teal-500/30 uppercase tracking-widest">
               Método de Educação Financeira Pessoal
             </span>
             <h3 className="text-xl font-bold mt-1 flex items-center gap-2 text-white">
               Regra do Orçamento Pessoal (50% - 30% - 20%)
             </h3>
             <p className="text-xs text-slate-400 font-normal">
-              Divisão recomendada para equilibrar gastos essenciais do lar, lazer da família e reservas do futuro.
+              Divisão recomendada de gastos com base na Renda Total cadastrada (50% Necessidades, 30% Lazer, 20% Economia).
             </p>
           </div>
         </div>
-
-        <div className="p-3 bg-slate-950 rounded-2xl border border-slate-800 shrink-0 text-right">
-          <span className="text-[10px] uppercase text-slate-400 font-semibold block">Renda Total Disponível</span>
-          <span className="text-lg font-bold text-emerald-400">
-            R$ {rendaTotalFamiliar.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </span>
-        </div>
       </div>
 
-      {/* 3 PILARES DO ORÇAMENTO 50/30/20 */}
+      {/* CARDS DE COMPARAÇÃO IDEAL VS REAL */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        
-        {/* Pilar 1: 50% Necessidades Básicas */}
+        {/* CARD 1: NECESSIDADES BÁSICAS (50%) */}
         <div className={`p-6 rounded-3xl border shadow-xl space-y-3 ${
-          darkMode ? 'bg-slate-900/90 border-sky-900/40 text-white' : 'bg-white border-sky-100 text-slate-900'
+          darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
         }`}>
-          <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-            <span className="text-xs font-semibold text-sky-400 uppercase tracking-wider">1. Necessidades (50%)</span>
-            <span className="text-[10px] font-bold text-sky-300 bg-sky-500/10 px-2 py-0.5 rounded">Meta: 50%</span>
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-bold text-sky-400 bg-sky-500/10 px-2.5 py-0.5 rounded-full border border-sky-500/30">
+              50% Necessidades Básicas
+            </span>
+            <span className="text-xs font-bold text-slate-400">Meta: R$ {metaNecessidades.toLocaleString('pt-BR')}</span>
           </div>
 
-          <h4 className="text-2xl font-bold text-white">
-            R$ {gastosNecessidades.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </h4>
+          <div>
+            <span className="text-2xl font-black text-white">R$ {gastosNecessidades.toLocaleString('pt-BR')}</span>
+            <span className="text-xs text-slate-400 block font-normal mt-0.5">Gastos Fixos (Moradia, Alimentação, Água/Luz)</span>
+          </div>
 
           <div className="space-y-1 text-xs">
             <div className="flex justify-between text-slate-400">
-              <span>Uso real da renda:</span>
-              <strong className="text-sky-400 font-semibold">{pctNecessidadesReal}% (Ideal: R$ {metaNecessidades.toLocaleString('pt-BR')})</strong>
+              <span>Comprometimento Atual:</span>
+              <strong className={pctNecessidadesReal > 50 ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold'}>
+                {pctNecessidadesReal}% da Renda
+              </strong>
             </div>
-            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div className="h-full bg-sky-400 rounded-full" style={{ width: `${Math.min(100, pctNecessidadesReal)}%` }}></div>
+            <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${pctNecessidadesReal > 50 ? 'bg-rose-500' : 'bg-sky-400'}`}
+                style={{ width: `${Math.min(100, pctNecessidadesReal)}%` }}
+              ></div>
             </div>
           </div>
-
-          <p className="text-[11px] text-slate-400 font-normal leading-relaxed">
-            Contas essenciais do lar: aluguel, supermercado, energia, água, saúde e custos fixos.
-          </p>
         </div>
 
-        {/* Pilar 2: 30% Estilo de Vida & Lazer */}
+        {/* CARD 2: ESTILO DE VIDA & LAZER (30%) */}
         <div className={`p-6 rounded-3xl border shadow-xl space-y-3 ${
-          darkMode ? 'bg-slate-900/90 border-purple-900/40 text-white' : 'bg-white border-purple-100 text-slate-900'
+          darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
         }`}>
-          <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-            <span className="text-xs font-semibold text-purple-400 uppercase tracking-wider">2. Lazer & Estilo (30%)</span>
-            <span className="text-[10px] font-bold text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded">Meta: 30%</span>
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-bold text-purple-400 bg-purple-500/10 px-2.5 py-0.5 rounded-full border border-purple-500/30">
+              30% Estilo de Vida & Lazer
+            </span>
+            <span className="text-xs font-bold text-slate-400">Meta: R$ {metaLazer.toLocaleString('pt-BR')}</span>
           </div>
 
-          <h4 className="text-2xl font-bold text-white">
-            R$ {gastosLazerEstiloVida.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </h4>
+          <div>
+            <span className="text-2xl font-black text-white">R$ {gastosLazerEstiloVida.toLocaleString('pt-BR')}</span>
+            <span className="text-xs text-slate-400 block font-normal mt-0.5">Gastos Variáveis & Cartões de Crédito</span>
+          </div>
 
           <div className="space-y-1 text-xs">
             <div className="flex justify-between text-slate-400">
-              <span>Uso real da renda:</span>
-              <strong className="text-purple-400 font-semibold">{pctLazerReal}% (Ideal: R$ {metaLazer.toLocaleString('pt-BR')})</strong>
+              <span>Comprometimento Atual:</span>
+              <strong className={pctLazerReal > 30 ? 'text-rose-400 font-bold' : 'text-purple-400 font-bold'}>
+                {pctLazerReal}% da Renda
+              </strong>
             </div>
-            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div className="h-full bg-purple-400 rounded-full" style={{ width: `${Math.min(100, pctLazerReal)}%` }}></div>
+            <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${pctLazerReal > 30 ? 'bg-rose-500' : 'bg-purple-400'}`}
+                style={{ width: `${Math.min(100, pctLazerReal)}%` }}
+              ></div>
             </div>
           </div>
-
-          <p className="text-[11px] text-slate-400 font-normal leading-relaxed">
-            Despesas de lazer da família, restaurantes, cartões de crédito, passeios e compras pessoais.
-          </p>
         </div>
 
-        {/* Pilar 3: 20% Economia & Futuro */}
+        {/* CARD 3: ECONOMIA & FUTURO (20%) */}
         <div className={`p-6 rounded-3xl border shadow-xl space-y-3 ${
-          darkMode ? 'bg-slate-900/90 border-emerald-900/40 text-white' : 'bg-white border-emerald-100 text-slate-900'
+          darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
         }`}>
-          <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-            <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">3. Futuro & Reserva (20%)</span>
-            <span className="text-[10px] font-bold text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded">Meta: 20%</span>
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+              20% Economia & Investimentos
+            </span>
+            <span className="text-xs font-bold text-slate-400">Meta: R$ {metaFuturo.toLocaleString('pt-BR')}</span>
           </div>
 
-          <h4 className="text-2xl font-bold text-emerald-400">
-            R$ {economiaFuturoReal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </h4>
+          <div>
+            <span className="text-2xl font-black text-emerald-400">R$ {economiaFuturoReal.toLocaleString('pt-BR')}</span>
+            <span className="text-xs text-slate-400 block font-normal mt-0.5">Reserva Restante para Investir</span>
+          </div>
 
           <div className="space-y-1 text-xs">
             <div className="flex justify-between text-slate-400">
-              <span>Economia real da renda:</span>
-              <strong className="text-emerald-400 font-semibold">{pctFuturoReal}% (Ideal: R$ {metaFuturo.toLocaleString('pt-BR')})</strong>
+              <span>Economia Real Acumulada:</span>
+              <strong className="text-emerald-400 font-bold">{pctFuturoReal}% da Renda</strong>
             </div>
-            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${Math.min(100, pctFuturoReal)}%` }}></div>
+            <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-emerald-400 rounded-full transition-all"
+                style={{ width: `${Math.min(100, pctFuturoReal)}%` }}
+              ></div>
             </div>
           </div>
-
-          <p className="text-[11px] text-slate-400 font-normal leading-relaxed">
-            Recursos livres para guardar na reserva de emergência e investimentos do futuro familiar.
-          </p>
         </div>
-
       </div>
     </div>
   );

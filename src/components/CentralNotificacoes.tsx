@@ -1,17 +1,15 @@
 import React from 'react';
 import { Bell, CheckCircle2, AlertTriangle, Info, X } from 'lucide-react';
-import type { TransacaoPessoal, ItemProducaoTomo } from '../types';
+import type { TransacaoPessoal } from '../types';
 
 interface CentralNotificacoesProps {
   transacoes: TransacaoPessoal[];
-  itensProducao: ItemProducaoTomo[];
   onFechar: () => void;
   darkMode?: boolean;
 }
 
 export const CentralNotificacoes: React.FC<CentralNotificacoesProps> = ({
   transacoes,
-  itensProducao,
   onFechar,
   darkMode
 }) => {
@@ -47,12 +45,12 @@ export const CentralNotificacoes: React.FC<CentralNotificacoesProps> = ({
     }
   });
 
-  const totalProducao = itensProducao.reduce((acc, i) => acc + i.valor, 0);
-  if (totalProducao > 0) {
+  const totalEntradas = transacoes.filter((t) => t.tipo === 'Entrada').reduce((acc, t) => acc + t.valor, 0);
+  if (totalEntradas > 0) {
     notificacoes.push({
-      id: 'not-prod-ok',
-      titulo: '🎉 Produção Unificada no Ar',
-      mensagem: `Produção total acumulada atingiu R$ ${totalProducao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`,
+      id: 'not-entradas-ok',
+      titulo: '🎉 Renda Sincronizada',
+      mensagem: `Total de entradas registradas atingiu R$ ${totalEntradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.`,
       tipo: 'sucesso',
       data: hoje
     });
@@ -61,7 +59,7 @@ export const CentralNotificacoes: React.FC<CentralNotificacoesProps> = ({
   notificacoes.push({
     id: 'not-robo-wa',
     titulo: '🤖 Disparo Automático Agendado',
-    mensagem: 'Seu resumo diário de produção e finanças será enviado às 18:30h no WhatsApp.',
+    mensagem: 'Seu resumo diário de finanças será enviado às 18:30h no WhatsApp.',
     tipo: 'info',
     data: hoje
   });

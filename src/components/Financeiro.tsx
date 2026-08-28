@@ -528,15 +528,15 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, userRole = 'ad
       {subAbaFinanceiro === 'calendario' ? (
         <CalendarioVencimentos transacoes={transacoes} darkMode={darkMode} />
       ) : subAbaFinanceiro === '503020' ? (
-        <Regra503020 transacoes={transacoes} faturamentoProducaoTotal={faturamentoTotalProducaoGeral} darkMode={darkMode} />
+        <Regra503020 transacoes={transacoes} darkMode={darkMode} />
       ) : subAbaFinanceiro === 'recibo' ? (
         <GeradorReciboPessoal darkMode={darkMode} />
       ) : subAbaFinanceiro === 'metas' ? (
         <SimuladorSonhosMetas darkMode={darkMode} />
       ) : subAbaFinanceiro === 'graficos' ? (
-        <GraficosVisualizer itensProducao={producaoItens} transacoesFinanceiras={transacoes} darkMode={darkMode} />
+        <GraficosVisualizer transacoesFinanceiras={transacoes} darkMode={darkMode} />
       ) : subAbaFinanceiro === 'dre' ? (
-        <DREGerencial itensProducao={producaoItens} transacoesFinanceiras={transacoes} darkMode={darkMode} />
+        <DREGerencial transacoesFinanceiras={transacoes} darkMode={darkMode} />
       ) : subAbaFinanceiro === 'cartoes' ? (
         <CartoesEMetas transacoesFinanceiras={transacoes} darkMode={darkMode} />
       ) : (

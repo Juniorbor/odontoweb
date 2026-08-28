@@ -205,8 +205,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* ASSISTENTE DE IA FINBOT & GAMIFICAÇÃO */}
-      <AIFinBot itensProducao={[]} transacoesFinanceiras={transacoesFinanceiras} darkMode={darkMode} />
-      <GamificacaoFinanceira transacoes={transacoesFinanceiras} itensProducao={[]} darkMode={darkMode} />
+      <AIFinBot transacoesFinanceiras={transacoesFinanceiras} darkMode={darkMode} />
+      <GamificacaoFinanceira transacoes={transacoesFinanceiras} darkMode={darkMode} />
 
       {/* PAINEL ORGANIZADO DAS FINANÇAS DO USUÁRIO */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

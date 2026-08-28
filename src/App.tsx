@@ -545,7 +545,6 @@ export function App() {
       {centralNotificacoesAberto && (
         <CentralNotificacoes
           transacoes={getItemJSON('odonto_financeiro_pessoal_v1', [])}
-          itensProducao={getItemJSON('odonto_producao_registros_v2', [])}
           darkMode={darkMode}
           onFechar={() => setCentralNotificacoesAberto(false)}
         />
