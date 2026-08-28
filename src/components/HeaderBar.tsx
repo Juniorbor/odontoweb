@@ -4,7 +4,6 @@ import {
   Moon,
   Sun,
   Bell,
-  Plus,
   User,
   LogOut,
   ChevronDown,
@@ -177,15 +176,6 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           title={darkMode ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}
         >
           {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
-
-        {/* Botão Novo Paciente Rápido (Oculto em telas super pequenas) */}
-        <button
-          onClick={() => onNavigate('pacientes')}
-          className="hidden sm:flex bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-bold px-3 py-2 rounded-2xl text-xs items-center gap-1.5 shadow-md shadow-teal-600/20 transition-all cursor-pointer shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>+ Paciente</span>
         </button>
 
         {/* Notificações */}
