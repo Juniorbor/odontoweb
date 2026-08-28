@@ -513,7 +513,13 @@ export function App() {
             />
           )}
 
-          {activeTab === 'relatorios' && <Relatorios darkMode={darkMode} />}
+          {activeTab === 'relatorios' && (
+            <Relatorios
+              darkMode={darkMode}
+              userRole={usuarioLogado?.role || 'admin'}
+              usuarioId={usuarioLogado?.id}
+            />
+          )}
 
           {activeTab === 'configuracoes' && (
             <Configuracoes

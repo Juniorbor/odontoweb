@@ -246,7 +246,6 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
             <div className="hidden md:block text-left">
               <p className="text-xs font-bold leading-tight">{usuarioLogado?.nome || 'Crenilto Junior'}</p>
-              <p className="text-[10px] text-teal-500 leading-none font-semibold">{usuarioLogado?.cro || 'CRO-RO 147369'}</p>
             </div>
 
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
@@ -263,7 +262,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                 <p className="font-bold text-slate-900 dark:text-white">{usuarioLogado?.nome || 'Crenilto Junior'}</p>
                 <p className="text-[11px] text-slate-400">{usuarioLogado?.email || 'juniorbor1986@gmail.com'}</p>
                 <span className="inline-block mt-1 text-[10px] font-semibold text-teal-500 bg-teal-500/10 px-2 py-0.5 rounded-md">
-                  {usuarioLogado?.funcao || 'Administrador / Cirurgião-Dentista'}
+                  {usuarioLogado?.funcao || 'Administrador Master'}
                 </span>
               </div>
 

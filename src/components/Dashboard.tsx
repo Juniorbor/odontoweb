@@ -1,21 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import type { ItemProducaoTomo, TransacaoPessoal } from '../types';
+import type { TransacaoPessoal } from '../types';
 import LOGO_BASE64 from '../assets/logoData';
 import { AIFinBot } from './AIFinBot';
 import { GamificacaoFinanceira } from './GamificacaoFinanceira';
 import {
-  BarChart3,
   DollarSign,
   TrendingUp,
-  Users,
   Wallet,
   Sparkles,
   ShieldCheck,
-  Building2,
   ChevronRight,
   CheckCircle2,
   Clock,
-  ArrowDownRight
+  ArrowDownRight,
+  PieChart
 } from 'lucide-react';
 
 interface DashboardProps {
@@ -25,8 +23,7 @@ interface DashboardProps {
   usuarioId?: string;
 }
 
-const PRODUCAO_KEY = 'odonto_producao_registros_v2';
-const FINANCEIRO_KEY = 'odonto_financeiro_pessoal_v1';
+const FINANCEIRO_KEY_ADMIN = 'odonto_financeiro_pessoal_v1';
 
 export const Dashboard: React.FC<DashboardProps> = ({
   onNavigate,
@@ -35,18 +32,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   usuarioId
 }) => {
   const isCliente = userRole === 'cliente';
-  const chaveFinanceiro = isCliente && usuarioId ? `odonto_financeiro_pessoal_${usuarioId}` : FINANCEIRO_KEY;
-
-  const [itensProducao, setItensProducao] = useState<ItemProducaoTomo[]>(() => {
-    if (isCliente) return [];
-    const salvo = localStorage.getItem(PRODUCAO_KEY);
-    if (salvo) {
-      try {
-        return JSON.parse(salvo);
-      } catch (e) {}
-    }
-    return [];
-  });
+  const chaveFinanceiro = isCliente && usuarioId ? `odonto_financeiro_pessoal_${usuarioId}` : FINANCEIRO_KEY_ADMIN;
 
   const [transacoesFinanceiras, setTransacoesFinanceiras] = useState<TransacaoPessoal[]>(() => {
     const salvo = localStorage.getItem(chaveFinanceiro);
@@ -58,59 +44,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return [];
   });
 
+  // Atualização em tempo real quando ocorrem novos lançamentos no localStorage
   useEffect(() => {
     const handleStorageChange = () => {
-      const p = localStorage.getItem(PRODUCAO_KEY);
-      if (p) {
-        try { setItensProducao(JSON.parse(p)); } catch (e) {}
-      }
-      const f = localStorage.getItem(FINANCEIRO_KEY);
+      const f = localStorage.getItem(chaveFinanceiro);
       if (f) {
         try { setTransacoesFinanceiras(JSON.parse(f)); } catch (e) {}
       }
     };
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [chaveFinanceiro]);
 
-  // --- ESTATÍSTICAS DE PRODUÇÃO ---
-  const totalFaturamentoProducao = itensProducao.reduce((acc, i) => acc + i.valor, 0);
-  const totalExamesProducao = itensProducao.length;
-
-  const itensFernando = itensProducao.filter((i) => i.proprietario === 'Fernando');
-  const itensBernardo = itensProducao.filter((i) => i.proprietario === 'Bernardo');
-
-  const totalFernandoR$ = itensFernando.reduce((acc, i) => acc + i.valor, 0);
-  const totalBernardoR$ = itensBernardo.reduce((acc, i) => acc + i.valor, 0);
-
-  const UNIDADES_PRODUCAO = [
-    { nome: 'Ariquemes', owner: 'Fernando', cor: '#0EA5E9' },
-    { nome: 'Porto Velho', owner: 'Fernando', cor: '#0EA5E9' },
-    { nome: 'Machadinho', owner: 'Fernando', cor: '#0EA5E9' },
-    { nome: 'Cacoal', owner: 'Fernando', cor: '#0EA5E9' },
-    { nome: 'Rolim de Moura', owner: 'Bernardo', cor: '#6366F1' },
-    { nome: 'Ouro Preto', owner: 'Bernardo', cor: '#6366F1' },
-    { nome: 'Ji-Paraná', owner: 'Bernardo', cor: '#6366F1' }
-  ];
-
-  const resumoClinicasProducao = UNIDADES_PRODUCAO.map((u) => {
-    const lancamentos = itensProducao.filter((i) => i.unidade === u.nome);
-    const valorTotal = lancamentos.reduce((acc, i) => acc + i.valor, 0);
-    return {
-      ...u,
-      count: lancamentos.length,
-      valor: valorTotal
-    };
-  }).sort((a, b) => b.valor - a.valor);
-
-  const maxClinicaVal = Math.max(1, ...resumoClinicasProducao.map((c) => c.valor));
-
-  // --- ESTATÍSTICAS DO FINANCEIRO ---
-  const totalEntradasOutras = transacoesFinanceiras
+  // --- ESTATÍSTICAS DO FINANCEIRO PESSOAL DO USUÁRIO ---
+  const totalEntradas = transacoesFinanceiras
     .filter((t) => t.tipo === 'Entrada')
     .reduce((acc, t) => acc + t.valor, 0);
-
-  const totalEntradasFinanceiro = totalFaturamentoProducao + totalEntradasOutras;
 
   const totalDespesasFixas = transacoesFinanceiras
     .filter((t) => t.tipo === 'Despesa Fixa')
@@ -121,16 +70,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
     .reduce((acc, t) => acc + t.valor, 0);
 
   const totalDespesasGerais = totalDespesasFixas + totalDespesasVariaveis;
-  const saldoLiquidoGeral = totalEntradasFinanceiro - totalDespesasGerais;
-  const comprometimentoRenda = totalEntradasFinanceiro > 0 ? Math.round((totalDespesasGerais / totalEntradasFinanceiro) * 100) : 0;
+  const saldoLiquidoGeral = totalEntradas - totalDespesasGerais;
+  
+  const comprometimentoRenda = totalEntradas > 0 
+    ? Math.round((totalDespesasGerais / totalEntradas) * 100) 
+    : 0;
 
-  const totalContasPagas = transacoesFinanceiras.filter((t) => t.status === 'Pago').length + 1;
+  const totalContasPagas = transacoesFinanceiras.filter((t) => t.status === 'Pago').length;
   const totalContasPendentes = transacoesFinanceiras.filter((t) => t.status === 'Pendente').length;
+
+  // Agrupamento de Gastos por Categoria
+  const categoriasMap: Record<string, number> = {};
+  transacoesFinanceiras
+    .filter((t) => t.tipo !== 'Entrada')
+    .forEach((t) => {
+      categoriasMap[t.categoria] = (categoriasMap[t.categoria] || 0) + t.valor;
+    });
+
+  const resumoCategorias = Object.entries(categoriasMap)
+    .map(([categoria, valor]) => ({ categoria, valor }))
+    .sort((a, b) => b.valor - a.valor);
+
+  const maxCategoriaVal = Math.max(1, ...resumoCategorias.map((c) => c.valor));
 
   return (
     <div className="space-y-6 w-full max-w-full animate-fadeIn font-sans text-slate-200">
       
-      {/* Banner de Boas-Vindas Executivo com Glow Neon */}
+      {/* Banner Executivo de Boas-Vindas */}
       <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-slate-950 to-teal-950 text-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-teal-500/30 glow-teal">
         <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-80 h-80 bg-gradient-to-br from-teal-500/20 to-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -147,74 +113,32 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
             <div className="space-y-1">
               <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest border border-emerald-500/40">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Painel Executivo Integrado 2026
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Painel Orçamentário Pessoal
               </span>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
-                Painel de Atendimento & Gestão <span className="text-teal-400 font-bold text-sm bg-teal-500/10 px-2.5 py-0.5 rounded-full border border-teal-500/30">AO VIVO</span>
+                Painel Financeiro & Saúde Orçamentária <span className="text-teal-400 font-bold text-sm bg-teal-500/10 px-2.5 py-0.5 rounded-full border border-teal-500/30">AO VIVO</span>
               </h1>
               <p className="text-slate-300 text-xs sm:text-sm font-normal max-w-xl">
-                Consolidado exclusivo das operações de <strong className="font-bold text-teal-400">Produção</strong> (Tomografia & Traçados) e <strong className="font-bold text-emerald-400">Financeiro Pessoal</strong>.
+                Consolidado dinâmico das suas <strong className="font-bold text-emerald-400">Entradas / Salário</strong>, despesas fixas do lar, cartões de crédito e metas.
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-3">
-            {!isCliente && (
-              <button
-                onClick={() => onNavigate('producao')}
-                className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold px-5 py-3 rounded-2xl text-xs shadow-xl shadow-teal-500/25 transition-all flex items-center gap-2 cursor-pointer hover:scale-[1.03]"
-              >
-                <BarChart3 className="w-4.5 h-4.5 text-white" /> Ir para Produção
-              </button>
-            )}
-
             <button
               onClick={() => onNavigate('financeiro')}
-              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold px-5 py-3 rounded-2xl text-xs shadow-xl shadow-emerald-600/25 transition-all flex items-center gap-2 cursor-pointer hover:scale-[1.03]"
+              className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold px-5 py-3 rounded-2xl text-xs shadow-xl shadow-teal-500/25 transition-all flex items-center gap-2 cursor-pointer hover:scale-[1.03]"
             >
-              <Wallet className="w-4.5 h-4.5 text-white" /> Ir para Financeiro
+              <Wallet className="w-4.5 h-4.5 text-white" /> Acessar Meu Financeiro
             </button>
           </div>
         </div>
       </div>
 
-      {/* 4 Cards KPI Principais Estilo Cyber Fintech */}
+      {/* 4 Cards KPI Principais do Usuário */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         
-        {/* KPI 1: Faturamento Produção */}
-        <div className="card-cyber p-5 rounded-3xl transition-all hover:scale-[1.02]">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-bold text-teal-400 uppercase tracking-wider">Faturamento Produção</p>
-            <div className="p-3 rounded-2xl bg-gradient-to-br from-teal-500/20 to-emerald-500/10 text-teal-400 border border-teal-500/30 shadow-md">
-              <BarChart3 className="w-6 h-6" />
-            </div>
-          </div>
-          <p className="text-2xl sm:text-3xl font-black mt-3 text-white tracking-tight">
-            R$ {totalFaturamentoProducao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </p>
-          <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-teal-300">
-            <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
-            <span>7 Clínicas Monitoradas</span>
-          </div>
-        </div>
-
-        {/* KPI 2: Pacientes / Exames Produção */}
-        <div className="card-cyber p-5 rounded-3xl transition-all hover:scale-[1.02]">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-bold text-sky-400 uppercase tracking-wider">Exames Produzidos</p>
-            <div className="p-3 rounded-2xl bg-gradient-to-br from-sky-500/20 to-indigo-500/10 text-sky-400 border border-sky-500/30 shadow-md">
-              <Users className="w-6 h-6" />
-            </div>
-          </div>
-          <p className="text-2xl sm:text-3xl font-black mt-3 text-white tracking-tight">
-            {totalExamesProducao} <span className="text-sm font-semibold text-slate-400">exames</span>
-          </p>
-          <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-sky-300">
-            <TrendingUp className="w-3.5 h-3.5 text-sky-400" /> Fernando ({itensFernando.length}) • Bernardo ({itensBernardo.length})
-          </div>
-        </div>
-
-        {/* KPI 3: Receitas & Salário Financeiro */}
+        {/* KPI 1: Renda / Entradas */}
         <div className="card-cyber p-5 rounded-3xl transition-all hover:scale-[1.02]">
           <div className="flex items-center justify-between">
             <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Entradas & Renda Total</p>
@@ -223,17 +147,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
           <p className="text-2xl sm:text-3xl font-black mt-3 text-emerald-400 tracking-tight">
-            R$ {totalEntradasFinanceiro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            R$ {totalEntradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
           <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-emerald-300">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Produção + Entradas Pessoais
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Salário & Rendas Cadastradas
           </div>
         </div>
 
-        {/* KPI 4: Despesas Domésticas */}
+        {/* KPI 2: Despesas do Lar */}
         <div className="card-cyber p-5 rounded-3xl transition-all hover:scale-[1.02]">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-bold text-rose-400 uppercase tracking-wider">Despesas do Lar</p>
+            <p className="text-xs font-bold text-rose-400 uppercase tracking-wider">Despesas Totais do Lar</p>
             <div className="p-3 rounded-2xl bg-gradient-to-br from-rose-500/20 to-amber-500/10 text-rose-400 border border-rose-500/30 shadow-md">
               <TrendingUp className="w-6 h-6" />
             </div>
@@ -245,106 +169,113 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <ArrowDownRight className="w-3.5 h-3.5 text-rose-400" /> Comprometimento de {comprometimentoRenda}%
           </div>
         </div>
+
+        {/* KPI 3: Saldo Líquido */}
+        <div className="card-cyber p-5 rounded-3xl transition-all hover:scale-[1.02]">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold text-teal-400 uppercase tracking-wider">Saldo Líquido Disponível</p>
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-teal-500/20 to-emerald-500/10 text-teal-400 border border-teal-500/30 shadow-md">
+              <Wallet className="w-6 h-6" />
+            </div>
+          </div>
+          <p className={`text-2xl sm:text-3xl font-black mt-3 tracking-tight ${saldoLiquidoGeral >= 0 ? 'text-teal-300' : 'text-rose-400'}`}>
+            R$ {saldoLiquidoGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          </p>
+          <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-teal-300">
+            <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+            <span>Balanço Orçamentário Atual</span>
+          </div>
+        </div>
+
+        {/* KPI 4: Contas Pagas vs Pendentes */}
+        <div className="card-cyber p-5 rounded-3xl transition-all hover:scale-[1.02]">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-bold text-sky-400 uppercase tracking-wider">Contas Liquidadas</p>
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-sky-500/20 to-indigo-500/10 text-sky-400 border border-sky-500/30 shadow-md">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+          </div>
+          <p className="text-2xl sm:text-3xl font-black mt-3 text-white tracking-tight">
+            {totalContasPagas} <span className="text-sm font-semibold text-slate-400">pagas</span>
+          </p>
+          <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-amber-300">
+            <Clock className="w-3.5 h-3.5 text-amber-400" /> {totalContasPendentes} pendentes em aberto
+          </div>
+        </div>
       </div>
 
       {/* ASSISTENTE DE IA FINBOT & GAMIFICAÇÃO */}
-      <AIFinBot itensProducao={itensProducao} transacoesFinanceiras={transacoesFinanceiras} darkMode={darkMode} />
-      <GamificacaoFinanceira transacoes={transacoesFinanceiras} itensProducao={itensProducao} darkMode={darkMode} />
+      <AIFinBot itensProducao={[]} transacoesFinanceiras={transacoesFinanceiras} darkMode={darkMode} />
+      <GamificacaoFinanceira transacoes={transacoesFinanceiras} itensProducao={[]} darkMode={darkMode} />
 
-      {/* GRADE ORGANIZADA EM 2 COLUNAS: PRODUÇÃO E FINANCEIRO */}
+      {/* PAINEL ORGANIZADO DAS FINANÇAS DO USUÁRIO */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {/* SEÇÃO 1: PAINEL EXECUTIVO DE PRODUÇÃO */}
+        {/* COLUNA 1: DISTRIBUIÇÃO DOS GASTOS POR CATEGORIA */}
         <div className={`p-6 rounded-3xl border shadow-xl space-y-5 ${
           darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
         }`}>
           <div className="flex justify-between items-center pb-3 border-b border-slate-800/40">
             <div>
-              <span className="text-[10px] font-medium uppercase text-teal-400 bg-teal-500/10 px-2.5 py-0.5 rounded border border-teal-500/20 tracking-wider">
-                MÓDULO DE PRODUÇÃO
+              <span className="text-[10px] font-extrabold uppercase text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded border border-rose-500/20 tracking-wider">
+                DESPESAS DO LAR
               </span>
-              <h2 className="font-semibold text-base flex items-center gap-2 text-white mt-1">
-                <BarChart3 className="w-5 h-5 text-teal-400" /> Desempenho Faturado por Clínica
+              <h2 className="font-bold text-base flex items-center gap-2 text-white mt-1">
+                <PieChart className="w-5 h-5 text-rose-400" /> Gastos por Categoria
               </h2>
             </div>
 
             <button
-              onClick={() => onNavigate('producao')}
-              className="text-xs font-semibold text-teal-400 hover:text-teal-300 flex items-center gap-1 hover:underline cursor-pointer"
+              onClick={() => onNavigate('financeiro')}
+              className="text-xs font-semibold text-rose-400 hover:text-rose-300 flex items-center gap-1 hover:underline cursor-pointer"
             >
-              Ver Tabela Completa <ChevronRight className="w-4 h-4" />
+              Ver Extrato <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Cards Rápidos Fernando vs Bernardo */}
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
-              <span className="text-[10px] font-medium uppercase text-sky-400 block">Fernando (4 Clínicas)</span>
-              <span className="text-base font-bold text-white block">
-                R$ {totalFernandoR$.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </span>
-              <span className="text-[10px] text-slate-400 font-normal">{itensFernando.length} exames faturados</span>
-            </div>
-
-            <div className="p-3.5 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-1">
-              <span className="text-[10px] font-medium uppercase text-indigo-400 block">Bernardo (3 Clínicas)</span>
-              <span className="text-base font-bold text-white block">
-                R$ {totalBernardoR$.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </span>
-              <span className="text-[10px] text-slate-400 font-normal">{itensBernardo.length} exames faturados</span>
-            </div>
-          </div>
-
-          {/* Ranking em Barras das Clínicas */}
           <div className="space-y-3 pt-1">
-            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block">
-              Distribuição por Unidade (Extraído da Produção):
-            </span>
-
-            <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-              {resumoClinicasProducao.map((c) => {
-                const pct = Math.round((c.valor / maxClinicaVal) * 100);
-                return (
-                  <div key={c.nome} className="p-3 rounded-2xl bg-slate-950/50 border border-slate-800/70 space-y-1.5">
-                    <div className="flex justify-between items-center text-xs font-normal">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-teal-400 shrink-0" />
-                        <span className="text-white font-semibold">{c.nome}</span>
-                        <span className="text-[10px] text-slate-400 font-normal">({c.owner})</span>
-                      </div>
-
-                      <div className="text-right">
-                        <span className="text-emerald-400 font-bold">
-                          R$ {c.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            {resumoCategorias.length === 0 ? (
+              <p className="text-center text-slate-400 py-8 text-xs">
+                Nenhum lançamento de despesa cadastrado ainda. Clique em "Acessar Meu Financeiro" para começar a adicionar suas contas!
+              </p>
+            ) : (
+              <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+                {resumoCategorias.map((cat) => {
+                  const pct = Math.round((cat.valor / maxCategoriaVal) * 100);
+                  return (
+                    <div key={cat.categoria} className="p-3 rounded-2xl bg-slate-950/50 border border-slate-800/70 space-y-1.5">
+                      <div className="flex justify-between items-center text-xs font-normal">
+                        <span className="text-white font-semibold">{cat.categoria}</span>
+                        <span className="text-rose-400 font-bold">
+                          R$ {cat.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </span>
-                        <span className="text-[10px] text-slate-400 block font-normal">{c.count} exames</span>
+                      </div>
+
+                      <div className="w-full bg-slate-800/80 h-2 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-rose-500 to-amber-400"
+                          style={{ width: `${Math.max(5, pct)}%` }}
+                        ></div>
                       </div>
                     </div>
-
-                    <div className="w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-teal-500 to-emerald-400"
-                        style={{ width: `${Math.max(5, pct)}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* SEÇÃO 2: PAINEL EXECUTIVO DO FINANCEIRO PESSOAL */}
+        {/* COLUNA 2: SAÚDE FINANCEIRA & BALANÇO DO LAR */}
         <div className={`p-6 rounded-3xl border shadow-xl space-y-5 ${
           darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
         }`}>
           <div className="flex justify-between items-center pb-3 border-b border-slate-800/40">
             <div>
-              <span className="text-[10px] font-medium uppercase text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20 tracking-wider">
-                MÓDULO FINANCEIRO PESSOAL
+              <span className="text-[10px] font-extrabold uppercase text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20 tracking-wider">
+                RESUMO ORÇAMENTÁRIO
               </span>
-              <h2 className="font-semibold text-base flex items-center gap-2 text-white mt-1">
-                <Wallet className="w-5 h-5 text-emerald-400" /> Saúde Financeira & Orçamento do Lar
+              <h2 className="font-bold text-base flex items-center gap-2 text-white mt-1">
+                <Wallet className="w-5 h-5 text-emerald-400" /> Saúde Financeira do Mês
               </h2>
             </div>
 
@@ -352,60 +283,49 @@ export const Dashboard: React.FC<DashboardProps> = ({
               onClick={() => onNavigate('financeiro')}
               className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 hover:underline cursor-pointer"
             >
-              Ver Extrato Pessoal <ChevronRight className="w-4 h-4" />
+              Novo Lançamento <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Saldo Líquido e Comprometimento */}
           <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-950 via-slate-900 to-emerald-950 border border-emerald-500/30 text-white space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-xs font-medium uppercase text-emerald-400 tracking-wider">Saldo Líquido do Mês</span>
-              <span className="text-[10px] font-semibold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30">
+              <span className="text-xs font-bold uppercase text-emerald-400 tracking-wider">Saldo do Mês</span>
+              <span className="text-[10px] font-bold text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30">
                 {comprometimentoRenda}% da renda comprometida
               </span>
             </div>
 
-            <h3 className={`text-2xl font-bold tracking-tight ${saldoLiquidoGeral >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <h3 className={`text-2xl font-black tracking-tight ${saldoLiquidoGeral >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               R$ {saldoLiquidoGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </h3>
 
-            <div className="flex justify-between text-[11px] text-slate-300 pt-1 border-t border-slate-800/80 font-normal">
-              <span>Fixas do Lar: <strong className="font-semibold text-white">R$ {totalDespesasFixas.toLocaleString('pt-BR')}</strong></span>
-              <span>Cartões / Variáveis: <strong className="font-semibold text-white">R$ {totalDespesasVariaveis.toLocaleString('pt-BR')}</strong></span>
+            <div className="flex justify-between text-[11px] text-slate-300 pt-2 border-t border-slate-800/80 font-normal">
+              <span>Fixas: <strong className="font-bold text-white">R$ {totalDespesasFixas.toLocaleString('pt-BR')}</strong></span>
+              <span>Variáveis: <strong className="font-bold text-white">R$ {totalDespesasVariaveis.toLocaleString('pt-BR')}</strong></span>
             </div>
           </div>
 
-          {/* Status de Contas Pagas vs Pendentes */}
-          <div className="space-y-3 pt-1">
-            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider block">
-              Controle de Pagamentos das Contas do Lar:
-            </span>
-
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 space-y-1">
-                <div className="flex items-center gap-1.5 font-medium">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Contas Liquidadas
-                </div>
-                <span className="text-lg font-bold text-white block">{totalContasPagas} contas</span>
-                <span className="text-[10px] text-emerald-400 block font-normal">Sem atrasos registrados</span>
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 space-y-1">
+              <div className="flex items-center gap-1.5 font-bold">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Liquidadas
               </div>
+              <span className="text-lg font-black text-white block">{totalContasPagas} contas</span>
+            </div>
 
-              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 space-y-1">
-                <div className="flex items-center gap-1.5 font-medium">
-                  <Clock className="w-4 h-4 text-amber-400" /> Pendentes a Pagar
-                </div>
-                <span className="text-lg font-bold text-white block">{totalContasPendentes} contas</span>
-                <span className="text-[10px] text-amber-400 block font-normal">Agendadas em carteira</span>
+            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 space-y-1">
+              <div className="flex items-center gap-1.5 font-bold">
+                <Clock className="w-4 h-4 text-amber-400" /> Pendentes
               </div>
+              <span className="text-lg font-black text-white block">{totalContasPendentes} contas</span>
             </div>
           </div>
 
-          {/* Botão de Atalho */}
           <button
             onClick={() => onNavigate('financeiro')}
-            className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2.5 rounded-2xl text-xs border border-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold py-3 rounded-2xl text-xs shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
-            <DollarSign className="w-4 h-4 text-emerald-400" /> Lançar Nova Conta ou Entrada no Financeiro
+            <DollarSign className="w-4 h-4" /> Cadastrar Novo Lançamento no Financeiro
           </button>
         </div>
 
