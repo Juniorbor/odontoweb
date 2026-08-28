@@ -8,6 +8,8 @@ import { CalendarioVencimentos } from './CalendarioVencimentos';
 import { Regra503020 } from './Regra503020';
 import { GeradorReciboPessoal } from './GeradorReciboPessoal';
 import { ComandoVozModal } from './ComandoVozModal';
+import { SimuladorSonhosMetas } from './SimuladorSonhosMetas';
+import { GraficosVisualizer } from './GraficosVisualizer';
 import {
   DollarSign,
   Plus,
@@ -184,7 +186,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
     };
   }, []);
 
-  const [subAbaFinanceiro, setSubAbaFinanceiro] = useState<'lancamentos' | 'calendario' | '503020' | 'recibo' | 'dre' | 'cartoes'>('lancamentos');
+  const [subAbaFinanceiro, setSubAbaFinanceiro] = useState<'lancamentos' | 'calendario' | '503020' | 'recibo' | 'metas' | 'graficos' | 'dre' | 'cartoes'>('lancamentos');
   const [modalOCRAberto, setModalOCRAberto] = useState<boolean>(false);
   const [modalVozAberto, setModalVozAberto] = useState<boolean>(false);
 
@@ -455,6 +457,28 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
           </button>
 
           <button
+            onClick={() => setSubAbaFinanceiro('metas')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+              subAbaFinanceiro === 'metas'
+                ? 'bg-purple-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-amber-300" /> Metas & Sonhos
+          </button>
+
+          <button
+            onClick={() => setSubAbaFinanceiro('graficos')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+              subAbaFinanceiro === 'graficos'
+                ? 'bg-sky-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+            }`}
+          >
+            <BarChart3 className="w-4 h-4 text-sky-300" /> Gráficos
+          </button>
+
+          <button
             onClick={() => setSubAbaFinanceiro('dre')}
             className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               subAbaFinanceiro === 'dre'
@@ -500,6 +524,10 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
         <Regra503020 transacoes={transacoes} faturamentoProducaoTotal={faturamentoTotalProducaoGeral} darkMode={darkMode} />
       ) : subAbaFinanceiro === 'recibo' ? (
         <GeradorReciboPessoal darkMode={darkMode} />
+      ) : subAbaFinanceiro === 'metas' ? (
+        <SimuladorSonhosMetas darkMode={darkMode} />
+      ) : subAbaFinanceiro === 'graficos' ? (
+        <GraficosVisualizer itensProducao={producaoItens} transacoesFinanceiras={transacoes} darkMode={darkMode} />
       ) : subAbaFinanceiro === 'dre' ? (
         <DREGerencial itensProducao={producaoItens} transacoesFinanceiras={transacoes} darkMode={darkMode} />
       ) : subAbaFinanceiro === 'cartoes' ? (

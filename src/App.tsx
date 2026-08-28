@@ -15,6 +15,7 @@ import { Configuracoes } from './components/Configuracoes';
 import { Login } from './components/Login';
 import { Sidebar } from './components/Sidebar';
 import { HeaderBar } from './components/HeaderBar';
+import { CentralNotificacoes } from './components/CentralNotificacoes';
 import { ToastContainer, type ToastMessage } from './components/Toast';
 import LOGO_BASE64 from './assets/logoData';
 
@@ -82,6 +83,7 @@ export function App() {
   const [fotografias, setFotografias] = useState<FotografiaClinica[]>(() => getItemJSON(KEYS.FOTOGRAFIAS, mockFotografias));
   const [timeline] = useState<HistoricoTimeline[]>(mockTimeline);
   const [mensagensIA, setMensagensIA] = useState<MensagemIA[]>(mockMensagensIA);
+  const [centralNotificacoesAberto, setCentralNotificacoesAberto] = useState<boolean>(false);
 
   // Efeito de salvamento permanente automático no dispositivo local
   useEffect(() => {
@@ -525,6 +527,15 @@ export function App() {
 
       {/* Container de Toast Notifications */}
       <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
+
+      {centralNotificacoesAberto && (
+        <CentralNotificacoes
+          transacoes={getItemJSON('odonto_financeiro_pessoal_v1', [])}
+          itensProducao={getItemJSON('odonto_producao_registros_v2', [])}
+          darkMode={darkMode}
+          onFechar={() => setCentralNotificacoesAberto(false)}
+        />
+      )}
     </div>
   );
 }
