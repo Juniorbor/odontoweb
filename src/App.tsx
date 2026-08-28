@@ -395,6 +395,7 @@ export function App() {
           consultas={consultas}
           onSelectPaciente={(p) => handleVerPerfilPaciente(p)}
           onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          onAbrirNotificacoes={() => setCentralNotificacoesAberto(true)}
         />
 
         {/* Dynamic Views */}

@@ -28,6 +28,7 @@ interface HeaderBarProps {
   consultas: Consulta[];
   onSelectPaciente: (paciente: Paciente) => void;
   onToggleMobileMenu?: () => void;
+  onAbrirNotificacoes?: () => void;
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({
@@ -39,7 +40,8 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   pacientes,
   consultas: _consultas,
   onSelectPaciente,
-  onToggleMobileMenu
+  onToggleMobileMenu,
+  onAbrirNotificacoes
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
@@ -190,7 +192,11 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         <div className="relative">
           <button
             onClick={() => {
-              setNotifOpen(!notifOpen);
+              if (onAbrirNotificacoes) {
+                onAbrirNotificacoes();
+              } else {
+                setNotifOpen(!notifOpen);
+              }
               setProfileOpen(false);
             }}
             className={`p-2 rounded-2xl border transition-all cursor-pointer relative ${
@@ -198,11 +204,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                 ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
                 : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
             }`}
+            title="Central de Notificações"
           >
-            <Bell className="w-4 h-4" />
-            {notificacoes.length > 0 && (
-              <span className="absolute top-1 right-1 w-2 h-2 bg-teal-500 rounded-full animate-pulse" />
-            )}
+            <Bell className="w-4 h-4 text-teal-400" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-slate-900 animate-pulse"></span>
           </button>
 
           {notifOpen && (
