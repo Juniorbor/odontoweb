@@ -534,18 +534,16 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
         <CartoesEMetas transacoesFinanceiras={transacoes} darkMode={darkMode} />
       ) : (
         <>
-      {/* 1. HEADER GESTÃO FINANCEIRA PESSOAL */}
-      <div className={`p-4 sm:p-6 rounded-3xl border shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${
-        darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
-      }`}>
+      {/* 1. HEADER GESTÃO FINANCEIRA PESSOAL COM GLOW */}
+      <div className="card-cyber p-4 sm:p-6 rounded-3xl border shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-md border border-teal-500/20 flex items-center gap-1 w-fit">
+          <span className="text-[10px] font-extrabold uppercase tracking-widest text-teal-400 bg-teal-500/10 px-3 py-1 rounded-full border border-teal-500/30 flex items-center gap-1.5 w-fit">
             <Wallet className="w-3.5 h-3.5" /> Módulo de Controle Orçamentário Familiar & Pessoal (Sincronizado)
           </span>
-          <h2 className="text-xl font-bold flex items-center gap-2 mt-1">
-            <DollarSign className="w-6 h-6 text-teal-500" /> Gestão Financeira Pessoal & Despesas do Lar
+          <h2 className="text-xl font-extrabold flex items-center gap-2 mt-1 text-white">
+            <DollarSign className="w-6 h-6 text-emerald-400" /> Gestão Financeira Pessoal & Despesas do Lar
           </h2>
-          <p className="text-xs text-slate-400 font-normal">
+          <p className="text-xs text-slate-300 font-normal">
             Controle de entradas (Salário/Renda), contas fixas da casa, cartões de crédito e despesas domésticas.
           </p>
         </div>
@@ -554,7 +552,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
           <button
             onClick={handleManualSync}
             disabled={sincronizando}
-            className="bg-slate-800 hover:bg-slate-700 text-teal-400 font-semibold px-3.5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition-all cursor-pointer shadow w-full sm:w-auto"
+            className="bg-slate-950 hover:bg-slate-900 text-teal-400 font-bold px-4 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-teal-500/30 transition-all cursor-pointer shadow-md shadow-teal-500/10 w-full sm:w-auto"
             title="Sincronizar dados em tempo real com a nuvem"
           >
             <RefreshCw className={`w-4 h-4 ${sincronizando ? 'animate-spin' : ''}`} />
@@ -563,14 +561,14 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
 
           <button
             onClick={() => window.print()}
-            className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-3.5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition-all cursor-pointer shadow w-full sm:w-auto"
+            className="bg-slate-950 hover:bg-slate-900 text-slate-200 font-bold px-4 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-slate-800 transition-all cursor-pointer shadow-md w-full sm:w-auto"
           >
             <Download className="w-4 h-4 text-teal-400" /> Exportar Extrato (PDF)
           </button>
 
           <button
             onClick={handleAbrirNovoModal}
-            className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-semibold px-5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-teal-600/25 transition-all cursor-pointer w-full sm:w-auto"
+            className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-extrabold px-5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-xl shadow-teal-500/30 transition-all cursor-pointer w-full sm:w-auto hover:scale-[1.02]"
           >
             <Plus className="w-4.5 h-4.5" /> + Lançar Entrada ou Despesa do Lar
           </button>

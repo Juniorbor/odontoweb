@@ -10,7 +10,6 @@ import {
   Users,
   Wallet,
   Sparkles,
-  ArrowUpRight,
   ShieldCheck,
   Building2,
   ChevronRight,
@@ -123,26 +122,30 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="space-y-6 w-full max-w-full animate-fadeIn font-sans text-slate-200">
       
-      {/* Banner de Boas-Vindas Executivo */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-slate-950 to-teal-950 text-white rounded-3xl p-6 sm:p-7 shadow-xl border border-slate-800/80">
-        <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      {/* Banner de Boas-Vindas Executivo com Glow Neon */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-slate-950 to-teal-950 text-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-teal-500/30 glow-teal">
+        <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-80 h-80 bg-gradient-to-br from-teal-500/20 to-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
           <div className="flex items-center gap-4">
-            <img
-              src={LOGO_BASE64}
-              alt="Finanças Pessoal"
-              className="w-13 h-13 object-contain rounded-full border border-emerald-500/40 shadow-md bg-white p-1 shrink-0 hidden sm:block"
-            />
+            <div className="relative shrink-0 hidden sm:block">
+              <img
+                src={LOGO_BASE64}
+                alt="Finanças Pessoal"
+                className="w-14 h-14 object-contain rounded-full border-2 border-emerald-400 shadow-xl bg-white p-1"
+              />
+              <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-slate-900 rounded-full animate-ping"></span>
+            </div>
+
             <div className="space-y-1">
-              <span className="inline-flex items-center gap-1.5 bg-emerald-500/15 text-emerald-300 text-[11px] font-semibold px-3 py-0.5 rounded-full uppercase tracking-wider border border-emerald-500/30">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Painel Executivo Integrado
+              <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest border border-emerald-500/40">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Painel Executivo Integrado 2026
               </span>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white flex items-center gap-2">
-                Painel de Atendimento & Gestão
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                Painel de Atendimento & Gestão <span className="text-teal-400 font-bold text-sm bg-teal-500/10 px-2.5 py-0.5 rounded-full border border-teal-500/30">AO VIVO</span>
               </h1>
-              <p className="text-slate-400 text-xs sm:text-sm font-normal max-w-xl">
-                Consolidado exclusivo das operações de <strong className="font-semibold text-teal-400">Produção</strong> (Tomografia & Traçados) e <strong className="font-semibold text-emerald-400">Financeiro</strong>.
+              <p className="text-slate-300 text-xs sm:text-sm font-normal max-w-xl">
+                Consolidado exclusivo das operações de <strong className="font-bold text-teal-400">Produção</strong> (Tomografia & Traçados) e <strong className="font-bold text-emerald-400">Financeiro Pessoal</strong>.
               </p>
             </div>
           </div>
@@ -150,93 +153,86 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => onNavigate('producao')}
-              className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-semibold px-4 py-2.5 rounded-2xl text-xs shadow-md shadow-teal-600/20 transition-all flex items-center gap-2 cursor-pointer"
+              className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold px-5 py-3 rounded-2xl text-xs shadow-xl shadow-teal-500/25 transition-all flex items-center gap-2 cursor-pointer hover:scale-[1.03]"
             >
-              <BarChart3 className="w-4 h-4 text-teal-300" /> Ir para Produção
+              <BarChart3 className="w-4.5 h-4.5 text-white" /> Ir para Produção
             </button>
 
             <button
               onClick={() => onNavigate('financeiro')}
-              className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold px-4 py-2.5 rounded-2xl text-xs shadow-md shadow-emerald-600/20 transition-all flex items-center gap-2 cursor-pointer"
+              className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold px-5 py-3 rounded-2xl text-xs shadow-xl shadow-emerald-600/25 transition-all flex items-center gap-2 cursor-pointer hover:scale-[1.03]"
             >
-              <Wallet className="w-4 h-4 text-emerald-300" /> Ir para Financeiro
+              <Wallet className="w-4.5 h-4.5 text-white" /> Ir para Financeiro
             </button>
           </div>
         </div>
       </div>
 
-      {/* 4 Cards KPI Principais */}
+      {/* 4 Cards KPI Principais Estilo Cyber Fintech */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         
         {/* KPI 1: Faturamento Produção */}
-        <div className={`p-5 rounded-3xl border shadow-md transition-all hover:border-teal-500/40 ${
-          darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
-        }`}>
+        <div className="card-cyber p-5 rounded-3xl transition-all hover:scale-[1.02]">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-teal-400 uppercase tracking-wider">Faturamento Produção</p>
-            <div className="bg-teal-500/10 p-2.5 rounded-2xl text-teal-400 border border-teal-500/20">
-              <BarChart3 className="w-5 h-5" />
+            <p className="text-xs font-bold text-teal-400 uppercase tracking-wider">Faturamento Produção</p>
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-teal-500/20 to-emerald-500/10 text-teal-400 border border-teal-500/30 shadow-md">
+              <BarChart3 className="w-6 h-6" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-bold mt-2 text-white tracking-tight">
+          <p className="text-2xl sm:text-3xl font-black mt-3 text-white tracking-tight">
             R$ {totalFaturamentoProducao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
-          <div className="mt-2 flex items-center gap-1 text-[11px] font-medium text-teal-400">
-            <ArrowUpRight className="w-3.5 h-3.5" /> 7 Clínicas Monitoradas
+          <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-teal-300">
+            <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+            <span>7 Clínicas Monitoradas</span>
           </div>
         </div>
 
         {/* KPI 2: Pacientes / Exames Produção */}
-        <div className={`p-5 rounded-3xl border shadow-md transition-all hover:border-sky-500/40 ${
-          darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
-        }`}>
+        <div className="card-cyber p-5 rounded-3xl transition-all hover:scale-[1.02]">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-sky-400 uppercase tracking-wider">Exames Produzidos</p>
-            <div className="bg-sky-500/10 p-2.5 rounded-2xl text-sky-400 border border-sky-500/20">
-              <Users className="w-5 h-5" />
+            <p className="text-xs font-bold text-sky-400 uppercase tracking-wider">Exames Produzidos</p>
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-sky-500/20 to-indigo-500/10 text-sky-400 border border-sky-500/30 shadow-md">
+              <Users className="w-6 h-6" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-bold mt-2 text-white tracking-tight">
-            {totalExamesProducao} <span className="text-sm font-normal text-slate-400">exames</span>
+          <p className="text-2xl sm:text-3xl font-black mt-3 text-white tracking-tight">
+            {totalExamesProducao} <span className="text-sm font-semibold text-slate-400">exames</span>
           </p>
-          <div className="mt-2 flex items-center gap-1 text-[11px] font-medium text-sky-400">
-            <TrendingUp className="w-3.5 h-3.5" /> Fernando ({itensFernando.length}) • Bernardo ({itensBernardo.length})
+          <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-sky-300">
+            <TrendingUp className="w-3.5 h-3.5 text-sky-400" /> Fernando ({itensFernando.length}) • Bernardo ({itensBernardo.length})
           </div>
         </div>
 
         {/* KPI 3: Receitas & Salário Financeiro */}
-        <div className={`p-5 rounded-3xl border shadow-md transition-all hover:border-emerald-500/40 ${
-          darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
-        }`}>
+        <div className="card-cyber p-5 rounded-3xl transition-all hover:scale-[1.02]">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Entradas & Renda Total</p>
-            <div className="bg-emerald-500/10 p-2.5 rounded-2xl text-emerald-400 border border-emerald-500/20">
-              <DollarSign className="w-5 h-5" />
+            <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Entradas & Renda Total</p>
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/10 text-emerald-400 border border-emerald-500/30 shadow-md">
+              <DollarSign className="w-6 h-6" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-bold mt-2 text-emerald-400 tracking-tight">
+          <p className="text-2xl sm:text-3xl font-black mt-3 text-emerald-400 tracking-tight">
             R$ {totalEntradasFinanceiro.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
-          <div className="mt-2 flex items-center gap-1 text-[11px] font-medium text-emerald-400">
-            <ShieldCheck className="w-3.5 h-3.5" /> Produção + Entradas Pessoais
+          <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-emerald-300">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Produção + Entradas Pessoais
           </div>
         </div>
 
         {/* KPI 4: Despesas Domésticas */}
-        <div className={`p-5 rounded-3xl border shadow-md transition-all hover:border-rose-500/40 ${
-          darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
-        }`}>
+        <div className="card-cyber p-5 rounded-3xl transition-all hover:scale-[1.02]">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-rose-400 uppercase tracking-wider">Despesas do Lar</p>
-            <div className="bg-rose-500/10 p-2.5 rounded-2xl text-rose-400 border border-rose-500/20">
-              <TrendingUp className="w-5 h-5" />
+            <p className="text-xs font-bold text-rose-400 uppercase tracking-wider">Despesas do Lar</p>
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-rose-500/20 to-amber-500/10 text-rose-400 border border-rose-500/30 shadow-md">
+              <TrendingUp className="w-6 h-6" />
             </div>
           </div>
-          <p className="text-2xl sm:text-3xl font-bold mt-2 text-rose-400 tracking-tight">
+          <p className="text-2xl sm:text-3xl font-black mt-3 text-rose-400 tracking-tight">
             R$ {totalDespesasGerais.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </p>
-          <div className="mt-2 flex items-center gap-1 text-[11px] font-medium text-rose-400">
-            <ArrowDownRight className="w-3.5 h-3.5" /> Comprometimento de {comprometimentoRenda}%
+          <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-rose-300">
+            <ArrowDownRight className="w-3.5 h-3.5 text-rose-400" /> Comprometimento de {comprometimentoRenda}%
           </div>
         </div>
       </div>
