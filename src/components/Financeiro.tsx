@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import type { TransacaoPessoal, ItemProducaoTomo } from '../types';
 import { pushToCloud, pullFromCloud, subscribeLocalBroadcast } from '../services/cloudSync';
+import { LeitorComprovanteOCR } from './LeitorComprovanteOCR';
+import { DREGerencial } from './DREGerencial';
+import { CartoesEMetas } from './CartoesEMetas';
 import {
   DollarSign,
   Plus,
@@ -18,7 +21,8 @@ import {
   RefreshCw,
   Sparkles,
   PieChart,
-  BarChart3
+  BarChart3,
+  Camera
 } from 'lucide-react';
 
 interface FinanceiroProps {
@@ -172,6 +176,9 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
       window.removeEventListener('focus', handleFocus);
     };
   }, []);
+
+  const [subAbaFinanceiro, setSubAbaFinanceiro] = useState<'lancamentos' | 'dre' | 'cartoes'>('lancamentos');
+  const [modalOCRAberto, setModalOCRAberto] = useState<boolean>(false);
 
   const [filtroTipo, setFiltroTipo] = useState<string>('Todos');
   const [filtroCategoria, setFiltroCategoria] = useState<string>('Todas');
@@ -392,6 +399,57 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
 
   return (
     <div className="space-y-6">
+      {/* SELETOR DE SUB-ABAS FINANCEIRAS */}
+      <div className="bg-slate-950 p-1.5 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-2 shadow-inner">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setSubAbaFinanceiro('lancamentos')}
+            className={`px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              subAbaFinanceiro === 'lancamentos'
+                ? 'bg-teal-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+            }`}
+          >
+            <DollarSign className="w-4 h-4 text-teal-300" /> Extrato & Contas do Lar
+          </button>
+
+          <button
+            onClick={() => setSubAbaFinanceiro('dre')}
+            className={`px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              subAbaFinanceiro === 'dre'
+                ? 'bg-emerald-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+            }`}
+          >
+            <PieChart className="w-4 h-4 text-emerald-400" /> DRE Gerencial & Fluxo de Caixa
+          </button>
+
+          <button
+            onClick={() => setSubAbaFinanceiro('cartoes')}
+            className={`px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              subAbaFinanceiro === 'cartoes'
+                ? 'bg-purple-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+            }`}
+          >
+            <CreditCard className="w-4 h-4 text-purple-300" /> Cartão de Crédito & Reserva
+          </button>
+        </div>
+
+        <button
+          onClick={() => setModalOCRAberto(true)}
+          className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md cursor-pointer"
+        >
+          <Camera className="w-4 h-4" /> Ler Comprovante / Foto (OCR IA)
+        </button>
+      </div>
+
+      {subAbaFinanceiro === 'dre' ? (
+        <DREGerencial itensProducao={producaoItens} transacoesFinanceiras={transacoes} darkMode={darkMode} />
+      ) : subAbaFinanceiro === 'cartoes' ? (
+        <CartoesEMetas transacoesFinanceiras={transacoes} darkMode={darkMode} />
+      ) : (
+        <>
       {/* 1. HEADER GESTÃO FINANCEIRA PESSOAL */}
       <div className={`p-4 sm:p-6 rounded-3xl border shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${
         darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
@@ -1037,6 +1095,22 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
             </form>
           </div>
         </div>
+      )}
+      </>
+      )}
+
+      {modalOCRAberto && (
+        <LeitorComprovanteOCR
+          darkMode={darkMode}
+          onFechar={() => setModalOCRAberto(false)}
+          onAdicionarTransacao={(novaTransacao) => {
+            const item: TransacaoPessoal = {
+              ...novaTransacao,
+              id: `fin-${Date.now()}`
+            };
+            updateTransacoesECloud([item, ...transacoes]);
+          }}
+        />
       )}
     </div>
   );
