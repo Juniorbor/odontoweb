@@ -16,6 +16,8 @@ import {
   PieChart
 } from 'lucide-react';
 
+import { getUserKeys } from '../services/cloudSync';
+
 interface DashboardProps {
   onNavigate: (tab: string) => void;
   darkMode?: boolean;
@@ -23,16 +25,13 @@ interface DashboardProps {
   usuarioId?: string;
 }
 
-const FINANCEIRO_KEY_ADMIN = 'odonto_financeiro_pessoal_v1';
-
 export const Dashboard: React.FC<DashboardProps> = ({
   onNavigate,
   darkMode,
-  userRole = 'admin',
   usuarioId
 }) => {
-  const isCliente = userRole === 'cliente';
-  const chaveFinanceiro = isCliente && usuarioId ? `odonto_financeiro_pessoal_${usuarioId}` : FINANCEIRO_KEY_ADMIN;
+  const userKeys = getUserKeys(usuarioId);
+  const chaveFinanceiro = userKeys.FINANCEIRO;
 
   const [transacoesFinanceiras, setTransacoesFinanceiras] = useState<TransacaoPessoal[]>(() => {
     const salvo = localStorage.getItem(chaveFinanceiro);
@@ -44,16 +43,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return [];
   });
 
-  // Atualização em tempo real quando ocorrem novos lançamentos no localStorage
+  // Atualização em tempo real quando ocorrem novos lançamentos ou exclusões no localStorage
   useEffect(() => {
-    const handleStorageChange = () => {
+    const atualizar = () => {
       const f = localStorage.getItem(chaveFinanceiro);
       if (f) {
         try { setTransacoesFinanceiras(JSON.parse(f)); } catch (e) {}
+      } else {
+        setTransacoesFinanceiras([]);
       }
     };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+
+    atualizar();
+    window.addEventListener('storage', atualizar);
+    const interval = setInterval(atualizar, 1000);
+
+    return () => {
+      window.removeEventListener('storage', atualizar);
+      clearInterval(interval);
+    };
   }, [chaveFinanceiro]);
 
   // --- ESTATÍSTICAS DO FINANCEIRO PESSOAL DO USUÁRIO ---

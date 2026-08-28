@@ -14,17 +14,17 @@ import {
   Clock
 } from 'lucide-react';
 
+import { getUserKeys } from '../services/cloudSync';
+
 interface RelatoriosProps {
   darkMode?: boolean;
   userRole?: 'admin' | 'cliente';
   usuarioId?: string;
 }
 
-const FINANCEIRO_KEY_ADMIN = 'odonto_financeiro_pessoal_v1';
-
-export const Relatorios: React.FC<RelatoriosProps> = ({ darkMode, userRole = 'admin', usuarioId }) => {
-  const isCliente = userRole === 'cliente';
-  const chaveFinanceiro = isCliente && usuarioId ? `odonto_financeiro_pessoal_${usuarioId}` : FINANCEIRO_KEY_ADMIN;
+export const Relatorios: React.FC<RelatoriosProps> = ({ darkMode, usuarioId }) => {
+  const userKeys = getUserKeys(usuarioId);
+  const chaveFinanceiro = userKeys.FINANCEIRO;
 
   const [transacoesFinanceiras, setTransacoesFinanceiras] = useState<TransacaoPessoal[]>(() => {
     const salvo = localStorage.getItem(chaveFinanceiro);
@@ -37,12 +37,23 @@ export const Relatorios: React.FC<RelatoriosProps> = ({ darkMode, userRole = 'ad
   const [filtroPeriodo, setFiltroPeriodo] = useState<string>('todos');
 
   useEffect(() => {
-    const handleStorage = () => {
+    const atualizar = () => {
       const f = localStorage.getItem(chaveFinanceiro);
-      if (f) { try { setTransacoesFinanceiras(JSON.parse(f)); } catch (e) {} }
+      if (f) {
+        try { setTransacoesFinanceiras(JSON.parse(f)); } catch (e) {}
+      } else {
+        setTransacoesFinanceiras([]);
+      }
     };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
+
+    atualizar();
+    window.addEventListener('storage', atualizar);
+    const interval = setInterval(atualizar, 1000);
+
+    return () => {
+      window.removeEventListener('storage', atualizar);
+      clearInterval(interval);
+    };
   }, [chaveFinanceiro]);
 
   // FILTRAGEM POR PERÍODO DE DATA

@@ -46,7 +46,7 @@ import type {
   MensagemIA
 } from './types';
 
-import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, KEYS, getItemJSON } from './services/cloudSync';
+import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, KEYS, getItemJSON, getUserKeys } from './services/cloudSync';
 import type { UsuarioSistema } from './services/authService';
 
 const SESSION_KEY = 'odonto_usuario_sessao_v1';
@@ -95,14 +95,17 @@ export function App() {
     localStorage.setItem(KEYS.FOTOGRAFIAS, JSON.stringify(fotografias));
   }, [fotografias]);
 
-  // Garantir que a conta do Admin e o sistema iniciem 100% ZERADOS para Produção e Financeiro
+  // Garantir que o Dashboard, Produção e Financeiro do Admin e do Sistema fiquem 100% ZERADOS
   useEffect(() => {
-    const RESET_ZERADO_KEY = 'odonto_reset_100pct_zerado_v4';
+    const RESET_ZERADO_KEY = 'odonto_reset_100pct_zerado_v5';
     if (!localStorage.getItem(RESET_ZERADO_KEY)) {
-      localStorage.setItem(KEYS.FINANCEIRO, JSON.stringify([]));
-      localStorage.setItem(KEYS.PRODUCAO, JSON.stringify([]));
+      const adminKeys = getUserKeys('usr-admin-master');
+      localStorage.setItem(adminKeys.FINANCEIRO, JSON.stringify([]));
+      localStorage.setItem(adminKeys.PRODUCAO, JSON.stringify([]));
+      localStorage.setItem('odonto_financeiro_pessoal_v1', JSON.stringify([]));
+      localStorage.setItem('odonto_producao_registros_v2', JSON.stringify([]));
       localStorage.setItem(RESET_ZERADO_KEY, 'true');
-      pushToCloud({ financeiro: [], producao: [] });
+      pushToCloud({ financeiro: [], producao: [] }, 'usr-admin-master');
     }
   }, []);
 
