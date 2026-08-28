@@ -46,6 +46,7 @@ import type {
 } from './types';
 
 import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, KEYS, getItemJSON } from './services/cloudSync';
+import type { UsuarioSistema } from './services/authService';
 
 const SESSION_KEY = 'odonto_usuario_sessao_v1';
 
@@ -56,12 +57,7 @@ export function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
   // Autenticação: Sempre abre na tela de Login ao acessar o site
-  const [usuarioLogado, setUsuarioLogado] = useState<{
-    nome: string;
-    email: string;
-    funcao: string;
-    cro: string;
-  } | null>(null);
+  const [usuarioLogado, setUsuarioLogado] = useState<UsuarioSistema | null>(null);
 
   const [isAutenticado, setIsAutenticado] = useState<boolean>(false);
 
@@ -158,7 +154,7 @@ export function App() {
   };
 
   // Handlers Login/Logout Persistente
-  const handleLoginSuccess = (usuario: { nome: string; email: string; funcao: string; cro: string }) => {
+  const handleLoginSuccess = (usuario: UsuarioSistema) => {
     setUsuarioLogado(usuario);
     setIsAutenticado(true);
     setActiveTab('dashboard');
@@ -363,6 +359,7 @@ export function App() {
       <Sidebar
         activeTab={activeTab === 'perfil_paciente' ? 'pacientes' : activeTab}
         onNavigate={(tab) => {
+          if (usuarioLogado?.role === 'cliente' && tab === 'producao') return;
           setActiveTab(tab);
           setPacientePerfilSelecionado(null);
           setIsMobileMenuOpen(false);
@@ -373,6 +370,7 @@ export function App() {
         onCloseMobile={() => setIsMobileMenuOpen(false)}
         darkMode={darkMode}
         onLogout={handleLogout}
+        userRole={usuarioLogado?.role || 'admin'}
         badgeCounts={{
           consultasHoje,
           pacientes: pacientes.length,
@@ -390,7 +388,10 @@ export function App() {
           onToggleDarkMode={() => setDarkMode(!darkMode)}
           usuarioLogado={usuarioLogado}
           onLogout={handleLogout}
-          onNavigate={setActiveTab}
+          onNavigate={(tab) => {
+            if (usuarioLogado?.role === 'cliente' && tab === 'producao') return;
+            setActiveTab(tab);
+          }}
           pacientes={pacientes}
           consultas={consultas}
           onSelectPaciente={(p) => handleVerPerfilPaciente(p)}
@@ -404,6 +405,8 @@ export function App() {
             <Dashboard
               onNavigate={setActiveTab}
               darkMode={darkMode}
+              userRole={usuarioLogado?.role || 'admin'}
+              usuarioId={usuarioLogado?.id}
             />
           )}
 
@@ -451,7 +454,7 @@ export function App() {
             />
           )}
 
-          {activeTab === 'producao' && (
+          {activeTab === 'producao' && usuarioLogado?.role !== 'cliente' && (
             <Producao darkMode={darkMode} />
           )}
 
@@ -503,7 +506,11 @@ export function App() {
           )}
 
           {activeTab === 'financeiro' && (
-            <Financeiro darkMode={darkMode} />
+            <Financeiro
+              darkMode={darkMode}
+              userRole={usuarioLogado?.role || 'admin'}
+              usuarioId={usuarioLogado?.id}
+            />
           )}
 
           {activeTab === 'relatorios' && <Relatorios darkMode={darkMode} />}

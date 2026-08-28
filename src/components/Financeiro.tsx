@@ -36,9 +36,11 @@ import {
 
 interface FinanceiroProps {
   darkMode?: boolean;
+  userRole?: 'admin' | 'cliente';
+  usuarioId?: string;
 }
 
-const STORAGE_KEY = 'odonto_financeiro_pessoal_v1';
+const STORAGE_KEY_ADMIN = 'odonto_financeiro_pessoal_v1';
 
 const CATEGORIAS_PESSOAIS = [
   'Salário & Renda',
@@ -80,7 +82,10 @@ const TRANSACOES_INICIAIS: TransacaoPessoal[] = [
   { id: 'fin-19', descricao: 'MEI Imposto Mensal', tipo: 'Despesa Variável', valor: 75.00, data: '2026-08-20', categoria: 'Serviços', status: 'Pago' }
 ];
 
-export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
+export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, userRole = 'admin', usuarioId }) => {
+  const isCliente = userRole === 'cliente';
+  const STORAGE_KEY = isCliente && usuarioId ? `odonto_financeiro_pessoal_${usuarioId}` : STORAGE_KEY_ADMIN;
+
   const [transacoes, setTransacoes] = useState<TransacaoPessoal[]>(() => {
     const salvo = localStorage.getItem(STORAGE_KEY);
     if (salvo !== null) {
@@ -90,7 +95,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
         console.error('Erro ao ler transações pessoais do localStorage:', e);
       }
     }
-    return TRANSACOES_INICIAIS;
+    return isCliente ? [] : TRANSACOES_INICIAIS;
   });
 
   const [sincronizando, setSincronizando] = useState<boolean>(false);

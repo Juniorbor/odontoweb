@@ -201,7 +201,7 @@ export function subscribeLocalBroadcast(onUpdate: (payload: CloudDataPayload) =>
   };
 }
 
-export function getItemJSON(key: string, fallback: any) {
+export function getItemJSON<T = any>(key: string, fallback: T): T {
   try {
     const item = localStorage.getItem(key);
     return item ? JSON.parse(item) : fallback;

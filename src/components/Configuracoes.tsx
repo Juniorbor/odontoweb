@@ -1,24 +1,22 @@
 import React, { useState } from 'react';
-import { Settings, Moon, Save, CheckCircle2, MessageSquare, Shield, Globe } from 'lucide-react';
+import { Settings, Save, CheckCircle2, Globe } from 'lucide-react';
+import { PainelAuditoriaAdmin } from './PainelAuditoriaAdmin';
+import type { UsuarioSistema } from '../services/authService';
 
 interface ConfiguracoesProps {
   darkMode: boolean;
   onToggleDarkMode: () => void;
-  usuarioLogado?: {
-    nome: string;
-    email: string;
-    funcao: string;
-    cro: string;
-  } | null;
+  usuarioLogado?: UsuarioSistema | null;
 }
 
 export const Configuracoes: React.FC<ConfiguracoesProps> = ({
   darkMode,
-  onToggleDarkMode
+  usuarioLogado
 }) => {
   const [salvo, setSalvo] = useState<boolean>(false);
   const [nichoSistema, setNichoSistema] = useState<string>('clinica');
-  const [nivelAcesso, setNivelAcesso] = useState<string>('admin');
+
+  const isAdmin = usuarioLogado?.role === 'admin' || usuarioLogado?.email === 'juniorbor1986@gmail.com';
 
   const handleSalvar = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,8 +51,12 @@ export const Configuracoes: React.FC<ConfiguracoesProps> = ({
         </button>
       </div>
 
-      <form onSubmit={handleSalvar} className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs font-normal">
+      {/* SEÇÃO DE AUDITORIA EXCLUSIVA DO ADMINISTRADOR MASTER */}
+      {isAdmin && (
+        <PainelAuditoriaAdmin darkMode={darkMode} />
+      )}
 
+      <form onSubmit={handleSalvar} className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs font-normal">
         {/* MÓDULO UNIVERSAL: SELETOR DE NICHO & PERFIL */}
         <div className={`p-6 rounded-3xl border shadow-xl space-y-4 md:col-span-2 ${
           darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
@@ -104,95 +106,13 @@ export const Configuracoes: React.FC<ConfiguracoesProps> = ({
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="font-bold text-xs text-white">💼 Prestadores de Serviço & Autônomos</span>
+                <span className="font-bold text-xs text-white">💼 Prestador de Serviços / Autônomo</span>
                 {nichoSistema === 'servicos' && <CheckCircle2 className="w-4 h-4 text-teal-400" />}
               </div>
-              <p className="text-[11px] text-slate-400 mt-1">Para advogados, contadores, consultores e autônomos.</p>
+              <p className="text-[11px] text-slate-400 mt-1">Emissão de recibos e gestão de recebíveis de clientes.</p>
             </div>
           </div>
         </div>
-
-        {/* NÍVEIS DE ACESSO (PERMISSÕES SAAS) */}
-        <div className={`p-6 rounded-3xl border shadow-xl space-y-4 ${
-          darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
-        }`}>
-          <h3 className="font-bold text-xs uppercase text-teal-400 tracking-wider flex items-center gap-2">
-            <Shield className="w-4 h-4" /> Nível de Acesso & Permissões do Usuário
-          </h3>
-
-          <div>
-            <label className="block font-semibold text-slate-300 mb-1">Perfil de Acesso Atual</label>
-            <select
-              value={nivelAcesso}
-              onChange={(e) => setNivelAcesso(e.target.value)}
-              className="w-full p-3 rounded-xl bg-slate-950 border border-slate-800 text-white font-semibold focus:ring-2 focus:ring-teal-500"
-            >
-              <option value="admin">👑 Administrador / Sócio (Acesso Total + Pessoal)</option>
-              <option value="secretaria">👩‍💼 Secretária / Recepcionista (Apenas Produção)</option>
-              <option value="contador">📊 Contador (Apenas DRE e Extratos)</option>
-            </select>
-            <span className="text-[10px] text-slate-400 mt-1 block">
-              Permite simular o acesso restrito que cada funcionário terá na venda do SaaS.
-            </span>
-          </div>
-        </div>
-
-        {/* Tema & Aparência */}
-        <div className={`p-6 rounded-3xl border shadow-xl space-y-4 ${
-          darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
-        }`}>
-          <h3 className="font-bold text-xs uppercase text-teal-400 tracking-wider flex items-center gap-2">
-            <Moon className="w-4 h-4" /> Aparência e Tema
-          </h3>
-
-          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-950 border border-slate-800">
-            <div>
-              <p className="font-semibold text-white">Modo Escuro (Dark Theme)</p>
-              <p className="text-[11px] text-slate-400">Alterna entre o tema Claro e Escuro de alta visibilidade.</p>
-            </div>
-
-            <button
-              type="button"
-              onClick={onToggleDarkMode}
-              className={`px-4 py-2 rounded-xl font-bold transition-all cursor-pointer ${
-                darkMode ? 'bg-amber-400 text-slate-950 shadow' : 'bg-slate-800 text-white shadow'
-              }`}
-            >
-              {darkMode ? 'Desativar Dark' : 'Ativar Dark'}
-            </button>
-          </div>
-        </div>
-
-        {/* Automação WhatsApp & Disparos Diários */}
-        <div className={`p-6 rounded-3xl border shadow-xl space-y-4 md:col-span-2 ${
-          darkMode ? 'bg-slate-900/90 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
-        }`}>
-          <h3 className="font-bold text-xs uppercase text-emerald-400 tracking-wider flex items-center gap-2">
-            <MessageSquare className="w-4 h-4" /> Automação WhatsApp 24/7 (Render Cloud)
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block font-semibold text-slate-300 mb-1">Contato Cadastrado p/ Disparo</label>
-              <input
-                type="text"
-                defaultValue="(69) 993649158"
-                className="w-full p-3 rounded-xl bg-slate-950 border border-slate-800 text-emerald-400 font-bold"
-                readOnly
-              />
-              <span className="text-[10px] text-slate-400 mt-1 block">Recebe o balanço diário de faturamento e pacientes às 18:30h.</span>
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-300 mb-1">Status da Automação na Nuvem</label>
-              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
-                <span className="font-semibold text-teal-400 block">⏰ Diário às 18:30h (Ativo 24/7 na Nuvem Render)</span>
-                <span className="font-semibold text-emerald-400 block">📊 Mensal todo dia 01 (Mês Anterior)</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </form>
     </div>
   );

@@ -21,6 +21,8 @@ import {
 interface DashboardProps {
   onNavigate: (tab: string) => void;
   darkMode?: boolean;
+  userRole?: 'admin' | 'cliente';
+  usuarioId?: string;
 }
 
 const PRODUCAO_KEY = 'odonto_producao_registros_v2';
@@ -28,9 +30,15 @@ const FINANCEIRO_KEY = 'odonto_financeiro_pessoal_v1';
 
 export const Dashboard: React.FC<DashboardProps> = ({
   onNavigate,
-  darkMode
+  darkMode,
+  userRole = 'admin',
+  usuarioId
 }) => {
+  const isCliente = userRole === 'cliente';
+  const chaveFinanceiro = isCliente && usuarioId ? `odonto_financeiro_pessoal_${usuarioId}` : FINANCEIRO_KEY;
+
   const [itensProducao, setItensProducao] = useState<ItemProducaoTomo[]>(() => {
+    if (isCliente) return [];
     const salvo = localStorage.getItem(PRODUCAO_KEY);
     if (salvo) {
       try {
@@ -41,7 +49,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   });
 
   const [transacoesFinanceiras, setTransacoesFinanceiras] = useState<TransacaoPessoal[]>(() => {
-    const salvo = localStorage.getItem(FINANCEIRO_KEY);
+    const salvo = localStorage.getItem(chaveFinanceiro);
     if (salvo) {
       try {
         return JSON.parse(salvo);
@@ -151,12 +159,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <button
-              onClick={() => onNavigate('producao')}
-              className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold px-5 py-3 rounded-2xl text-xs shadow-xl shadow-teal-500/25 transition-all flex items-center gap-2 cursor-pointer hover:scale-[1.03]"
-            >
-              <BarChart3 className="w-4.5 h-4.5 text-white" /> Ir para Produção
-            </button>
+            {!isCliente && (
+              <button
+                onClick={() => onNavigate('producao')}
+                className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold px-5 py-3 rounded-2xl text-xs shadow-xl shadow-teal-500/25 transition-all flex items-center gap-2 cursor-pointer hover:scale-[1.03]"
+              >
+                <BarChart3 className="w-4.5 h-4.5 text-white" /> Ir para Produção
+              </button>
+            )}
 
             <button
               onClick={() => onNavigate('financeiro')}

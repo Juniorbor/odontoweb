@@ -10,17 +10,13 @@ import {
   Menu
 } from 'lucide-react';
 import type { Paciente, Consulta } from '../types';
+import type { UsuarioSistema } from '../services/authService';
 import LOGO_BASE64 from '../assets/logoData';
 
 interface HeaderBarProps {
   darkMode: boolean;
   onToggleDarkMode: () => void;
-  usuarioLogado: {
-    nome: string;
-    email: string;
-    funcao: string;
-    cro: string;
-  } | null;
+  usuarioLogado: UsuarioSistema | null;
   onLogout: () => void;
   onNavigate: (tab: string) => void;
   pacientes: Paciente[];

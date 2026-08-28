@@ -22,6 +22,7 @@ interface SidebarProps {
   onCloseMobile?: () => void;
   darkMode?: boolean;
   onLogout?: () => void;
+  userRole?: 'admin' | 'cliente';
   badgeCounts?: {
     pacientes?: number;
     consultasHoje?: number;
@@ -38,15 +39,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCloseMobile,
   darkMode,
   onLogout,
+  userRole = 'admin',
   badgeCounts
 }) => {
-  const menuItems = [
+  const allMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Activity },
     { id: 'producao', label: 'Produção', icon: FileSpreadsheet },
     { id: 'financeiro', label: 'Financeiro', icon: DollarSign, badge: badgeCounts?.pendentes ? `! ${badgeCounts.pendentes}` : undefined },
     { id: 'relatorios', label: 'Relatórios', icon: BarChart3 },
     { id: 'configuracoes', label: 'Configurações', icon: Settings },
   ];
+
+  const menuItems = userRole === 'cliente'
+    ? allMenuItems.filter(item => item.id !== 'producao')
+    : allMenuItems;
 
   const handleItemClick = (id: string) => {
     onNavigate(id);
