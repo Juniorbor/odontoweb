@@ -4,6 +4,9 @@ import { pushToCloud, pullFromCloud, subscribeLocalBroadcast } from '../services
 import { LeitorComprovanteOCR } from './LeitorComprovanteOCR';
 import { DREGerencial } from './DREGerencial';
 import { CartoesEMetas } from './CartoesEMetas';
+import { CalendarioVencimentos } from './CalendarioVencimentos';
+import { Regra503020 } from './Regra503020';
+import { GeradorReciboPessoal } from './GeradorReciboPessoal';
 import {
   DollarSign,
   Plus,
@@ -22,7 +25,9 @@ import {
   Sparkles,
   PieChart,
   BarChart3,
-  Camera
+  Camera,
+  Calendar,
+  Compass
 } from 'lucide-react';
 
 interface FinanceiroProps {
@@ -177,7 +182,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
     };
   }, []);
 
-  const [subAbaFinanceiro, setSubAbaFinanceiro] = useState<'lancamentos' | 'dre' | 'cartoes'>('lancamentos');
+  const [subAbaFinanceiro, setSubAbaFinanceiro] = useState<'lancamentos' | 'calendario' | '503020' | 'recibo' | 'dre' | 'cartoes'>('lancamentos');
   const [modalOCRAberto, setModalOCRAberto] = useState<boolean>(false);
 
   const [filtroTipo, setFiltroTipo] = useState<string>('Todos');
@@ -404,7 +409,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setSubAbaFinanceiro('lancamentos')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               subAbaFinanceiro === 'lancamentos'
                 ? 'bg-teal-600 text-white shadow-md'
                 : 'text-slate-400 hover:text-white hover:bg-slate-900'
@@ -414,37 +419,76 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode }) => {
           </button>
 
           <button
+            onClick={() => setSubAbaFinanceiro('calendario')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+              subAbaFinanceiro === 'calendario'
+                ? 'bg-amber-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+            }`}
+          >
+            <Calendar className="w-4 h-4 text-amber-300" /> Calendário de Vencimentos
+          </button>
+
+          <button
+            onClick={() => setSubAbaFinanceiro('503020')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+              subAbaFinanceiro === '503020'
+                ? 'bg-sky-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+            }`}
+          >
+            <Compass className="w-4 h-4 text-sky-300" /> Regra 50 / 30 / 20
+          </button>
+
+          <button
+            onClick={() => setSubAbaFinanceiro('recibo')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+              subAbaFinanceiro === 'recibo'
+                ? 'bg-indigo-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+            }`}
+          >
+            <FileText className="w-4 h-4 text-indigo-300" /> Recibos Pessoais
+          </button>
+
+          <button
             onClick={() => setSubAbaFinanceiro('dre')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               subAbaFinanceiro === 'dre'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'text-slate-400 hover:text-white hover:bg-slate-900'
             }`}
           >
-            <PieChart className="w-4 h-4 text-emerald-400" /> DRE Gerencial & Fluxo de Caixa
+            <PieChart className="w-4 h-4 text-emerald-400" /> DRE Gerencial
           </button>
 
           <button
             onClick={() => setSubAbaFinanceiro('cartoes')}
-            className={`px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
               subAbaFinanceiro === 'cartoes'
                 ? 'bg-purple-600 text-white shadow-md'
                 : 'text-slate-400 hover:text-white hover:bg-slate-900'
             }`}
           >
-            <CreditCard className="w-4 h-4 text-purple-300" /> Cartão de Crédito & Reserva
+            <CreditCard className="w-4 h-4 text-purple-300" /> Cartão & Reserva
           </button>
         </div>
 
         <button
           onClick={() => setModalOCRAberto(true)}
-          className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 shadow-md cursor-pointer"
+          className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md cursor-pointer"
         >
           <Camera className="w-4 h-4" /> Ler Comprovante / Foto (OCR IA)
         </button>
       </div>
 
-      {subAbaFinanceiro === 'dre' ? (
+      {subAbaFinanceiro === 'calendario' ? (
+        <CalendarioVencimentos transacoes={transacoes} darkMode={darkMode} />
+      ) : subAbaFinanceiro === '503020' ? (
+        <Regra503020 transacoes={transacoes} faturamentoProducaoTotal={faturamentoTotalProducaoGeral} darkMode={darkMode} />
+      ) : subAbaFinanceiro === 'recibo' ? (
+        <GeradorReciboPessoal darkMode={darkMode} />
+      ) : subAbaFinanceiro === 'dre' ? (
         <DREGerencial itensProducao={producaoItens} transacoesFinanceiras={transacoes} darkMode={darkMode} />
       ) : subAbaFinanceiro === 'cartoes' ? (
         <CartoesEMetas transacoesFinanceiras={transacoes} darkMode={darkMode} />
