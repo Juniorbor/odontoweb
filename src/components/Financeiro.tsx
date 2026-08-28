@@ -55,31 +55,7 @@ const CATEGORIAS_PESSOAIS = [
   'Materiais & Outros'
 ];
 
-const TRANSACOES_INICIAIS: TransacaoPessoal[] = [
-  // Entradas (Salário / Renda)
-  { id: 'fin-1', descricao: 'Salário Mensal', tipo: 'Entrada', valor: 3645.00, data: '2026-08-01', categoria: 'Salário & Renda', status: 'Pago', observacao: 'Crédito em Conta' },
-  { id: 'fin-2', descricao: 'Primeira Quinzena / Adiantamento', tipo: 'Entrada', valor: 1500.00, data: '2026-08-15', categoria: 'Salário & Renda', status: 'Pago', observacao: 'Adiantamento quinzenal' },
-  
-  // Despesas Fixas do Lar
-  { id: 'fin-3', descricao: 'Aluguel Residencial', tipo: 'Despesa Fixa', valor: 800.00, data: '2026-08-05', categoria: 'Aluguel & Moradia', status: 'Pago', observacao: 'Vencimento dia 05' },
-  { id: 'fin-5', descricao: 'Conta de Luz / Energia Elétrica', tipo: 'Despesa Fixa', valor: 500.00, data: '2026-08-12', categoria: 'Contas de Consumo (Água/Luz/Net)', status: 'Pago' },
-  { id: 'fin-6', descricao: 'Internet Residencial', tipo: 'Despesa Fixa', valor: 119.90, data: '2026-08-15', categoria: 'Contas de Consumo (Água/Luz/Net)', status: 'Pago' },
-  { id: 'fin-7', descricao: 'Mensalidade Faculdade', tipo: 'Despesa Fixa', valor: 1393.82, data: '2026-08-10', categoria: 'Educação & Faculdade', status: 'Pago' },
-  { id: 'fin-8', descricao: 'Acordo Faculdade', tipo: 'Despesa Fixa', valor: 323.00, data: '2026-08-10', categoria: 'Educação & Faculdade', status: 'Pago' },
-  { id: 'fin-9', descricao: 'Acordo Faculdade (Parcela 2)', tipo: 'Despesa Fixa', valor: 254.00, data: '2026-08-10', categoria: 'Educação & Faculdade', status: 'Pago' },
-  { id: 'fin-10', descricao: 'Nivaldo Contador', tipo: 'Despesa Fixa', valor: 60.00, data: '2026-08-15', categoria: 'Serviços', status: 'Pago' },
-  { id: 'fin-11', descricao: 'Passagem / Ônibus Faculdade', tipo: 'Despesa Fixa', valor: 300.00, data: '2026-08-01', categoria: 'Transporte & Combustível', status: 'Pago' },
-  { id: 'fin-12', descricao: 'Despesas Filha', tipo: 'Despesa Fixa', valor: 400.00, data: '2026-08-05', categoria: 'Família & Filha', status: 'Pago' },
 
-  // Despesas Variáveis & Cartões do Lar
-  { id: 'fin-13', descricao: 'Materiais Dental Speed (8x)', tipo: 'Despesa Variável', valor: 109.35, data: '2026-08-15', categoria: 'Materiais & Outros', status: 'Pago', parcelas: '8x' },
-  { id: 'fin-14', descricao: 'Materiais Dental Cremer (12x)', tipo: 'Despesa Variável', valor: 403.00, data: '2026-08-15', categoria: 'Materiais & Outros', status: 'Pago', parcelas: '12x' },
-  { id: 'fin-15', descricao: 'Empréstimo Nubank Jack', tipo: 'Despesa Variável', valor: 470.00, data: '2026-08-20', categoria: 'Empréstimos & Acordos', status: 'Pago' },
-  { id: 'fin-16', descricao: 'Cartão Mãe - Roupas Anna (6x)', tipo: 'Despesa Variável', valor: 140.00, data: '2026-08-18', categoria: 'Cartões de Crédito', status: 'Pago', parcelas: '6x' },
-  { id: 'fin-17', descricao: 'Cartão Pai - Material Novo', tipo: 'Despesa Variável', valor: 202.79, data: '2026-08-12', categoria: 'Cartões de Crédito', status: 'Pago' },
-  { id: 'fin-18', descricao: 'Cartão NUBANK', tipo: 'Despesa Variável', valor: 200.00, data: '2026-08-22', categoria: 'Cartões de Crédito', status: 'Pago' },
-  { id: 'fin-19', descricao: 'MEI Imposto Mensal', tipo: 'Despesa Variável', valor: 75.00, data: '2026-08-20', categoria: 'Serviços', status: 'Pago' }
-];
 
 export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, userRole = 'admin', usuarioId }) => {
   const isCliente = userRole === 'cliente';
@@ -89,37 +65,27 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, userRole = 'ad
     const salvo = localStorage.getItem(STORAGE_KEY);
     if (salvo !== null) {
       try {
-        const parsed: TransacaoPessoal[] = JSON.parse(salvo);
-        if (parsed.length > 0) {
-          return parsed;
-        }
+        return JSON.parse(salvo);
       } catch (e) {
         console.error('Erro ao ler transações pessoais do localStorage:', e);
       }
     }
-    return isCliente ? [] : TRANSACOES_INICIAIS;
+    return [];
   });
 
   const [sincronizando, setSincronizando] = useState<boolean>(false);
-
-  // Restauração Automática: se o Admin não tiver transações cadastradas no localStorage, restaura os lançamentos
-  useEffect(() => {
-    if (!isCliente && transacoes.length === 0) {
-      updateTransacoesECloud(TRANSACOES_INICIAIS);
-    }
-  }, [isCliente, transacoes.length]);
-
-  const handleRestaurarDadosPadraoAdmin = () => {
-    if (window.confirm('Deseja restaurar todos os lançamentos financeiros padrão (Salário, Aluguel, Faculdade, Contas e Cartões)?')) {
-      updateTransacoesECloud(TRANSACOES_INICIAIS);
-    }
-  };
 
   // Função central para salvar e sincronizar instantaneamente na nuvem para todos os dispositivos
   const updateTransacoesECloud = (novas: TransacaoPessoal[]) => {
     setTransacoes(novas);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(novas));
     pushToCloud({ financeiro: novas });
+  };
+
+  const handleZerarTodasTransacoes = () => {
+    if (window.confirm('Tem certeza que deseja apagar TODOS os lançamentos de contas do financeiro? O painel ficará 100% zerado.')) {
+      updateTransacoesECloud([]);
+    }
   };
 
   // Carregamento e Polling em Tempo Real da Nuvem
@@ -529,13 +495,13 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, userRole = 'ad
             <Download className="w-4 h-4 text-teal-400" /> Exportar Extrato (PDF)
           </button>
 
-          {!isCliente && (
+          {transacoes.length > 0 && (
             <button
-              onClick={handleRestaurarDadosPadraoAdmin}
-              className="bg-slate-900 hover:bg-slate-800 text-amber-400 font-bold px-4 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-amber-500/30 transition-all cursor-pointer shadow-md w-full sm:w-auto"
-              title="Restaurar lançamentos financeiros originais do Admin"
+              onClick={handleZerarTodasTransacoes}
+              className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold px-4 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-rose-500/30 transition-all cursor-pointer shadow-md w-full sm:w-auto"
+              title="Apagar todos os lançamentos financeiros"
             >
-              <RefreshCw className="w-4 h-4 text-amber-400" /> Restaurar Lançamentos Padrão
+              <Trash2 className="w-4 h-4 text-rose-400" /> Limpar Financeiro
             </button>
           )}
 
