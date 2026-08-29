@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import type { Paciente, Consulta } from '../types';
 import type { UsuarioSistema } from '../services/authService';
+import { getNotificacoesNovosClientesAdmin, marcarNotificacoesNovosClientesComoLidas } from '../services/authService';
 import LOGO_BASE64 from '../assets/logoData';
 
 interface HeaderBarProps {
@@ -173,28 +174,43 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         >
           {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
-
         {/* Notificações */}
         <div className="relative">
-          <button
-            onClick={() => {
-              if (onAbrirNotificacoes) {
-                onAbrirNotificacoes();
-              } else {
-                setNotifOpen(!notifOpen);
-              }
-              setProfileOpen(false);
-            }}
-            className={`p-2 rounded-2xl border transition-all cursor-pointer relative ${
-              darkMode
-                ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
-                : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
-            }`}
-            title="Central de Notificações"
-          >
-            <Bell className="w-4 h-4 text-teal-400" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-slate-900 animate-pulse"></span>
-          </button>
+          {(() => {
+            const notificacoesNovosClientes = usuarioLogado?.role === 'admin' ? getNotificacoesNovosClientesAdmin() : [];
+            const naoLidosCount = notificacoesNovosClientes.filter((n) => !n.lida).length;
+
+            return (
+              <button
+                onClick={() => {
+                  if (usuarioLogado?.role === 'admin') {
+                    marcarNotificacoesNovosClientesComoLidas();
+                  }
+                  if (onAbrirNotificacoes) {
+                    onAbrirNotificacoes();
+                  } else {
+                    setNotifOpen(!notifOpen);
+                  }
+                  setProfileOpen(false);
+                }}
+                className={`p-2 rounded-2xl border transition-all cursor-pointer relative ${
+                  darkMode
+                    ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                    : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
+                }`}
+                title="Central de Notificações"
+              >
+                <Bell className="w-4 h-4 text-teal-400" />
+                {naoLidosCount > 0 ? (
+                  <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white font-black text-[9px] w-4 h-4 rounded-full border border-slate-900 flex items-center justify-center animate-bounce shadow-md">
+                    {naoLidosCount}
+                  </span>
+                ) : (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-slate-900 animate-pulse"></span>
+                )}
+              </button>
+            );
+          })()}
 
           {notifOpen && (
             <div

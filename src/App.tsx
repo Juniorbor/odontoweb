@@ -47,7 +47,7 @@ import type {
 } from './types';
 
 import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, KEYS, getItemJSON, getUserKeys } from './services/cloudSync';
-import type { UsuarioSistema } from './services/authService';
+import { type UsuarioSistema, getNotificacoesNovosClientesAdmin, type NotificacaoNovoClienteAdmin } from './services/authService';
 
 const SESSION_KEY = 'odonto_usuario_sessao_v1';
 
@@ -159,9 +159,61 @@ export function App() {
     }
   }, [darkMode]);
 
-  const addToast = (mensagem: string, tipo: 'sucesso' | 'erro' | 'info' = 'sucesso') => {
+  // Monitoramento em tempo real de novos cadastros de clientes para o Administrador Master
+  useEffect(() => {
+    if (usuarioLogado?.role !== 'admin') return;
+
+    let ultimoIdNotificado = '';
+
+    const checarNovosClientes = () => {
+      const notificacoes = getNotificacoesNovosClientesAdmin();
+      const naoLidas = notificacoes.filter((n: NotificacaoNovoClienteAdmin) => !n.lida);
+      if (naoLidas.length > 0) {
+        const maisRecente = naoLidas[0];
+        if (maisRecente.id !== ultimoIdNotificado) {
+          ultimoIdNotificado = maisRecente.id;
+          addToast(
+            `🚨 ALERTA: Novo Cliente Cadastrado!`,
+            `O cliente ${maisRecente.clienteNome} (${maisRecente.clienteEmail}) criou uma conta com 7 dias de teste grátis!`,
+            'info'
+          );
+        }
+      }
+    };
+
+    checarNovosClientes();
+    const interval = setInterval(checarNovosClientes, 2000);
+
+    const handleBroadcast = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'NOVO_CLIENTE_CADASTRADO') {
+        const cli = event.data.payload;
+        addToast(
+          `🚨 ALERTA: Novo Cliente Cadastrado!`,
+          `O cliente ${cli.clienteNome} (${cli.clienteEmail}) criou uma conta com 7 dias de teste grátis!`,
+          'info'
+        );
+      }
+    };
+
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        const bc = new BroadcastChannel('odontoweb_realtime_channel');
+        bc.addEventListener('message', handleBroadcast);
+        return () => {
+          clearInterval(interval);
+          bc.removeEventListener('message', handleBroadcast);
+        };
+      } catch (e) {}
+    }
+
+    return () => clearInterval(interval);
+  }, [usuarioLogado]);
+
+  const addToast = (mensagem: string, descOrTipo?: string, tipoParam: 'sucesso' | 'erro' | 'info' = 'sucesso') => {
     const id = `toast-${Date.now()}`;
-    setToasts((prev) => [...prev, { id, mensagem, tipo }]);
+    const tipoFinal = (descOrTipo === 'sucesso' || descOrTipo === 'erro' || descOrTipo === 'info') ? descOrTipo : tipoParam;
+    const msgCompleta = (descOrTipo && descOrTipo !== tipoFinal) ? `${mensagem} ${descOrTipo}` : mensagem;
+    setToasts((prev) => [...prev, { id, mensagem: msgCompleta, tipo: tipoFinal }]);
   };
 
   const handleDismissToast = (id: string) => {
@@ -561,8 +613,10 @@ export function App() {
 
       {centralNotificacoesAberto && (
         <CentralNotificacoes
-          transacoes={getItemJSON('odonto_financeiro_pessoal_v1', [])}
+          transacoes={getItemJSON(getUserKeys(usuarioLogado?.id).FINANCEIRO, [])}
           darkMode={darkMode}
+          usuarioLogado={usuarioLogado}
+          onNavegarPainelAdmin={() => setActiveTab('configuracoes')}
           onFechar={() => setCentralNotificacoesAberto(false)}
         />
       )}

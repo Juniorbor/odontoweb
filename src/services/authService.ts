@@ -1,4 +1,4 @@
-import { getItemJSON } from './cloudSync';
+import { getItemJSON, pushToCloud } from './cloudSync';
 
 export interface UsuarioSistema {
   id: string;
@@ -31,8 +31,19 @@ export interface LogAuditoriaAcesso {
   status: 'Sucesso' | 'Alerta' | 'Erro';
 }
 
+export interface NotificacaoNovoClienteAdmin {
+  id: string;
+  clienteId: string;
+  clienteNome: string;
+  clienteEmail: string;
+  dataHora: string;
+  lida: boolean;
+  mensagem: string;
+}
+
 const STORAGE_USUARIOS = 'odonto_usuarios_sistema_v1';
 const STORAGE_LOGS = 'odonto_logs_auditoria_acesso_v1';
+const STORAGE_NOTIFICACOES_ADMIN = 'odonto_notificacoes_novos_clientes_v1';
 
 export const ADMIN_PADRAO: UsuarioSistema = {
   id: 'usr-admin-master',
@@ -50,6 +61,48 @@ export const ADMIN_PADRAO: UsuarioSistema = {
   dataExpiraTeste: '2099-12-31',
   valorAdesao: 0,
   valorMensalidade: 0
+};
+
+export const getNotificacoesNovosClientesAdmin = (): NotificacaoNovoClienteAdmin[] => {
+  return getItemJSON<NotificacaoNovoClienteAdmin[]>(STORAGE_NOTIFICACOES_ADMIN, []);
+};
+
+export const marcarNotificacoesNovosClientesComoLidas = () => {
+  const notificacoes = getNotificacoesNovosClientesAdmin();
+  const lidas = notificacoes.map((n) => ({ ...n, lida: true }));
+  localStorage.setItem(STORAGE_NOTIFICACOES_ADMIN, JSON.stringify(lidas));
+};
+
+export const adicionarNotificacaoNovoClienteAdmin = (cliente: UsuarioSistema) => {
+  const notificacoes = getNotificacoesNovosClientesAdmin();
+  const nova: NotificacaoNovoClienteAdmin = {
+    id: `notif-cli-${Date.now()}`,
+    clienteId: cliente.id,
+    clienteNome: cliente.nome,
+    clienteEmail: cliente.email,
+    dataHora: new Date().toLocaleString('pt-BR'),
+    lida: false,
+    mensagem: `🚨 NOVO CLIENTE CADASTRADO: ${cliente.nome} (${cliente.email}) iniciou o teste de 7 dias grátis!`
+  };
+  const listaAtualizada = [nova, ...notificacoes];
+  localStorage.setItem(STORAGE_NOTIFICACOES_ADMIN, JSON.stringify(listaAtualizada));
+
+  // Push to cloud payload para notificação instantânea do Admin
+  pushToCloud({
+    updatedAt: Date.now(),
+    updatedBy: `Novo Cliente (${cliente.nome})`
+  }, 'usr-admin-master');
+
+  // Transmissão local em tempo real para abas abertas
+  if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    try {
+      const bc = new BroadcastChannel('odontoweb_realtime_channel');
+      bc.postMessage({
+        type: 'NOVO_CLIENTE_CADASTRADO',
+        payload: nova
+      });
+    } catch (e) {}
+  }
 };
 
 export const calcularDiasRestantesEStatusPlano = (usuario: UsuarioSistema): {
@@ -94,7 +147,6 @@ export const getUsuariosCadastrados = (): UsuarioSistema[] => {
     usuarios.unshift(ADMIN_PADRAO);
     localStorage.setItem(STORAGE_USUARIOS, JSON.stringify(usuarios));
   } else {
-    // Atualizar campos do Admin padrão
     usuarios[indexAdmin] = {
       ...usuarios[indexAdmin],
       role: 'admin',
@@ -182,6 +234,7 @@ export const registrarNovoUsuario = (dados: {
   const listaAtualizada = [...usuarios, novoUsuario];
   localStorage.setItem(STORAGE_USUARIOS, JSON.stringify(listaAtualizada));
 
+  // Registrar Log de Auditoria
   registrarLogAuditoria({
     usuarioId: novoUsuario.id,
     nomeUsuario: novoUsuario.nome,
@@ -192,6 +245,9 @@ export const registrarNovoUsuario = (dados: {
     mensagemDetalhe: `Novo cliente cadastrado com teste grátis de 7 dias (Expira em ${novoUsuario.dataExpiraTeste}).`,
     status: 'Sucesso'
   });
+
+  // Notificar o Admin Master com alerta instantâneo
+  adicionarNotificacaoNovoClienteAdmin(novoUsuario);
 
   return { sucesso: true, mensagem: 'Conta criada com 7 dias de teste grátis!', usuario: novoUsuario };
 };
