@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { TransacaoPessoal } from '../types';
-import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, getUserKeys } from '../services/cloudSync';
+import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, getUserKeys, getProducaoComoTransacoes } from '../services/cloudSync';
 import { LeitorComprovanteOCR } from './LeitorComprovanteOCR';
 import { DREGerencial } from './DREGerencial';
 import { CartoesEMetas } from './CartoesEMetas';
@@ -42,6 +42,7 @@ interface FinanceiroProps {
 
 const CATEGORIAS_PESSOAIS = [
   'Salário & Renda',
+  'Faturamento de Produção',
   'Aluguel & Moradia',
   'Contas de Consumo (Água/Luz/Net)',
   'Educação & Faculdade',
@@ -52,8 +53,6 @@ const CATEGORIAS_PESSOAIS = [
   'Empréstimos & Acordos',
   'Materiais & Outros'
 ];
-
-
 
 export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) => {
   const userKeys = getUserKeys(usuarioId);
@@ -72,6 +71,12 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
   });
 
   const [sincronizando, setSincronizando] = useState<boolean>(false);
+
+  // Transações combinadas (Manuais + Faturamento Consolidado da Produção)
+  const transacoesCombinadas = [
+    ...transacoes,
+    ...getProducaoComoTransacoes(usuarioId)
+  ];
 
   // Função central para salvar e sincronizar instantaneamente na nuvem para todos os dispositivos
   const updateTransacoesECloud = (novas: TransacaoPessoal[]) => {
@@ -128,15 +133,13 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
   }, []);
 
   const [subAbaFinanceiro, setSubAbaFinanceiro] = useState<'lancamentos' | 'calendario' | '503020' | 'recibo' | 'metas' | 'graficos' | 'dre' | 'cartoes'>('lancamentos');
-  const [modalOCRAberto, setModalOCRAberto] = useState<boolean>(false);
-  const [modalVozAberto, setModalVozAberto] = useState<boolean>(false);
 
   const [filtroTipo, setFiltroTipo] = useState<string>('Todos');
   const [filtroCategoria, setFiltroCategoria] = useState<string>('Todas');
   const [busca, setBusca] = useState<string>('');
-
-  // Modal State
   const [modalAberto, setModalAberto] = useState<boolean>(false);
+  const [modalOCRAberto, setModalOCRAberto] = useState<boolean>(false);
+  const [modalVozAberto, setModalVozAberto] = useState<boolean>(false);
   const [transacaoEditando, setTransacaoEditando] = useState<TransacaoPessoal | null>(null);
 
   // Form State
@@ -149,16 +152,16 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
   const [parcelas, setParcelas] = useState<string>('');
   const [observacao, setObservacao] = useState<string>('');
 
-  // Entradas e Salário cadastrados pelo usuário
-  const totalEntradas = transacoes
+  // Entradas e Faturamento Geral Consolidado (Produção + Manuais)
+  const totalEntradas = transacoesCombinadas
     .filter((t) => t.tipo === 'Entrada')
     .reduce((acc, t) => acc + t.valor, 0);
 
-  const totalDespesasFixas = transacoes
+  const totalDespesasFixas = transacoesCombinadas
     .filter((t) => t.tipo === 'Despesa Fixa')
     .reduce((acc, t) => acc + t.valor, 0);
 
-  const totalDespesasVariaveis = transacoes
+  const totalDespesasVariaveis = transacoesCombinadas
     .filter((t) => t.tipo === 'Despesa Variável')
     .reduce((acc, t) => acc + t.valor, 0);
 
@@ -242,7 +245,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
     );
   };
 
-  const transacoesFiltradas = transacoes.filter((t) => {
+  const transacoesFiltradas = transacoesCombinadas.filter((t) => {
     const atendeTipo = filtroTipo === 'Todos' || t.tipo === filtroTipo;
     const atendeCat = filtroCategoria === 'Todas' || t.categoria === filtroCategoria;
     const atendeBusca = t.descricao.toLowerCase().includes(busca.toLowerCase());

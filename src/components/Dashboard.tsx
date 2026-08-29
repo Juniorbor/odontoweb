@@ -17,7 +17,7 @@ import {
   Users
 } from 'lucide-react';
 
-import { getUserKeys } from '../services/cloudSync';
+import { getUserKeys, getProducaoComoTransacoes } from '../services/cloudSync';
 
 interface DashboardProps {
   onNavigate: (tab: string) => void;
@@ -68,8 +68,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
     };
   }, [chaveFinanceiro]);
 
+  // COMBINAÇÃO CONSOLIDADA: Entradas Financeiras + Faturamento Geral da Produção
+  const todasTransacoesCombinadas = [
+    ...transacoesFinanceiras,
+    ...getProducaoComoTransacoes(usuarioId)
+  ];
+
   // --- ESTATÍSTICAS DO FINANCEIRO PESSOAL DO USUÁRIO ---
-  const totalEntradas = transacoesFinanceiras
+  const totalEntradas = todasTransacoesCombinadas
     .filter((t) => t.tipo === 'Entrada')
     .reduce((acc, t) => acc + t.valor, 0);
 

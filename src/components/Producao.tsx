@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { ItemProducaoTomo } from '../types';
-import { pushToCloud, pullFromCloud, subscribeLocalBroadcast } from '../services/cloudSync';
+import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, getUserKeys } from '../services/cloudSync';
 import { WhatsappNotificacoes } from './WhatsappNotificacoes';
 import {
   BarChart3,
@@ -23,13 +23,16 @@ import {
 
 interface ProducaoProps {
   darkMode?: boolean;
+  usuarioId?: string;
 }
 
 const CLINICAS_FERNANDO = ['Ariquemes', 'Machadinho', 'Cacoal', 'Porto Velho'] as const;
 const CLINICAS_BERNARDO = ['Rolim de Moura', 'Ouro Preto', 'Ji-Paraná'] as const;
-const STORAGE_KEY = 'odonto_producao_registros_v2';
 
-export const Producao: React.FC<ProducaoProps> = ({ darkMode }) => {
+export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
+  const userKeys = getUserKeys(usuarioId);
+  const STORAGE_KEY = userKeys.PRODUCAO;
+
   // Inicializa a lista de registros. Se houver dados salvos no localStorage, utiliza-os.
   // Caso contrário, inicia SEM INFORMAÇÃO NENHUMA (lista vazia []).
   const [itens, setItens] = useState<ItemProducaoTomo[]>(() => {
@@ -50,13 +53,13 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode }) => {
   // Salvamento automático permanente em localStorage local
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(itens));
-  }, [itens]);
+  }, [itens, STORAGE_KEY]);
 
   // Função central para salvar localmente e enviar à nuvem sem sobregravar na carga inicial
   const updateItensECloud = (novosItens: ItemProducaoTomo[]) => {
     setItens(novosItens);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(novosItens));
-    pushToCloud({ producao: novosItens });
+    pushToCloud({ producao: novosItens }, usuarioId);
   };
 
   // Carregamento Prioritário ao abrir e Polling em tempo real

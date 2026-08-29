@@ -17,7 +17,7 @@ import {
   Tag
 } from 'lucide-react';
 
-import { getUserKeys } from '../services/cloudSync';
+import { getUserKeys, getProducaoComoTransacoes } from '../services/cloudSync';
 
 interface RelatoriosProps {
   darkMode?: boolean;
@@ -63,12 +63,18 @@ export const Relatorios: React.FC<RelatoriosProps> = ({ darkMode, usuarioId }) =
     };
   }, [chaveFinanceiro]);
 
+  // COMBINAÇÃO CONSOLIDADA: Entradas Financeiras + Faturamento Geral da Produção
+  const todasTransacoesCombinadas = [
+    ...transacoesFinanceiras,
+    ...getProducaoComoTransacoes(usuarioId)
+  ];
+
   // FILTRAGEM POR PERÍODO DE DATA
   const hoje = new Date();
   const primeiroDiaMesAtual = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
 
   // FILTRAGEM MULTICRITÉRIO ITEM POR ITEM
-  const transacoesFiltradas = transacoesFinanceiras.filter((t) => {
+  const transacoesFiltradas = todasTransacoesCombinadas.filter((t) => {
     // Periodo
     if (filtroPeriodo === 'mes_atual' && t.data < primeiroDiaMesAtual) return false;
 

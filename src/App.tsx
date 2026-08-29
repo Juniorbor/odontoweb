@@ -564,7 +564,7 @@ export function App() {
           )}
 
           {activeTab === 'producao' && usuarioLogado?.role !== 'cliente' && (
-            <Producao darkMode={darkMode} />
+            <Producao darkMode={darkMode} usuarioId={usuarioLogado?.id} />
           )}
 
           {activeTab === 'odontograma' && (

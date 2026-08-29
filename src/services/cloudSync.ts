@@ -57,6 +57,26 @@ export function getUserKeys(usuarioId?: string) {
 }
 
 /**
+ * Converte os lançamentos de faturamento da Produção em Entradas Financeiras Consolidadas
+ */
+export function getProducaoComoTransacoes(usuarioId?: string): any[] {
+  const keys = getUserKeys(usuarioId);
+  const itensProducao = getItemJSON(keys.PRODUCAO, []);
+  if (!Array.isArray(itensProducao)) return [];
+
+  return itensProducao.map((item: any, idx: number) => ({
+    id: `prod-entrada-${item.id || idx}`,
+    descricao: `Faturamento Produção: ${item.paciente || 'Paciente'} - ${item.procedimento || 'Procedimento'} (${item.clinica || 'Unidade'})`,
+    valor: Number(item.valor || 0),
+    data: item.data || new Date().toISOString().split('T')[0],
+    categoria: 'Faturamento de Produção',
+    tipo: 'Entrada' as const,
+    status: 'Pago' as const,
+    origemProducao: true
+  }));
+}
+
+/**
  * Envia as alterações para o localStorage local e para a nuvem isoladas por Usuário + Heartbeat de Presença
  */
 export async function pushToCloud(
