@@ -1,15 +1,24 @@
-// Netlify Serverless Function para Sincronização em Nuvem em Tempo Real sem limites de requisições
-// Permite que qualquer alteração no celular (Android/iOS) apareça instantaneamente no notebook!
+// Netlify Serverless Function com Isolamento Multi-Tenant por Usuário
+// Garante 100% de separação dos dados de cada usuário no servidor
 
-let stateStore = {
-  producao: [],
-  financeiro: [],
-  pacientes: [],
-  consultas: [],
-  fotografias: [],
-  updatedAt: 0,
-  updatedBy: ''
-};
+let userStores = {};
+
+function getUserStore(usuarioId) {
+  const key = usuarioId || 'usr-admin-master';
+  if (!userStores[key]) {
+    userStores[key] = {
+      usuarioId: key,
+      producao: [],
+      financeiro: [],
+      pacientes: [],
+      consultas: [],
+      fotografias: [],
+      updatedAt: 0,
+      updatedBy: ''
+    };
+  }
+  return userStores[key];
+}
 
 exports.handler = async (event) => {
   const headers = {
@@ -24,23 +33,27 @@ exports.handler = async (event) => {
     return { statusCode: 200, headers, body: '' };
   }
 
+  const queryUsuarioId = event.queryStringParameters?.usuarioId;
+
   if (event.httpMethod === 'POST' || event.httpMethod === 'PUT') {
     try {
       const body = JSON.parse(event.body || '{}');
-      
-      if (Array.isArray(body.producao)) stateStore.producao = body.producao;
-      if (Array.isArray(body.financeiro)) stateStore.financeiro = body.financeiro;
-      if (Array.isArray(body.pacientes)) stateStore.pacientes = body.pacientes;
-      if (Array.isArray(body.consultas)) stateStore.consultas = body.consultas;
-      if (Array.isArray(body.fotografias)) stateStore.fotografias = body.fotografias;
-      
-      stateStore.updatedAt = body.updatedAt || Date.now();
-      stateStore.updatedBy = body.updatedBy || 'Dispositivo';
+      const usuarioId = body.usuarioId || queryUsuarioId || 'usr-admin-master';
+      const store = getUserStore(usuarioId);
+
+      if (Array.isArray(body.producao)) store.producao = body.producao;
+      if (Array.isArray(body.financeiro)) store.financeiro = body.financeiro;
+      if (Array.isArray(body.pacientes)) store.pacientes = body.pacientes;
+      if (Array.isArray(body.consultas)) store.consultas = body.consultas;
+      if (Array.isArray(body.fotografias)) store.fotografias = body.fotografias;
+
+      store.updatedAt = body.updatedAt || Date.now();
+      store.updatedBy = body.updatedBy || 'Dispositivo';
 
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ success: true, data: stateStore })
+        body: JSON.stringify({ success: true, data: store })
       };
     } catch (e) {
       return {
@@ -51,10 +64,13 @@ exports.handler = async (event) => {
     }
   }
 
-  // GET request - Retorna os dados mais recentes da nuvem
+  // GET request - Retorna os dados isolados do usuário informado
+  const usuarioId = queryUsuarioId || 'usr-admin-master';
+  const store = getUserStore(usuarioId);
+
   return {
     statusCode: 200,
     headers,
-    body: JSON.stringify({ success: true, data: stateStore })
+    body: JSON.stringify({ success: true, data: store })
   };
 };

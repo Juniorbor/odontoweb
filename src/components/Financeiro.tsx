@@ -99,12 +99,10 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
 
     // 2. Escuta alterações locais de abas simultâneas via BroadcastChannel
     const unsubscribeBroadcast = subscribeLocalBroadcast((payload) => {
-      if (payload.usuarioId === usuarioId || !payload.usuarioId) {
-        if (payload.financeiro) {
-          setTransacoes(payload.financeiro);
-        }
+      if (payload.financeiro) {
+        setTransacoes(payload.financeiro);
       }
-    });
+    }, usuarioId);
 
     // 3. Polling contínuo a cada 2 segundos
     const interval = setInterval(() => {

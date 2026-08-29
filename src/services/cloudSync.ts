@@ -86,7 +86,7 @@ export async function pushToCloud(data: Partial<CloudDataPayload>, usuarioId?: s
       updatedBy: typeof window !== 'undefined' && window.innerWidth < 768 ? 'Celular (Android/iOS)' : 'Notebook/PC'
     };
 
-    // Notifica abas locais via BroadcastChannel
+    // Notifica apenas abas do mesmo usuário via BroadcastChannel
     if (broadcastChannel) {
       broadcastChannel.postMessage({ type: 'SYNC_UPDATE', payload });
     }
@@ -172,12 +172,15 @@ export async function pullFromCloud(
   return false;
 }
 
-export function subscribeLocalBroadcast(onUpdate: (payload: CloudDataPayload) => void) {
+export function subscribeLocalBroadcast(onUpdate: (payload: CloudDataPayload) => void, usuarioId?: string) {
   if (!broadcastChannel) return () => {};
 
   const handleMessage = (event: MessageEvent) => {
     if (event.data && event.data.type === 'SYNC_UPDATE') {
-      onUpdate(event.data.payload);
+      const payload = event.data.payload as CloudDataPayload;
+      if (!usuarioId || !payload.usuarioId || payload.usuarioId === usuarioId) {
+        onUpdate(payload);
+      }
     }
   };
 
