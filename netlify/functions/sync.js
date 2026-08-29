@@ -1,7 +1,7 @@
-// Netlify Serverless Function com Isolamento Multi-Tenant por Usuário
-// Garante 100% de separação dos dados de cada usuário no servidor
+// Netlify Serverless Function com Presença de Usuários Online em Tempo Real
 
 let userStores = {};
+let globalPresenceMap = {};
 
 function getUserStore(usuarioId) {
   const key = usuarioId || 'usr-admin-master';
@@ -20,6 +20,24 @@ function getUserStore(usuarioId) {
   return userStores[key];
 }
 
+function updatePresence(heartbeat) {
+  if (heartbeat && heartbeat.usuarioId) {
+    globalPresenceMap[heartbeat.usuarioId] = {
+      usuarioId: heartbeat.usuarioId,
+      nome: heartbeat.nome || 'Usuário',
+      email: heartbeat.email || '',
+      role: heartbeat.role || 'cliente',
+      timestamp: Date.now()
+    };
+  }
+  const now = Date.now();
+  Object.keys(globalPresenceMap).forEach((id) => {
+    if (now - globalPresenceMap[id].timestamp > 45000) {
+      delete globalPresenceMap[id];
+    }
+  });
+}
+
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -33,13 +51,18 @@ exports.handler = async (event) => {
     return { statusCode: 200, headers, body: '' };
   }
 
-  const queryUsuarioId = event.queryStringParameters?.usuarioId;
+  const queryParams = event.queryStringParameters || {};
+  const queryUsuarioId = queryParams.usuarioId;
 
   if (event.httpMethod === 'POST' || event.httpMethod === 'PUT') {
     try {
       const body = JSON.parse(event.body || '{}');
       const usuarioId = body.usuarioId || queryUsuarioId || 'usr-admin-master';
       const store = getUserStore(usuarioId);
+
+      if (body.heartbeat) {
+        updatePresence(body.heartbeat);
+      }
 
       if (Array.isArray(body.producao)) store.producao = body.producao;
       if (Array.isArray(body.financeiro)) store.financeiro = body.financeiro;
@@ -50,10 +73,13 @@ exports.handler = async (event) => {
       store.updatedAt = body.updatedAt || Date.now();
       store.updatedBy = body.updatedBy || 'Dispositivo';
 
+      updatePresence();
+      const onlineUsers = Object.values(globalPresenceMap);
+
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ success: true, data: store })
+        body: JSON.stringify({ success: true, data: { ...store, onlineUsers } })
       };
     } catch (e) {
       return {
@@ -64,13 +90,26 @@ exports.handler = async (event) => {
     }
   }
 
-  // GET request - Retorna os dados isolados do usuário informado
+  // GET request - Retorna os dados isolados do usuário informado + onlineUsers
   const usuarioId = queryUsuarioId || 'usr-admin-master';
   const store = getUserStore(usuarioId);
+
+  if (queryParams.hbUsuarioId) {
+    updatePresence({
+      usuarioId: queryParams.hbUsuarioId,
+      nome: queryParams.hbNome,
+      email: queryParams.hbEmail,
+      role: queryParams.hbRole
+    });
+  } else {
+    updatePresence();
+  }
+
+  const onlineUsers = Object.values(globalPresenceMap);
 
   return {
     statusCode: 200,
     headers,
-    body: JSON.stringify({ success: true, data: store })
+    body: JSON.stringify({ success: true, data: { ...store, onlineUsers } })
   };
 };

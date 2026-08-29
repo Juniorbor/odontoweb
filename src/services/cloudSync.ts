@@ -1,5 +1,4 @@
-// Serviço de Sincronização em Nuvem em Tempo Real com Isolamento Multi-Tenant por Usuário
-// Garantia total de isolamento entre Admin e Clientes
+// Serviço de Sincronização em Nuvem em Tempo Real com Presença de Usuários Online
 
 const getCloudEndpoint = () => {
   if (typeof window !== 'undefined') {
@@ -13,6 +12,14 @@ const getCloudEndpoint = () => {
   return '/api/sync';
 };
 
+export interface UsuarioOnlineInfo {
+  usuarioId: string;
+  nome: string;
+  email: string;
+  role: string;
+  timestamp: number;
+}
+
 export interface CloudDataPayload {
   usuarioId?: string;
   producao?: any[];
@@ -20,6 +27,7 @@ export interface CloudDataPayload {
   pacientes?: any[];
   consultas?: any[];
   fotografias?: any[];
+  onlineUsers?: UsuarioOnlineInfo[];
   updatedAt?: number;
   updatedBy?: string;
 }
@@ -49,9 +57,13 @@ export function getUserKeys(usuarioId?: string) {
 }
 
 /**
- * Envia as alterações para o localStorage local e para a nuvem isoladas por Usuário
+ * Envia as alterações para o localStorage local e para a nuvem isoladas por Usuário + Heartbeat de Presença
  */
-export async function pushToCloud(data: Partial<CloudDataPayload>, usuarioId?: string): Promise<boolean> {
+export async function pushToCloud(
+  data: Partial<CloudDataPayload>,
+  usuarioId?: string,
+  usuarioLogadoInfo?: { nome: string; email: string; role: string }
+): Promise<boolean> {
   try {
     const timestamp = Date.now();
     const keys = getUserKeys(usuarioId);
@@ -75,7 +87,7 @@ export async function pushToCloud(data: Partial<CloudDataPayload>, usuarioId?: s
 
     localStorage.setItem(keys.LAST_UPDATE, timestamp.toString());
 
-    const payload: CloudDataPayload = {
+    const payload: CloudDataPayload & { heartbeat?: any } = {
       usuarioId: usuarioId || 'usr-admin-master',
       producao: data.producao !== undefined ? data.producao : getItemJSON(keys.PRODUCAO, []),
       financeiro: data.financeiro !== undefined ? data.financeiro : getItemJSON(keys.FINANCEIRO, []),
@@ -85,6 +97,16 @@ export async function pushToCloud(data: Partial<CloudDataPayload>, usuarioId?: s
       updatedAt: timestamp,
       updatedBy: typeof window !== 'undefined' && window.innerWidth < 768 ? 'Celular (Android/iOS)' : 'Notebook/PC'
     };
+
+    if (usuarioLogadoInfo && usuarioId) {
+      payload.heartbeat = {
+        usuarioId,
+        nome: usuarioLogadoInfo.nome,
+        email: usuarioLogadoInfo.email,
+        role: usuarioLogadoInfo.role,
+        timestamp: Date.now()
+      };
+    }
 
     // Notifica apenas abas do mesmo usuário via BroadcastChannel
     if (broadcastChannel) {
@@ -98,6 +120,10 @@ export async function pushToCloud(data: Partial<CloudDataPayload>, usuarioId?: s
     });
 
     if (res.ok) {
+      const json = await res.json();
+      if (json.data && json.data.onlineUsers && data) {
+        data.onlineUsers = json.data.onlineUsers;
+      }
       return true;
     }
   } catch (error) {
@@ -107,19 +133,25 @@ export async function pushToCloud(data: Partial<CloudDataPayload>, usuarioId?: s
 }
 
 /**
- * Baixa as atualizações da nuvem com isolamento total por usuário
+ * Baixa as atualizações da nuvem com presenças online em tempo real
  */
 export async function pullFromCloud(
   onUpdate: (payload: CloudDataPayload) => void,
   _force: boolean = false,
-  usuarioId?: string
+  usuarioId?: string,
+  usuarioLogadoInfo?: { nome: string; email: string; role: string }
 ): Promise<boolean> {
   if (isSyncing) return false;
   isSyncing = true;
   const keys = getUserKeys(usuarioId);
 
   try {
-    const res = await fetch(`${getCloudEndpoint()}?usuarioId=${encodeURIComponent(usuarioId || 'usr-admin-master')}`, {
+    let url = `${getCloudEndpoint()}?usuarioId=${encodeURIComponent(usuarioId || 'usr-admin-master')}`;
+    if (usuarioLogadoInfo && usuarioId) {
+      url += `&hbUsuarioId=${encodeURIComponent(usuarioId)}&hbNome=${encodeURIComponent(usuarioLogadoInfo.nome)}&hbEmail=${encodeURIComponent(usuarioLogadoInfo.email)}&hbRole=${encodeURIComponent(usuarioLogadoInfo.role)}`;
+    }
+
+    const res = await fetch(url, {
       headers: { 'Accept': 'application/json' }
     });
     
@@ -131,12 +163,6 @@ export async function pullFromCloud(
     const result = await res.json();
     const cloudData: CloudDataPayload = result.data || {};
 
-    // Se o payload pertence a outro usuário, descarta para prevenir vazamento
-    if (cloudData.usuarioId && usuarioId && cloudData.usuarioId !== usuarioId) {
-      isSyncing = false;
-      return false;
-    }
-
     const remoteTimestamp = cloudData.updatedAt || 0;
     const localTimestamp = Number(localStorage.getItem(keys.LAST_UPDATE) || '0');
 
@@ -147,19 +173,21 @@ export async function pullFromCloud(
         pacientes: getItemJSON(KEYS.PACIENTES, []),
         consultas: getItemJSON(KEYS.CONSULTAS, []),
         fotografias: getItemJSON(KEYS.FOTOGRAFIAS, [])
-      }, usuarioId);
+      }, usuarioId, usuarioLogadoInfo);
       isSyncing = false;
       return true;
     }
 
-    if (remoteTimestamp > localTimestamp) {
+    if (remoteTimestamp > localTimestamp || cloudData.onlineUsers) {
       if (cloudData.producao) {
         localStorage.setItem(keys.PRODUCAO, JSON.stringify(cloudData.producao));
       }
       if (cloudData.financeiro) {
         localStorage.setItem(keys.FINANCEIRO, JSON.stringify(cloudData.financeiro));
       }
-      localStorage.setItem(keys.LAST_UPDATE, remoteTimestamp.toString());
+      if (remoteTimestamp > localTimestamp) {
+        localStorage.setItem(keys.LAST_UPDATE, remoteTimestamp.toString());
+      }
       onUpdate(cloudData);
       isSyncing = false;
       return true;

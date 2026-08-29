@@ -1,7 +1,7 @@
-// API Serverless de Sincronização com Isolamento Multi-Tenant por Usuário
-// Impede vazamento ou réplica de dados entre contas de usuários e administradores
+// API Serverless de Sincronização com Isolamento Multi-Tenant por Usuário + Presença de Usuários Online em Tempo Real
 
 let userStores = {};
+let globalPresenceMap = {};
 
 function getUserStore(usuarioId) {
   const key = usuarioId || 'usr-admin-master';
@@ -20,6 +20,25 @@ function getUserStore(usuarioId) {
   return userStores[key];
 }
 
+function updatePresence(heartbeat) {
+  if (heartbeat && heartbeat.usuarioId) {
+    globalPresenceMap[heartbeat.usuarioId] = {
+      usuarioId: heartbeat.usuarioId,
+      nome: heartbeat.nome || 'Usuário',
+      email: heartbeat.email || '',
+      role: heartbeat.role || 'cliente',
+      timestamp: Date.now()
+    };
+  }
+  // Limpa usuários inativos a mais de 45 segundos
+  const now = Date.now();
+  Object.keys(globalPresenceMap).forEach((id) => {
+    if (now - globalPresenceMap[id].timestamp > 45000) {
+      delete globalPresenceMap[id];
+    }
+  });
+}
+
 export default function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
@@ -36,6 +55,10 @@ export default function handler(req, res) {
       const usuarioId = body.usuarioId || req.query?.usuarioId || 'usr-admin-master';
       const store = getUserStore(usuarioId);
 
+      if (body.heartbeat) {
+        updatePresence(body.heartbeat);
+      }
+
       if (Array.isArray(body.producao)) store.producao = body.producao;
       if (Array.isArray(body.financeiro)) store.financeiro = body.financeiro;
       if (Array.isArray(body.pacientes)) store.pacientes = body.pacientes;
@@ -45,15 +68,31 @@ export default function handler(req, res) {
       store.updatedAt = body.updatedAt || Date.now();
       store.updatedBy = body.updatedBy || 'Dispositivo';
 
-      return res.status(200).json({ success: true, data: store });
+      updatePresence();
+      const onlineUsers = Object.values(globalPresenceMap);
+
+      return res.status(200).json({ success: true, data: { ...store, onlineUsers } });
     } catch (e) {
       return res.status(400).json({ success: false, error: 'Formato JSON inválido' });
     }
   }
 
-  // GET Request: extrai o usuarioId da query string para isolar dados do cliente
+  // GET Request: extrai o usuarioId da query string para isolar dados do cliente e retorna usuarios online
   const usuarioId = req.query?.usuarioId || 'usr-admin-master';
   const store = getUserStore(usuarioId);
 
-  return res.status(200).json({ success: true, data: store });
+  if (req.query?.hbUsuarioId) {
+    updatePresence({
+      usuarioId: req.query.hbUsuarioId,
+      nome: req.query.hbNome,
+      email: req.query.hbEmail,
+      role: req.query.hbRole
+    });
+  } else {
+    updatePresence();
+  }
+
+  const onlineUsers = Object.values(globalPresenceMap);
+
+  return res.status(200).json({ success: true, data: { ...store, onlineUsers } });
 }

@@ -7,11 +7,13 @@ import {
   User,
   LogOut,
   ChevronDown,
-  Menu
+  Menu,
+  Users
 } from 'lucide-react';
 import type { Paciente, Consulta } from '../types';
 import type { UsuarioSistema } from '../services/authService';
 import { getNotificacoesNovosClientesAdmin, marcarNotificacoesNovosClientesComoLidas } from '../services/authService';
+import type { UsuarioOnlineInfo } from '../services/cloudSync';
 import LOGO_BASE64 from '../assets/logoData';
 
 interface HeaderBarProps {
@@ -25,6 +27,7 @@ interface HeaderBarProps {
   onSelectPaciente: (paciente: Paciente) => void;
   onToggleMobileMenu?: () => void;
   onAbrirNotificacoes?: () => void;
+  onlineUsers?: UsuarioOnlineInfo[];
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({
@@ -37,7 +40,8 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   consultas: _consultas,
   onSelectPaciente,
   onToggleMobileMenu,
-  onAbrirNotificacoes
+  onAbrirNotificacoes,
+  onlineUsers = []
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
@@ -162,6 +166,49 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
       {/* Ações da Direita */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* Indicador de Presença de Usuários Online em Tempo Real */}
+        <div className="relative group">
+          <div className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-extrabold px-2.5 py-1.5 rounded-2xl text-[11px] flex items-center gap-1.5 border border-emerald-500/30 transition-all cursor-pointer shadow-sm">
+            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-ping shrink-0"></span>
+            <Users className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span className="hidden sm:inline font-mono">{onlineUsers.length || 1} Online</span>
+            <span className="sm:hidden font-mono">{onlineUsers.length || 1}</span>
+          </div>
+
+          {/* Tooltip com a lista dos usuários conectados em tempo real */}
+          <div className="absolute right-0 top-full mt-2 w-60 p-3 rounded-2xl bg-slate-950 border border-slate-800 text-white shadow-2xl text-xs space-y-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-50">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+              <span className="font-extrabold text-[10px] uppercase text-emerald-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span> Conectados Agora
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono">{onlineUsers.length || 1} ativo(s)</span>
+            </div>
+            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+              {(onlineUsers.length > 0 ? onlineUsers : [
+                {
+                  usuarioId: usuarioLogado?.id || 'master',
+                  nome: usuarioLogado?.nome || 'Você',
+                  email: usuarioLogado?.email || '',
+                  role: usuarioLogado?.role || 'admin',
+                  timestamp: Date.now()
+                }
+              ]).map((u) => (
+                <div key={u.usuarioId} className="flex items-center justify-between py-1 text-[11px] border-b border-slate-900 last:border-0">
+                  <div className="truncate pr-2">
+                    <span className="font-bold text-white block truncate">{u.nome}</span>
+                    <span className="text-[9px] text-slate-400 block truncate">{u.email}</span>
+                  </div>
+                  <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase shrink-0 border ${
+                    u.role === 'admin' ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                  }`}>
+                    {u.role === 'admin' ? 'Admin' : 'Cliente'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Toggle Tema (Claro / Escuro) */}
         <button
           onClick={onToggleDarkMode}

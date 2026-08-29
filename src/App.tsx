@@ -46,7 +46,7 @@ import type {
   MensagemIA
 } from './types';
 
-import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, KEYS, getItemJSON, getUserKeys } from './services/cloudSync';
+import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, KEYS, getItemJSON, getUserKeys, type UsuarioOnlineInfo } from './services/cloudSync';
 import { type UsuarioSistema, getNotificacoesNovosClientesAdmin, type NotificacaoNovoClienteAdmin } from './services/authService';
 
 const SESSION_KEY = 'odonto_usuario_sessao_v1';
@@ -109,37 +109,35 @@ export function App() {
     }
   }, []);
 
-  // Sincronização em nuvem e local entre dispositivos (celular e notebook)
+  // Presença de Usuários Online em Tempo Real
+  const [onlineUsers, setOnlineUsers] = useState<UsuarioOnlineInfo[]>([]);
+
+  // Sincronização em nuvem e heartbeat de presença online entre dispositivos
   useEffect(() => {
-    // 1. Carregamento prioritário na nuvem ao abrir a aplicação
-    pullFromCloud((payload) => {
+    const userInfo = usuarioLogado
+      ? { nome: usuarioLogado.nome, email: usuarioLogado.email, role: usuarioLogado.role }
+      : undefined;
+
+    const syncHandler = (payload: any) => {
       if (payload.pacientes && payload.pacientes.length > 0) setPacientes(payload.pacientes);
       if (payload.consultas && payload.consultas.length > 0) setConsultas(payload.consultas);
       if (payload.fotografias && payload.fotografias.length > 0) setFotografias(payload.fotografias);
-    }, true);
+      if (payload.onlineUsers) setOnlineUsers(payload.onlineUsers);
+    };
+
+    // 1. Carregamento prioritário na nuvem ao abrir a aplicação com Heartbeat
+    pullFromCloud(syncHandler, true, usuarioLogado?.id, userInfo);
 
     // 2. Escuta alterações locais de abas simultâneas via BroadcastChannel
-    const unsubscribeBroadcast = subscribeLocalBroadcast((payload) => {
-      if (payload.pacientes && payload.pacientes.length > 0) setPacientes(payload.pacientes);
-      if (payload.consultas && payload.consultas.length > 0) setConsultas(payload.consultas);
-      if (payload.fotografias && payload.fotografias.length > 0) setFotografias(payload.fotografias);
-    });
+    const unsubscribeBroadcast = subscribeLocalBroadcast(syncHandler, usuarioLogado?.id);
 
-    // 3. Polling em tempo real a cada 3 segundos para checar novas alterações no celular
+    // 3. Heartbeat e Polling continuo em tempo real a cada 5 segundos
     const interval = setInterval(() => {
-      pullFromCloud((payload) => {
-        if (payload.pacientes && payload.pacientes.length > 0) setPacientes(payload.pacientes);
-        if (payload.consultas && payload.consultas.length > 0) setConsultas(payload.consultas);
-        if (payload.fotografias && payload.fotografias.length > 0) setFotografias(payload.fotografias);
-      });
-    }, 3000);
+      pullFromCloud(syncHandler, false, usuarioLogado?.id, userInfo);
+    }, 5000);
 
     const handleFocus = () => {
-      pullFromCloud((payload) => {
-        if (payload.pacientes && payload.pacientes.length > 0) setPacientes(payload.pacientes);
-        if (payload.consultas && payload.consultas.length > 0) setConsultas(payload.consultas);
-        if (payload.fotografias && payload.fotografias.length > 0) setFotografias(payload.fotografias);
-      }, true);
+      pullFromCloud(syncHandler, true, usuarioLogado?.id, userInfo);
     };
 
     window.addEventListener('focus', handleFocus);
@@ -466,6 +464,7 @@ export function App() {
           onSelectPaciente={(p) => handleVerPerfilPaciente(p)}
           onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           onAbrirNotificacoes={() => setCentralNotificacoesAberto(true)}
+          onlineUsers={onlineUsers}
         />
 
         {/* Dynamic Views */}
@@ -476,6 +475,7 @@ export function App() {
               darkMode={darkMode}
               userRole={usuarioLogado?.role || 'admin'}
               usuarioId={usuarioLogado?.id}
+              onlineUsersCount={onlineUsers.length || 1}
             />
           )}
 
