@@ -178,20 +178,20 @@ export async function pullFromCloud(
       return true;
     }
 
-    if (remoteTimestamp > localTimestamp || cloudData.onlineUsers) {
+    if (remoteTimestamp > localTimestamp) {
       if (cloudData.producao) {
         localStorage.setItem(keys.PRODUCAO, JSON.stringify(cloudData.producao));
       }
       if (cloudData.financeiro) {
         localStorage.setItem(keys.FINANCEIRO, JSON.stringify(cloudData.financeiro));
       }
-      if (remoteTimestamp > localTimestamp) {
-        localStorage.setItem(keys.LAST_UPDATE, remoteTimestamp.toString());
-      }
-      onUpdate(cloudData);
-      isSyncing = false;
-      return true;
+      localStorage.setItem(keys.LAST_UPDATE, remoteTimestamp.toString());
     }
+
+    // Sempre entrega dados de presenca onlineUsers para a UI
+    onUpdate(cloudData);
+    isSyncing = false;
+    return true;
   } catch (e) {
     // Silencioso em offline
   }

@@ -63,6 +63,51 @@ export const ADMIN_PADRAO: UsuarioSistema = {
   valorMensalidade: 0
 };
 
+const STORAGE_PRESENCE_HEARTBEATS = 'odonto_presence_heartbeats_v2';
+
+export const registrarHeartbeatLocal = (usuario: { id: string; nome: string; email: string; role: string }) => {
+  const map = getItemJSON<Record<string, { usuarioId: string; nome: string; email: string; role: string; timestamp: number }>>(STORAGE_PRESENCE_HEARTBEATS, {});
+  map[usuario.id] = {
+    usuarioId: usuario.id,
+    nome: usuario.nome,
+    email: usuario.email,
+    role: usuario.role,
+    timestamp: Date.now()
+  };
+  localStorage.setItem(STORAGE_PRESENCE_HEARTBEATS, JSON.stringify(map));
+
+  if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    try {
+      const bc = new BroadcastChannel('odontoweb_realtime_channel');
+      bc.postMessage({ type: 'PRESENCE_HEARTBEAT', payload: map[usuario.id] });
+    } catch (e) {}
+  }
+};
+
+export const getUsuariosOnlineCombinados = (remoteOnlineUsers: any[] = []): any[] => {
+  const mapLocal = getItemJSON<Record<string, any>>(STORAGE_PRESENCE_HEARTBEATS, {});
+  const now = Date.now();
+  const result: Record<string, any> = {};
+
+  // Inclui remotos válidos (< 60s)
+  if (Array.isArray(remoteOnlineUsers)) {
+    remoteOnlineUsers.forEach((u) => {
+      if (u && u.usuarioId && now - (u.timestamp || 0) < 60000) {
+        result[u.usuarioId] = u;
+      }
+    });
+  }
+
+  // Inclui locais válidos (< 60s)
+  Object.values(mapLocal).forEach((u) => {
+    if (u && u.usuarioId && now - (u.timestamp || 0) < 60000) {
+      result[u.usuarioId] = u;
+    }
+  });
+
+  return Object.values(result);
+};
+
 export const getNotificacoesNovosClientesAdmin = (): NotificacaoNovoClienteAdmin[] => {
   return getItemJSON<NotificacaoNovoClienteAdmin[]>(STORAGE_NOTIFICACOES_ADMIN, []);
 };

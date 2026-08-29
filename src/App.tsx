@@ -47,7 +47,7 @@ import type {
 } from './types';
 
 import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, KEYS, getItemJSON, getUserKeys, type UsuarioOnlineInfo } from './services/cloudSync';
-import { type UsuarioSistema, getNotificacoesNovosClientesAdmin, type NotificacaoNovoClienteAdmin } from './services/authService';
+import { type UsuarioSistema, getNotificacoesNovosClientesAdmin, type NotificacaoNovoClienteAdmin, registrarHeartbeatLocal, getUsuariosOnlineCombinados } from './services/authService';
 
 const SESSION_KEY = 'odonto_usuario_sessao_v1';
 
@@ -114,30 +114,70 @@ export function App() {
 
   // Sincronização em nuvem e heartbeat de presença online entre dispositivos
   useEffect(() => {
-    const userInfo = usuarioLogado
-      ? { nome: usuarioLogado.nome, email: usuarioLogado.email, role: usuarioLogado.role }
-      : undefined;
+    if (!usuarioLogado) return;
+
+    const userInfo = {
+      nome: usuarioLogado.nome,
+      email: usuarioLogado.email,
+      role: usuarioLogado.role
+    };
+
+    // Registra presença local imediatamente
+    registrarHeartbeatLocal({
+      id: usuarioLogado.id,
+      nome: usuarioLogado.nome,
+      email: usuarioLogado.email,
+      role: usuarioLogado.role
+    });
 
     const syncHandler = (payload: any) => {
       if (payload.pacientes && payload.pacientes.length > 0) setPacientes(payload.pacientes);
       if (payload.consultas && payload.consultas.length > 0) setConsultas(payload.consultas);
       if (payload.fotografias && payload.fotografias.length > 0) setFotografias(payload.fotografias);
-      if (payload.onlineUsers) setOnlineUsers(payload.onlineUsers);
+
+      const combinados = getUsuariosOnlineCombinados(payload.onlineUsers || []);
+      setOnlineUsers(combinados);
     };
 
     // 1. Carregamento prioritário na nuvem ao abrir a aplicação com Heartbeat
-    pullFromCloud(syncHandler, true, usuarioLogado?.id, userInfo);
+    pullFromCloud(syncHandler, true, usuarioLogado.id, userInfo);
 
     // 2. Escuta alterações locais de abas simultâneas via BroadcastChannel
-    const unsubscribeBroadcast = subscribeLocalBroadcast(syncHandler, usuarioLogado?.id);
+    const unsubscribeBroadcast = subscribeLocalBroadcast(syncHandler, usuarioLogado.id);
 
-    // 3. Heartbeat e Polling continuo em tempo real a cada 5 segundos
+    // Escuta broadcasts de heartbeat de presença de outros usuários no mesmo navegador
+    const handleBroadcastChannel = (event: MessageEvent) => {
+      if (event.data && (event.data.type === 'PRESENCE_HEARTBEAT' || event.data.type === 'SYNC_UPDATE')) {
+        setOnlineUsers(getUsuariosOnlineCombinados());
+      }
+    };
+
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        const bc = new BroadcastChannel('odontoweb_realtime_channel');
+        bc.addEventListener('message', handleBroadcastChannel);
+      } catch (e) {}
+    }
+
+    // 3. Heartbeat e Polling contínuo em tempo real a cada 3 segundos
     const interval = setInterval(() => {
-      pullFromCloud(syncHandler, false, usuarioLogado?.id, userInfo);
-    }, 5000);
+      registrarHeartbeatLocal({
+        id: usuarioLogado.id,
+        nome: usuarioLogado.nome,
+        email: usuarioLogado.email,
+        role: usuarioLogado.role
+      });
+      pullFromCloud(syncHandler, false, usuarioLogado.id, userInfo);
+    }, 3000);
 
     const handleFocus = () => {
-      pullFromCloud(syncHandler, true, usuarioLogado?.id, userInfo);
+      registrarHeartbeatLocal({
+        id: usuarioLogado.id,
+        nome: usuarioLogado.nome,
+        email: usuarioLogado.email,
+        role: usuarioLogado.role
+      });
+      pullFromCloud(syncHandler, true, usuarioLogado.id, userInfo);
     };
 
     window.addEventListener('focus', handleFocus);
@@ -146,7 +186,7 @@ export function App() {
       clearInterval(interval);
       window.removeEventListener('focus', handleFocus);
     };
-  }, []);
+  }, [usuarioLogado]);
 
   // Aplicar classe dark no HTML root
   useEffect(() => {
