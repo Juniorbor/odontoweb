@@ -30,6 +30,7 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({
   onNavigate,
   darkMode,
+  userRole = 'admin',
   usuarioId,
   onlineUsersCount = 1
 }) => {
@@ -128,10 +129,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Painel Orçamentário Pessoal
                 </span>
 
-                <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 text-[11px] font-extrabold px-3 py-1 rounded-full border border-emerald-500/30">
-                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-ping"></span>
-                  <Users className="w-3.5 h-3.5" /> {onlineUsersCount} Usuário(s) Online Agora
-                </span>
+                {userRole === 'admin' && (
+                  <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-400 text-[11px] font-extrabold px-3 py-1 rounded-full border border-emerald-500/30">
+                    <span className="w-2 h-2 bg-emerald-400 rounded-full animate-ping"></span>
+                    <Users className="w-3.5 h-3.5" /> {onlineUsersCount} Usuário(s) Online Agora
+                  </span>
+                )}
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-2">
                 Painel Financeiro & Saúde Orçamentária <span className="text-teal-400 font-bold text-sm bg-teal-500/10 px-2.5 py-0.5 rounded-full border border-teal-500/30">AO VIVO</span>
