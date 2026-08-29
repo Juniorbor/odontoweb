@@ -16,6 +16,7 @@ import { Login } from './components/Login';
 import { Sidebar } from './components/Sidebar';
 import { HeaderBar } from './components/HeaderBar';
 import { CentralNotificacoes } from './components/CentralNotificacoes';
+import { OdontologiaMain } from './components/OdontologiaMain';
 import { ModalPlanoEExpiracao } from './components/ModalPlanoEExpiracao';
 import { ToastContainer, type ToastMessage } from './components/Toast';
 import LOGO_BASE64 from './assets/logoData';
@@ -62,8 +63,8 @@ export function App() {
 
   const [isAutenticado, setIsAutenticado] = useState<boolean>(false);
 
-  // Navegação
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  // Navegação: Define Odontologia como aba principal inicial
+  const [activeTab, setActiveTab] = useState<string>('odontologia');
   const [pacientePerfilSelecionado, setPacientePerfilSelecionado] = useState<Paciente | null>(null);
 
   // Notificações Toast
@@ -509,6 +510,13 @@ export function App() {
 
         {/* Dynamic Views */}
         <main className="p-3 sm:p-6 flex-1 box-border w-full max-w-full transition-all">
+          {activeTab === 'odontologia' && (
+            <OdontologiaMain
+              darkMode={darkMode}
+              userRole={usuarioLogado?.role || 'admin'}
+            />
+          )}
+
           {activeTab === 'dashboard' && (
             <Dashboard
               onNavigate={setActiveTab}

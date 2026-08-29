@@ -8,6 +8,7 @@ import {
   ChevronRight,
   LogOut,
   FileSpreadsheet,
+  Stethoscope,
   X
 } from 'lucide-react';
 
@@ -43,6 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   badgeCounts
 }) => {
   const allMenuItems = [
+    { id: 'odontologia', label: 'Odontologia', icon: Stethoscope, badge: 'NOVO' },
     { id: 'dashboard', label: 'Dashboard', icon: Activity },
     { id: 'producao', label: 'Produção', icon: FileSpreadsheet },
     { id: 'financeiro', label: 'Financeiro', icon: DollarSign, badge: badgeCounts?.pendentes ? `! ${badgeCounts.pendentes}` : undefined },
