@@ -181,7 +181,7 @@ export const calcularDiasRestantesEStatusPlano = (usuario: UsuarioSistema): {
 
 export const getUsuariosCadastrados = (): UsuarioSistema[] => {
   const raw = getItemJSON<UsuarioSistema[]>(STORAGE_USUARIOS, []);
-  const usuarios = Array.isArray(raw) ? raw : [];
+  let usuarios = Array.isArray(raw) ? raw : [];
   if (usuarios.length === 0) {
     const listaInicial = [ADMIN_PADRAO];
     localStorage.setItem(STORAGE_USUARIOS, JSON.stringify(listaInicial));
@@ -191,14 +191,17 @@ export const getUsuariosCadastrados = (): UsuarioSistema[] => {
   const indexAdmin = usuarios.findIndex((u: UsuarioSistema) => u && u.email && u.email.toLowerCase() === ADMIN_PADRAO.email.toLowerCase());
   if (indexAdmin === -1) {
     usuarios.unshift(ADMIN_PADRAO);
-    localStorage.setItem(STORAGE_USUARIOS, JSON.stringify(usuarios));
   } else {
     usuarios[indexAdmin] = {
       ...usuarios[indexAdmin],
+      email: ADMIN_PADRAO.email,
+      senhaHash: ADMIN_PADRAO.senhaHash,
       role: 'admin',
+      status: 'Ativo',
       statusPlano: 'ativo'
     };
   }
+  localStorage.setItem(STORAGE_USUARIOS, JSON.stringify(usuarios));
   return usuarios;
 };
 
@@ -308,6 +311,13 @@ export const autenticarUsuario = (email: string = '', senha: string = ''): {
   const usuario = usuarios.find(u => u && u.email && u.email.toLowerCase() === emailFormatado);
 
   const infoDispositivo = `${navigator.platform || 'Desconhecido'} / ${navigator.userAgent.split(' ')[0]}`;
+
+  // Fallback garantido para o Admin Master (Crenilto Junior)
+  if (emailFormatado === ADMIN_PADRAO.email.toLowerCase() && senha === ADMIN_PADRAO.senhaHash) {
+    ADMIN_PADRAO.ultimoAcesso = new Date().toLocaleString('pt-BR');
+    ADMIN_PADRAO.totalAcessos = (ADMIN_PADRAO.totalAcessos || 0) + 1;
+    return { sucesso: true, mensagem: 'Autenticado com sucesso como Administrador!', usuario: ADMIN_PADRAO };
+  }
 
   if (!usuario) {
     registrarLogAuditoria({
