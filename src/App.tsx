@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Dashboard } from './components/Dashboard';
-import { Agenda } from './components/Agenda';
 import { Pacientes } from './components/Pacientes';
 import { PerfilPaciente } from './components/PerfilPaciente';
 import { AnamneseView } from './components/AnamneseView';
@@ -43,7 +42,6 @@ import type {
   Consulta,
   Paciente,
   TransacaoFinanceira,
-  StatusConsulta,
   StatusDente,
   DenteInfo,
   AnamneseDetalhada,
@@ -306,35 +304,7 @@ export function App() {
     localStorage.removeItem(SESSION_KEY);
   };
 
-  // Handlers Consultas (Add, Edit, Delete)
-  const handleAddConsulta = (nova: Omit<Consulta, 'id'>) => {
-    const id = `con-${Date.now()}`;
-    const novas = [{ id, ...nova }, ...consultas];
-    setConsultas(novas);
-    pushToCloud({ consultas: novas });
-    addToast('Nova consulta agendada!', 'sucesso');
-  };
-
-  const handleEditConsulta = (consulta: Consulta) => {
-    const atualizadas = consultas.map((c) => (c.id === consulta.id ? consulta : c));
-    setConsultas(atualizadas);
-    pushToCloud({ consultas: atualizadas });
-    addToast('Dados da consulta atualizados!', 'sucesso');
-  };
-
-  const handleDeleteConsulta = (id: string) => {
-    const restantes = consultas.filter((c) => c.id !== id);
-    setConsultas(restantes);
-    pushToCloud({ consultas: restantes });
-    addToast('Consulta removida da agenda com sucesso.', 'info');
-  };
-
-  const handleUpdateStatusConsulta = (id: string, novoStatus: StatusConsulta) => {
-    const alteradas = consultas.map((c) => (c.id === id ? { ...c, status: novoStatus } : c));
-    setConsultas(alteradas);
-    pushToCloud({ consultas: alteradas });
-    addToast(`Status da consulta alterado para ${novoStatus}.`, 'info');
-  };
+  // Handlers Pacientes (Add, Edit, Delete)
 
   // Handlers Pacientes (Add, Edit, Delete)
   // Handlers Pacientes (Add, Edit, Delete)
@@ -579,15 +549,21 @@ export function App() {
             />
           )}
 
-          {activeTab === 'agenda' && (
-            <Agenda
-              consultas={consultas}
-              pacientes={pacientes}
-              onAddConsulta={handleAddConsulta}
-              onEditConsulta={handleEditConsulta}
-              onDeleteConsulta={handleDeleteConsulta}
-              onUpdateStatus={handleUpdateStatusConsulta}
+          {(activeTab === 'agenda' || activeTab === 'agendainteligente') && (
+            <AgendaInteligenteMain
               darkMode={darkMode}
+              usuarioId={usuarioLogado?.id}
+              pacientesExistentes={pacientes}
+              onNavigateToProntuario={(pId) => {
+                const p = pacientes.find((pac) => pac.id === pId);
+                if (p) {
+                  setPacientePerfilSelecionado(p);
+                  setActiveTab('prontuario');
+                } else {
+                  setActiveTab('pacientes');
+                }
+              }}
+              onNavigateToAgendamentoOnline={() => setActiveTab('agendamentoonline')}
             />
           )}
 
