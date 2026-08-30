@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowRight, UserPlus, LogIn, User } from 'lucide-react';
 import LOGO_BASE64 from '../assets/logoData';
 import { autenticarUsuario, registrarNovoUsuario, type UsuarioSistema } from '../services/authService';
+import { verificarStatusBloqueioLogin, registrarTentativaLoginFalha, resetarTentativasLoginFalhas, sanitizarEntradaTexto } from '../services/securityService';
 
 interface LoginProps {
   onLoginSuccess: (usuario: UsuarioSistema) => void;
@@ -29,16 +30,30 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     setErro('');
     setSucesso('');
 
-    if (!emailLogin || !senhaLogin) {
+    const emailL = sanitizarEntradaTexto(emailLogin);
+    if (!emailL || !senhaLogin) {
       setErro('Por favor, informe o e-mail e a senha de acesso.');
       return;
     }
 
-    const resultado = autenticarUsuario(emailLogin, senhaLogin);
+    // Checa bloqueio anti-força bruta
+    const statusBloqueio = verificarStatusBloqueioLogin(emailL);
+    if (statusBloqueio.bloqueado) {
+      setErro(`🛡️ ACESSO BLOQUEADO POR SEGURANÇA: Muitas tentativas incorretas de senha. Aguarde ${statusBloqueio.minutosRestantes} minuto(s) para tentar novamente.`);
+      return;
+    }
+
+    const resultado = autenticarUsuario(emailL, senhaLogin);
     if (resultado.sucesso && resultado.usuario) {
+      resetarTentativasLoginFalhas(emailL);
       onLoginSuccess(resultado.usuario);
     } else {
-      setErro(resultado.mensagem);
+      const regFalha = registrarTentativaLoginFalha(emailL);
+      if (regFalha.bloqueado) {
+        setErro(`🛡️ CONTA BLOQUEADA POR 5 MINUTOS: Limite de 5 tentativas incorretas atingido.`);
+      } else {
+        setErro(`${resultado.mensagem} (Tentativa ${regFalha.tentativas} de 5).`);
+      }
     }
   };
 

@@ -17,6 +17,7 @@ import { Sidebar } from './components/Sidebar';
 import { HeaderBar } from './components/HeaderBar';
 import { CentralNotificacoes } from './components/CentralNotificacoes';
 import { BancoDeDadosBackup } from './components/BancoDeDadosBackup';
+import { registrarSessaoDispositivoAtual, getTempoAutoLogoutMinutos } from './services/securityService';
 import { ModalPlanoEExpiracao } from './components/ModalPlanoEExpiracao';
 import { ToastContainer, type ToastMessage } from './components/Toast';
 import LOGO_BASE64 from './assets/logoData';
@@ -113,9 +114,12 @@ export function App() {
   // Presença de Usuários Online em Tempo Real
   const [onlineUsers, setOnlineUsers] = useState<UsuarioOnlineInfo[]>([]);
 
-  // Sincronização em nuvem e heartbeat de presença online entre dispositivos
+  // Sincronização em nuvem, heartbeat de presença online e Auto-Logout por Inatividade
   useEffect(() => {
     if (!usuarioLogado) return;
+
+    // Registra sessão ativa deste dispositivo
+    registrarSessaoDispositivoAtual(usuarioLogado.id);
 
     const userInfo = {
       nome: usuarioLogado.nome,
@@ -130,6 +134,24 @@ export function App() {
       email: usuarioLogado.email,
       role: usuarioLogado.role
     });
+
+    // Monitor de Inatividade para Auto-Logout (Padrão 15 minutos)
+    let inactivityTimer: any = null;
+    const resetInactivityTimer = () => {
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      const mins = getTempoAutoLogoutMinutos();
+      if (mins > 0) {
+        inactivityTimer = setTimeout(() => {
+          handleLogout();
+          alert('🔒 SESSÃO ENCERRADA POR INATIVIDADE: Você ficou ausente sem movimentação. Por razões de segurança da clínica, sua conta foi desconectada.');
+        }, mins * 60 * 1000);
+      }
+    };
+
+    resetInactivityTimer();
+
+    const activityEvents = ['mousemove', 'keydown', 'touchstart', 'scroll', 'click'];
+    activityEvents.forEach(evt => window.addEventListener(evt, resetInactivityTimer));
 
     const syncHandler = (payload: any) => {
       if (payload.pacientes && payload.pacientes.length > 0) setPacientes(payload.pacientes);

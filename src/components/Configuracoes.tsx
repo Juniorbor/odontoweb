@@ -4,6 +4,8 @@ import { PainelAuditoriaAdmin } from './PainelAuditoriaAdmin';
 import type { UsuarioSistema } from '../services/authService';
 import { BancoDeDadosBackup } from './BancoDeDadosBackup';
 
+import { PainelSegurancaESessoes } from './PainelSegurancaESessoes';
+
 interface ConfiguracoesProps {
   darkMode: boolean;
   onToggleDarkMode: () => void;
@@ -54,6 +56,9 @@ export const Configuracoes: React.FC<ConfiguracoesProps> = ({
 
       {/* SEÇÃO PRINCIPAL DE BANCO DE DADOS & BACKUP E RESTAURAÇÃO */}
       <BancoDeDadosBackup darkMode={darkMode} usuarioId={usuarioLogado?.id} />
+
+      {/* SEÇÃO DE SEGURANÇA EMPRESARIAL, 2FA E DISPOSITIVOS LOGADOS */}
+      <PainelSegurancaESessoes darkMode={darkMode} usuarioId={usuarioLogado?.id} />
 
       {/* SEÇÃO DE AUDITORIA EXCLUSIVA DO ADMINISTRADOR MASTER */}
       {isAdmin && (
