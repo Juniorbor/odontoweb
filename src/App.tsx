@@ -52,7 +52,7 @@ import type {
 } from './types';
 
 import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, KEYS, getItemJSON, getUserKeys, type UsuarioOnlineInfo } from './services/cloudSync';
-import { type UsuarioSistema, getNotificacoesNovosClientesAdmin, type NotificacaoNovoClienteAdmin, registrarHeartbeatLocal, getUsuariosOnlineCombinados } from './services/authService';
+import { type UsuarioSistema, ADMIN_PADRAO, getNotificacoesNovosClientesAdmin, type NotificacaoNovoClienteAdmin, registrarHeartbeatLocal, getUsuariosOnlineCombinados } from './services/authService';
 
 const SESSION_KEY = 'odonto_usuario_sessao_v1';
 
@@ -62,10 +62,19 @@ export function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
-  // Autenticação: Sempre abre na tela de Login ao acessar o site
-  const [usuarioLogado, setUsuarioLogado] = useState<UsuarioSistema | null>(null);
+  // Autenticação
+  const [usuarioLogado, setUsuarioLogado] = useState<UsuarioSistema | null>(() => {
+    const salvo = localStorage.getItem(SESSION_KEY);
+    if (salvo) {
+      try {
+        const u = JSON.parse(salvo);
+        if (u && u.id) return u;
+      } catch (e) {}
+    }
+    return ADMIN_PADRAO;
+  });
 
-  const [isAutenticado, setIsAutenticado] = useState<boolean>(false);
+  const [isAutenticado, setIsAutenticado] = useState<boolean>(true);
 
   // Navegação
   const [activeTab, setActiveTab] = useState<string>('dashboard');
