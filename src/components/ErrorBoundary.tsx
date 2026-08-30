@@ -28,6 +28,12 @@ export class ErrorBoundary extends Component<Props, State> {
     window.location.reload();
   };
 
+  public handleResetCache = () => {
+    // Remove chaves corrompidas de cache temporario e recarrega
+    sessionStorage.clear();
+    window.location.href = window.location.origin;
+  };
+
   public render() {
     if (this.state.hasError) {
       return (
@@ -38,7 +44,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
             
             <h2 className="text-xl font-extrabold text-white">
-              Sistema OdontoWeb Restaurado
+              Sistema OdontoWeb - Proteção Ativa
             </h2>
 
             <p className="text-xs text-slate-400 leading-relaxed">
@@ -46,12 +52,21 @@ export class ErrorBoundary extends Component<Props, State> {
                 'Ocorreu uma pequena instabilidade de renderização gráfica. O sistema isolou a exceção com segurança para proteger seus dados.'}
             </p>
 
-            <button
-              onClick={this.handleReload}
-              className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-extrabold px-6 py-3 rounded-2xl text-xs flex items-center justify-center gap-2 w-full shadow-lg shadow-teal-600/30 cursor-pointer transition-all"
-            >
-              <RefreshCw className="w-4 h-4 animate-spin" /> Recarregar OdontoWeb
-            </button>
+            <div className="space-y-2 pt-2">
+              <button
+                onClick={this.handleReload}
+                className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-slate-950 font-black px-6 py-3 rounded-2xl text-xs flex items-center justify-center gap-2 w-full shadow-lg shadow-teal-600/30 cursor-pointer transition-all"
+              >
+                <RefreshCw className="w-4 h-4" /> Recarregar OdontoWeb
+              </button>
+
+              <button
+                onClick={this.handleResetCache}
+                className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-2.5 rounded-2xl text-xs w-full transition-colors cursor-pointer"
+              >
+                🧹 Limpar Cache & Ir para Início
+              </button>
+            </div>
           </div>
         </div>
       );

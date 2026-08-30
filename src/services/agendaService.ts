@@ -120,7 +120,34 @@ export function salvarDentistasLocais(dentistas: Dentista[], usuarioId?: string)
 
 export function getConsultasInteligentesLocais(usuarioId?: string): ConsultaInteligente[] {
   const key = `odonto_consultas_inteligentes_${usuarioId || 'usr-admin-master'}`;
-  return getItemJSON(key, MOCK_CONSULTAS_INICIAIS);
+  const raw = getItemJSON(key, MOCK_CONSULTAS_INICIAIS);
+
+  if (!Array.isArray(raw)) return MOCK_CONSULTAS_INICIAIS;
+
+  return raw.map((c: any) => ({
+    id: String(c.id || `cons-${Date.now()}-${Math.random()}`),
+    pacienteId: String(c.pacienteId || 'pac-1'),
+    pacienteNome: String(c.pacienteNome || c.paciente || 'Paciente Sem Nome'),
+    pacienteTelefone: String(c.pacienteTelefone || c.telefone || '(69) 99999-0000'),
+    dentistaId: String(c.dentistaId || 'dent-1'),
+    dentistaNome: String(c.dentistaNome || 'Dr. Crenilto Junior'),
+    especialidade: c.especialidade || 'Clínico Geral',
+    procedimento: String(c.procedimento || 'Consulta Odontológica'),
+    data: String(c.data || new Date().toISOString().split('T')[0]),
+    horarioInicio: String(c.horarioInicio || c.horario || '09:00'),
+    horarioFim: String(c.horarioFim || '09:45'),
+    duracaoMinutos: Number(c.duracaoMinutos || 45),
+    consultorio: String(c.consultorio || 'Consultório 01 (Matriz)'),
+    motivoConsulta: String(c.motivoConsulta || ''),
+    observacoes: String(c.observacoes || ''),
+    status: c.status || 'Agendada',
+    formaContato: c.formaContato || 'WhatsApp',
+    necessitaRetorno: Boolean(c.necessitaRetorno),
+    periodoRetornoRecomendado: c.periodoRetornoRecomendado || '6m',
+    dataRetornoPrevisto: c.dataRetornoPrevisto ? String(c.dataRetornoPrevisto) : undefined,
+    agendamentoOnline: Boolean(c.agendamentoOnline),
+    createdAt: String(c.createdAt || new Date().toISOString())
+  }));
 }
 
 export function salvarConsultasInteligentesLocais(consultas: ConsultaInteligente[], usuarioId?: string) {

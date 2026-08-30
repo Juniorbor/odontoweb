@@ -138,7 +138,8 @@ export const AgendaInteligenteMain: React.FC<AgendaInteligenteMainProps> = ({
   };
 
   // Filtros aplicados
-  const consultasFiltradas = consultas.filter((c) => {
+  const consultasFiltradas = (consultas || []).filter((c) => {
+    if (!c) return false;
     if (dentistaFiltroId !== 'todos' && c.dentistaId !== dentistaFiltroId) return false;
     if (statusFiltro !== 'todos' && c.status !== statusFiltro) return false;
 
@@ -146,10 +147,10 @@ export const AgendaInteligenteMain: React.FC<AgendaInteligenteMainProps> = ({
 
     if (buscaQuery.trim()) {
       const q = buscaQuery.toLowerCase();
-      const matchNome = c.pacienteNome.toLowerCase().includes(q);
-      const matchDentista = c.dentistaNome.toLowerCase().includes(q);
-      const matchProc = c.procedimento.toLowerCase().includes(q);
-      const matchTel = c.pacienteTelefone.includes(q);
+      const matchNome = (c.pacienteNome || '').toLowerCase().includes(q);
+      const matchDentista = (c.dentistaNome || '').toLowerCase().includes(q);
+      const matchProc = (c.procedimento || '').toLowerCase().includes(q);
+      const matchTel = (c.pacienteTelefone || '').includes(q);
       return matchNome || matchDentista || matchProc || matchTel;
     }
 
@@ -158,11 +159,11 @@ export const AgendaInteligenteMain: React.FC<AgendaInteligenteMainProps> = ({
 
   // Métricas do Dashboard em Tempo Real
   const hojeStr = new Date().toISOString().split('T')[0];
-  const consultasHoje = consultas.filter((c) => c.data === hojeStr);
-  const confirmadasHoje = consultasHoje.filter((c) => c.status === 'Confirmada').length;
-  const aguardandoHoje = consultasHoje.filter((c) => c.status === 'Aguardando confirmação' || c.status === 'Agendada').length;
-  const atendidasHoje = consultasHoje.filter((c) => c.status === 'Atendimento concluído').length;
-  const retornosPendentesTotal = consultas.filter((c) => c.necessitaRetorno && c.dataRetornoPrevisto && c.dataRetornoPrevisto < hojeStr).length;
+  const consultasHoje = (consultas || []).filter((c) => c && c.data === hojeStr);
+  const confirmadasHoje = consultasHoje.filter((c) => c && c.status === 'Confirmada').length;
+  const aguardandoHoje = consultasHoje.filter((c) => c && (c.status === 'Aguardando confirmação' || c.status === 'Agendada')).length;
+  const atendidasHoje = consultasHoje.filter((c) => c && c.status === 'Atendimento concluído').length;
+  const retornosPendentesTotal = (consultas || []).filter((c) => c && c.necessitaRetorno && c.dataRetornoPrevisto && c.dataRetornoPrevisto < hojeStr).length;
 
   return (
     <div className="space-y-6 font-sans text-slate-200 animate-fadeIn">
