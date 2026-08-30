@@ -16,6 +16,7 @@ import { Login } from './components/Login';
 import { Sidebar } from './components/Sidebar';
 import { HeaderBar } from './components/HeaderBar';
 import { CentralNotificacoes } from './components/CentralNotificacoes';
+import { BancoDeDadosBackup } from './components/BancoDeDadosBackup';
 import { ModalPlanoEExpiracao } from './components/ModalPlanoEExpiracao';
 import { ToastContainer, type ToastMessage } from './components/Toast';
 import LOGO_BASE64 from './assets/logoData';
@@ -626,6 +627,13 @@ export function App() {
             <Relatorios
               darkMode={darkMode}
               userRole={usuarioLogado?.role || 'admin'}
+              usuarioId={usuarioLogado?.id}
+            />
+          )}
+
+          {activeTab === 'bancodedados' && (
+            <BancoDeDadosBackup
+              darkMode={darkMode}
               usuarioId={usuarioLogado?.id}
             />
           )}

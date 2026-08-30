@@ -8,6 +8,7 @@ import {
   ChevronRight,
   LogOut,
   FileSpreadsheet,
+  Database,
   X
 } from 'lucide-react';
 
@@ -47,6 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'producao', label: 'Produção', icon: FileSpreadsheet },
     { id: 'financeiro', label: 'Financeiro', icon: DollarSign, badge: badgeCounts?.pendentes ? `! ${badgeCounts.pendentes}` : undefined },
     { id: 'relatorios', label: 'Relatórios', icon: BarChart3 },
+    { id: 'bancodedados', label: 'Banco de Dados', icon: Database, badge: 'SEGURA' },
     { id: 'configuracoes', label: 'Configurações', icon: Settings },
   ];
 

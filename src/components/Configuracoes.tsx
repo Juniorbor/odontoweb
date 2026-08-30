@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Settings, Save, CheckCircle2, Globe } from 'lucide-react';
 import { PainelAuditoriaAdmin } from './PainelAuditoriaAdmin';
 import type { UsuarioSistema } from '../services/authService';
+import { BancoDeDadosBackup } from './BancoDeDadosBackup';
 
 interface ConfiguracoesProps {
   darkMode: boolean;
@@ -38,7 +39,7 @@ export const Configuracoes: React.FC<ConfiguracoesProps> = ({
             <Settings className="w-6 h-6 text-teal-500" /> Configurações Gerais do Sistema
           </h2>
           <p className="text-xs text-slate-400 font-normal">
-            Personalização de perfil de nicho, permissões de acesso e notificações automatizadas.
+            Personalização de perfil de nicho, banco de dados, backups e auditoria.
           </p>
         </div>
 
@@ -50,6 +51,9 @@ export const Configuracoes: React.FC<ConfiguracoesProps> = ({
           {salvo ? 'Configurações Salvas!' : 'Salvar Preferências'}
         </button>
       </div>
+
+      {/* SEÇÃO PRINCIPAL DE BANCO DE DADOS & BACKUP E RESTAURAÇÃO */}
+      <BancoDeDadosBackup darkMode={darkMode} usuarioId={usuarioLogado?.id} />
 
       {/* SEÇÃO DE AUDITORIA EXCLUSIVA DO ADMINISTRADOR MASTER */}
       {isAdmin && (
