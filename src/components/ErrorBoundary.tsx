@@ -25,11 +25,13 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public handleReload = () => {
+    this.setState({ hasError: false, error: undefined });
+    sessionStorage.clear();
     window.location.reload();
   };
 
   public handleResetCache = () => {
-    // Remove chaves corrompidas de cache temporario e recarrega
+    this.setState({ hasError: false, error: undefined });
     sessionStorage.clear();
     window.location.href = window.location.origin;
   };

@@ -55,11 +55,12 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   ];
 
   const resultadosBusca = searchQuery.trim()
-    ? pacientes.filter(
+    ? (pacientes || []).filter(
         (p) =>
-          p.nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.cpf.includes(searchQuery) ||
-          p.telefone.includes(searchQuery)
+          p &&
+          ((p.nome || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (p.cpf || '').includes(searchQuery) ||
+            (p.telefone || '').includes(searchQuery))
       )
     : [];
 
