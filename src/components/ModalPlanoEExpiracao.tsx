@@ -8,7 +8,7 @@ interface ModalPlanoEExpiracaoProps {
 }
 
 export const ModalPlanoEExpiracao: React.FC<ModalPlanoEExpiracaoProps> = ({ usuarioLogado, darkMode }) => {
-  if (usuarioLogado.role === 'admin' || usuarioLogado.statusPlano === 'ativo') {
+  if (!usuarioLogado || usuarioLogado.role === 'admin' || usuarioLogado.statusPlano === 'ativo') {
     return null;
   }
 
