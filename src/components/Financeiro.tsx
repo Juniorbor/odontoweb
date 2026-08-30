@@ -62,7 +62,8 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
     const salvo = localStorage.getItem(STORAGE_KEY);
     if (salvo !== null) {
       try {
-        return JSON.parse(salvo);
+        const parsed = JSON.parse(salvo);
+        if (Array.isArray(parsed)) return parsed;
       } catch (e) {
         console.error('Erro ao ler transações pessoais do localStorage:', e);
       }
@@ -73,9 +74,12 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
   const [sincronizando, setSincronizando] = useState<boolean>(false);
 
   // Transações combinadas (Manuais + Faturamento Consolidado da Produção)
+  const transSeguras = Array.isArray(transacoes) ? transacoes : [];
+  const prodSegura = Array.isArray(getProducaoComoTransacoes(usuarioId)) ? getProducaoComoTransacoes(usuarioId) : [];
+
   const transacoesCombinadas = [
-    ...transacoes,
-    ...getProducaoComoTransacoes(usuarioId)
+    ...transSeguras,
+    ...prodSegura
   ];
 
   // Função central para salvar e sincronizar instantaneamente na nuvem para todos os dispositivos

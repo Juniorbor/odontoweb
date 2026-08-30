@@ -41,7 +41,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const salvo = localStorage.getItem(chaveFinanceiro);
     if (salvo) {
       try {
-        return JSON.parse(salvo);
+        const parsed = JSON.parse(salvo);
+        if (Array.isArray(parsed)) return parsed;
       } catch (e) {}
     }
     return [];
@@ -52,7 +53,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const atualizar = () => {
       const f = localStorage.getItem(chaveFinanceiro);
       if (f) {
-        try { setTransacoesFinanceiras(JSON.parse(f)); } catch (e) {}
+        try {
+          const parsed = JSON.parse(f);
+          if (Array.isArray(parsed)) setTransacoesFinanceiras(parsed);
+          else setTransacoesFinanceiras([]);
+        } catch (e) {
+          setTransacoesFinanceiras([]);
+        }
       } else {
         setTransacoesFinanceiras([]);
       }
@@ -69,9 +76,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
   }, [chaveFinanceiro]);
 
   // COMBINAÇÃO CONSOLIDADA: Entradas Financeiras + Faturamento Geral da Produção
+  const transSeguras = Array.isArray(transacoesFinanceiras) ? transacoesFinanceiras : [];
+  const prodSegura = Array.isArray(getProducaoComoTransacoes(usuarioId)) ? getProducaoComoTransacoes(usuarioId) : [];
+
   const todasTransacoesCombinadas = [
-    ...transacoesFinanceiras,
-    ...getProducaoComoTransacoes(usuarioId)
+    ...transSeguras,
+    ...prodSegura
   ];
 
   // --- ESTATÍSTICAS DO FINANCEIRO PESSOAL DO USUÁRIO ---
