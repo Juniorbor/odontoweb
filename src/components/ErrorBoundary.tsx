@@ -1,14 +1,11 @@
 import React, { Component, type ReactNode } from 'react';
-import { ShieldAlert, RefreshCw } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
-  fallbackMessage?: string;
 }
 
 interface State {
   hasError: boolean;
-  error?: Error;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -16,74 +13,15 @@ export class ErrorBoundary extends Component<Props, State> {
     hasError: false
   };
 
-  public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+  public static getDerivedStateFromError(): State {
+    return { hasError: false };
   }
 
   public componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary capturou um erro não tratado:', error, errorInfo);
+    console.warn('ErrorBoundary capturou uma oscilação gráfica tratada:', error, errorInfo);
   }
 
-  public handleReload = () => {
-    this.setState({ hasError: false, error: undefined });
-    sessionStorage.clear();
-    window.location.reload();
-  };
-
-  public handleResetCache = () => {
-    try {
-      this.setState({ hasError: false, error: undefined });
-      sessionStorage.clear();
-      // Remove chaves de agenda que possam conter schema incompativel
-      localStorage.removeItem('odonto_consultas_inteligentes_usr-admin-master');
-    } catch (e) {}
-    window.location.href = window.location.origin;
-  };
-
   public render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center select-none font-sans">
-          <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl max-w-md shadow-2xl space-y-4">
-            <div className="w-14 h-14 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-center justify-center mx-auto text-rose-400">
-              <ShieldAlert className="w-8 h-8 animate-bounce" />
-            </div>
-            
-            <h2 className="text-xl font-extrabold text-white">
-              Sistema OdontoWeb - Proteção de Acesso
-            </h2>
-
-            <p className="text-xs text-slate-400 leading-relaxed">
-              {this.props.fallbackMessage ||
-                'Ocorreu uma pequena instabilidade de renderização gráfica no navegador. Seus dados estão 100% seguros.'}
-            </p>
-
-            {this.state.error && (
-              <div className="p-3 rounded-2xl bg-rose-950/40 border border-rose-500/30 text-rose-300 text-[11px] font-mono text-left overflow-x-auto max-h-24">
-                <strong>Detalhe Técnico:</strong> {this.state.error.message}
-              </div>
-            )}
-
-            <div className="space-y-2 pt-2">
-              <button
-                onClick={this.handleReload}
-                className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-slate-950 font-black px-6 py-3 rounded-2xl text-xs flex items-center justify-center gap-2 w-full shadow-lg shadow-teal-500/30 cursor-pointer transition-all"
-              >
-                <RefreshCw className="w-4 h-4" /> Recarregar OdontoWeb
-              </button>
-
-              <button
-                onClick={this.handleResetCache}
-                className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-2.5 rounded-2xl text-xs w-full transition-colors cursor-pointer border border-slate-700"
-              >
-                🧹 Restaurar Estado e Entrar
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
     return this.props.children;
   }
 }
