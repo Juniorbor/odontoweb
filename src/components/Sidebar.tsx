@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Activity,
   DollarSign,
@@ -9,6 +8,11 @@ import {
   LogOut,
   FileSpreadsheet,
   Database,
+  Calendar,
+  Bell,
+  MessageSquare,
+  Link,
+  UserCheck,
   X
 } from 'lucide-react';
 
@@ -45,6 +49,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const allMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Activity },
+    { id: 'agendainteligente', label: 'Agenda Inteligente', icon: Calendar, badge: 'NOVO' },
+    { id: 'retornos', label: 'Retornos Pendentes', icon: Bell },
+    { id: 'whatsapp', label: 'WhatsApp & Lembretes', icon: MessageSquare },
+    { id: 'agendamentoonline', label: 'Agendamento Online', icon: Link },
+    { id: 'dentistas', label: 'Profissionais & Dentistas', icon: UserCheck },
     { id: 'producao', label: 'Produção', icon: FileSpreadsheet },
     { id: 'financeiro', label: 'Financeiro', icon: DollarSign, badge: badgeCounts?.pendentes ? `! ${badgeCounts.pendentes}` : undefined },
     { id: 'relatorios', label: 'Relatórios', icon: BarChart3 },

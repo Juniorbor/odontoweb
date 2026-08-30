@@ -17,6 +17,11 @@ import { Sidebar } from './components/Sidebar';
 import { HeaderBar } from './components/HeaderBar';
 import { CentralNotificacoes } from './components/CentralNotificacoes';
 import { BancoDeDadosBackup } from './components/BancoDeDadosBackup';
+import { AgendaInteligenteMain } from './components/agenda/AgendaInteligenteMain';
+import { PainelRetornosPendentes } from './components/agenda/PainelRetornosPendentes';
+import { ConfiguracaoWhatsAppPainel } from './components/agenda/ConfiguracaoWhatsAppPainel';
+import { PaginaAgendamentoOnlinePublico } from './components/agenda/PaginaAgendamentoOnlinePublico';
+import { PainelDentistas } from './components/agenda/PainelDentistas';
 import { registrarSessaoDispositivoAtual, getTempoAutoLogoutMinutos } from './services/securityService';
 import { ModalPlanoEExpiracao } from './components/ModalPlanoEExpiracao';
 import { ToastContainer, type ToastMessage } from './components/Toast';
@@ -649,6 +654,53 @@ export function App() {
             <Relatorios
               darkMode={darkMode}
               userRole={usuarioLogado?.role || 'admin'}
+              usuarioId={usuarioLogado?.id}
+            />
+          )}
+
+          {activeTab === 'agendainteligente' && (
+            <AgendaInteligenteMain
+              darkMode={darkMode}
+              usuarioId={usuarioLogado?.id}
+              pacientesExistentes={pacientes}
+              onNavigateToProntuario={(pId) => {
+                const p = pacientes.find((pac) => pac.id === pId);
+                if (p) {
+                  setPacientePerfilSelecionado(p);
+                  setActiveTab('prontuario');
+                } else {
+                  setActiveTab('pacientes');
+                }
+              }}
+              onNavigateToAgendamentoOnline={() => setActiveTab('agendamentoonline')}
+            />
+          )}
+
+          {activeTab === 'retornos' && (
+            <PainelRetornosPendentes
+              darkMode={darkMode}
+              usuarioId={usuarioLogado?.id}
+            />
+          )}
+
+          {activeTab === 'whatsapp' && (
+            <ConfiguracaoWhatsAppPainel
+              darkMode={darkMode}
+              usuarioId={usuarioLogado?.id}
+            />
+          )}
+
+          {activeTab === 'agendamentoonline' && (
+            <PaginaAgendamentoOnlinePublico
+              darkMode={darkMode}
+              usuarioId={usuarioLogado?.id}
+              onConcluido={() => setActiveTab('agendainteligente')}
+            />
+          )}
+
+          {activeTab === 'dentistas' && (
+            <PainelDentistas
+              darkMode={darkMode}
               usuarioId={usuarioLogado?.id}
             />
           )}
