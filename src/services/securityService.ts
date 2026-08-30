@@ -79,8 +79,9 @@ export function descriptografarTexto(textoCripto: string, chaveSecreta: string =
 }
 
 // 3. PROTEÇÃO ANTI-FORÇA BRUTA NO LOGIN
-export function registrarTentativaLoginFalha(email: string): { bloqueado: boolean; minutosRestantes: number; tentativas: number } {
-  const chave = `${KEYS_SEGURANCA.LOGINS_FALHOS}_${email.toLowerCase().trim()}`;
+export function registrarTentativaLoginFalha(email: string = ''): { bloqueado: boolean; minutosRestantes: number; tentativas: number } {
+  const emailSeguro = (email || '').toLowerCase().trim();
+  const chave = `${KEYS_SEGURANCA.LOGINS_FALHOS}_${emailSeguro}`;
   const salvo = localStorage.getItem(chave);
   let reg = salvo ? JSON.parse(salvo) : { tentativas: 0, bloqueadoAte: 0 };
 
@@ -109,8 +110,11 @@ export function registrarTentativaLoginFalha(email: string): { bloqueado: boolea
   };
 }
 
-export function verificarStatusBloqueioLogin(email: string): { bloqueado: boolean; minutosRestantes: number } {
-  const chave = `${KEYS_SEGURANCA.LOGINS_FALHOS}_${email.toLowerCase().trim()}`;
+export function verificarStatusBloqueioLogin(email: string = ''): { bloqueado: boolean; minutosRestantes: number } {
+  const emailSeguro = (email || '').toLowerCase().trim();
+  if (!emailSeguro) return { bloqueado: false, minutosRestantes: 0 };
+
+  const chave = `${KEYS_SEGURANCA.LOGINS_FALHOS}_${emailSeguro}`;
   const salvo = localStorage.getItem(chave);
   if (!salvo) return { bloqueado: false, minutosRestantes: 0 };
 
@@ -124,8 +128,10 @@ export function verificarStatusBloqueioLogin(email: string): { bloqueado: boolea
   return { bloqueado: false, minutosRestantes: 0 };
 }
 
-export function resetarTentativasLoginFalhas(email: string) {
-  const chave = `${KEYS_SEGURANCA.LOGINS_FALHOS}_${email.toLowerCase().trim()}`;
+export function resetarTentativasLoginFalhas(email: string = '') {
+  const emailSeguro = (email || '').toLowerCase().trim();
+  if (!emailSeguro) return;
+  const chave = `${KEYS_SEGURANCA.LOGINS_FALHOS}_${emailSeguro}`;
   localStorage.removeItem(chave);
 }
 

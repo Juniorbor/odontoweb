@@ -180,14 +180,15 @@ export const calcularDiasRestantesEStatusPlano = (usuario: UsuarioSistema): {
 };
 
 export const getUsuariosCadastrados = (): UsuarioSistema[] => {
-  const usuarios = getItemJSON<UsuarioSistema[]>(STORAGE_USUARIOS, []);
+  const raw = getItemJSON<UsuarioSistema[]>(STORAGE_USUARIOS, []);
+  const usuarios = Array.isArray(raw) ? raw : [];
   if (usuarios.length === 0) {
     const listaInicial = [ADMIN_PADRAO];
     localStorage.setItem(STORAGE_USUARIOS, JSON.stringify(listaInicial));
     return listaInicial;
   }
   // Garantir que o Admin padrão sempre existe com as credenciais corretas
-  const indexAdmin = usuarios.findIndex((u: UsuarioSistema) => u.email.toLowerCase() === ADMIN_PADRAO.email.toLowerCase());
+  const indexAdmin = usuarios.findIndex((u: UsuarioSistema) => u && u.email && u.email.toLowerCase() === ADMIN_PADRAO.email.toLowerCase());
   if (indexAdmin === -1) {
     usuarios.unshift(ADMIN_PADRAO);
     localStorage.setItem(STORAGE_USUARIOS, JSON.stringify(usuarios));
@@ -239,9 +240,9 @@ export const registrarNovoUsuario = (dados: {
   senha: string;
 }): { sucesso: boolean; mensagem: string; usuario?: UsuarioSistema } => {
   const usuarios = getUsuariosCadastrados();
-  const emailFormatado = dados.email.trim().toLowerCase();
+  const emailFormatado = (dados.email || '').trim().toLowerCase();
 
-  if (usuarios.some(u => u.email.toLowerCase() === emailFormatado)) {
+  if (usuarios.some(u => u && u.email && u.email.toLowerCase() === emailFormatado)) {
     registrarLogAuditoria({
       usuarioId: 'desconhecido',
       nomeUsuario: dados.nome,
@@ -297,14 +298,14 @@ export const registrarNovoUsuario = (dados: {
   return { sucesso: true, mensagem: 'Conta criada com 7 dias de teste grátis!', usuario: novoUsuario };
 };
 
-export const autenticarUsuario = (email: string, senha: string): {
+export const autenticarUsuario = (email: string = '', senha: string = ''): {
   sucesso: boolean;
   mensagem: string;
   usuario?: UsuarioSistema;
 } => {
   const usuarios = getUsuariosCadastrados();
-  const emailFormatado = email.trim().toLowerCase();
-  const usuario = usuarios.find(u => u.email.toLowerCase() === emailFormatado);
+  const emailFormatado = (email || '').trim().toLowerCase();
+  const usuario = usuarios.find(u => u && u.email && u.email.toLowerCase() === emailFormatado);
 
   const infoDispositivo = `${navigator.platform || 'Desconhecido'} / ${navigator.userAgent.split(' ')[0]}`;
 
