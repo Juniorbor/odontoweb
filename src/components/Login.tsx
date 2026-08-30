@@ -11,9 +11,33 @@ interface LoginProps {
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [modo, setModo] = useState<'login' | 'cadastro'>('login');
   
-  // States de Login
-  const [emailLogin, setEmailLogin] = useState<string>('juniorbor1986@gmail.com');
-  const [senhaLogin, setSenhaLogin] = useState<string>('bitoninha1234');
+  // Option to remember credentials
+  const [lembrarMe, setLembrarMe] = useState<boolean>(() => {
+    return localStorage.getItem('odonto_remember_login_v1') !== null;
+  });
+
+  // States de Login (Campos vazios por padrao, a menos que o usuario tenha optado por salvar)
+  const [emailLogin, setEmailLogin] = useState<string>(() => {
+    const salvo = localStorage.getItem('odonto_remember_login_v1');
+    if (salvo) {
+      try {
+        const parsed = JSON.parse(salvo);
+        return parsed.email || '';
+      } catch (e) {}
+    }
+    return '';
+  });
+  
+  const [senhaLogin, setSenhaLogin] = useState<string>(() => {
+    const salvo = localStorage.getItem('odonto_remember_login_v1');
+    if (salvo) {
+      try {
+        const parsed = JSON.parse(salvo);
+        return parsed.senha || '';
+      } catch (e) {}
+    }
+    return '';
+  });
   
   // States de Cadastro
   const [nomeCadastro, setNomeCadastro] = useState<string>('');
@@ -25,6 +49,14 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [erro, setErro] = useState<string>('');
   const [sucesso, setSucesso] = useState<string>('');
 
+  const processarSalvamentoCredenciais = (email: string, senha: string) => {
+    if (lembrarMe) {
+      localStorage.setItem('odonto_remember_login_v1', JSON.stringify({ email, senha }));
+    } else {
+      localStorage.removeItem('odonto_remember_login_v1');
+    }
+  };
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setErro('');
@@ -35,6 +67,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       setErro('Por favor, informe o e-mail e a senha de acesso.');
       return;
     }
+
+    processarSalvamentoCredenciais(emailL, senhaLogin);
 
     // Se for o e-mail do Admin Master (Crenilto Junior) ou senha padrao, entra direto
     if (emailL.toLowerCase() === 'juniorbor1986@gmail.com' && senhaLogin === 'bitoninha1234') {
@@ -217,6 +251,24 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     {mostrarSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+              </div>
+
+              {/* Checkbox opcional de salvar credenciais */}
+              <div className="flex items-center justify-between py-1">
+                <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={lembrarMe}
+                    onChange={(e) => {
+                      setLembrarMe(e.target.checked);
+                      if (!e.target.checked) {
+                        localStorage.removeItem('odonto_remember_login_v1');
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-teal-500 focus:ring-teal-500 cursor-pointer"
+                  />
+                  <span>Lembrar e-mail e senha neste navegador</span>
+                </label>
               </div>
 
               <button
