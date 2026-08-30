@@ -91,7 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="relative">
               <img
                 src={LOGO_BASE64}
-                alt="Finanças Pessoal Logo"
+                alt="OdontoWeb - Finanças Logo"
                 className="w-11 h-11 object-contain rounded-full border-2 border-teal-500/60 shadow-md shadow-teal-500/30 shrink-0 bg-white p-0.5 group-hover:scale-105 transition-transform"
               />
               <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-slate-900 rounded-full animate-pulse"></span>
@@ -100,7 +100,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {(!isCollapsed || isMobileOpen) && (
               <div className="transition-opacity duration-300">
                 <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
-                  Finanças <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">Pessoal</span>
+                  OdontoWeb <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">- Finanças</span>
                 </span>
                 <span className="text-[9px] font-bold text-emerald-400 block -mt-0.5 uppercase tracking-wider">
                   Organize • Planeje • Realize

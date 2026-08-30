@@ -111,7 +111,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           <div className="inline-block relative">
             <img
               src={LOGO_BASE64}
-              alt="Finanças Pessoal"
+              alt="OdontoWeb - Finanças"
               className="w-28 h-28 object-contain rounded-full border-2 border-teal-500/60 shadow-2xl shadow-teal-500/20 bg-white p-1.5 mx-auto"
             />
             <span className="absolute -bottom-1 right-0 bg-emerald-500 text-slate-950 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-300 shadow flex items-center gap-1">
@@ -120,7 +120,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           </div>
           <div>
             <h1 className="text-2xl font-black text-white tracking-tight flex items-center justify-center gap-1">
-              Finanças <span className="text-teal-400">Pessoal</span>
+              OdontoWeb <span className="text-teal-400">- Finanças</span>
             </h1>
             <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mt-0.5">
               Organize • Planeje • Realize

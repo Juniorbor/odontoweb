@@ -673,8 +673,8 @@ export function App() {
         <footer className={`p-4 border-t text-center text-xs transition-colors flex items-center justify-center gap-2 ${
           darkMode ? 'bg-slate-900 border-slate-800 text-slate-400' : 'bg-white border-slate-200 text-slate-600'
         }`}>
-          <img src={LOGO_BASE64} alt="Finanças Pessoal Logo" className="w-5 h-5 object-contain rounded-full bg-white p-0.5 border border-teal-500/40 inline-block" />
-          <span>Finanças Pessoal Platform &copy; {new Date().getFullYear()} • Gestão Financeira & Produção</span>
+          <img src={LOGO_BASE64} alt="OdontoWeb - Finanças Logo" className="w-5 h-5 object-contain rounded-full bg-white p-0.5 border border-teal-500/40 inline-block" />
+          <span>OdontoWeb - Finanças Platform &copy; {new Date().getFullYear()} • Gestão Financeira & Produção</span>
         </footer>
       </div>
 
