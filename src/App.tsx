@@ -21,7 +21,7 @@ import { PainelRetornosPendentes } from './components/agenda/PainelRetornosPende
 import { ConfiguracaoWhatsAppPainel } from './components/agenda/ConfiguracaoWhatsAppPainel';
 import { PaginaAgendamentoOnlinePublico } from './components/agenda/PaginaAgendamentoOnlinePublico';
 import { PainelDentistas } from './components/agenda/PainelDentistas';
-import { registrarSessaoDispositivoAtual, getTempoAutoLogoutMinutos } from './services/securityService';
+import { registrarSessaoDispositivoAtual } from './services/securityService';
 import { ModalPlanoEExpiracao } from './components/ModalPlanoEExpiracao';
 import { ToastContainer, type ToastMessage } from './components/Toast';
 import LOGO_BASE64 from './assets/logoData';
@@ -137,23 +137,7 @@ export function App() {
       role: usuarioLogado.role
     });
 
-    // Monitor de Inatividade para Auto-Logout (Padrão 15 minutos)
-    let inactivityTimer: any = null;
-    const resetInactivityTimer = () => {
-      if (inactivityTimer) clearTimeout(inactivityTimer);
-      const mins = getTempoAutoLogoutMinutos();
-      if (mins > 0) {
-        inactivityTimer = setTimeout(() => {
-          handleLogout();
-          alert('🔒 SESSÃO ENCERRADA POR INATIVIDADE: Você ficou ausente sem movimentação. Por razões de segurança da clínica, sua conta foi desconectada.');
-        }, mins * 60 * 1000);
-      }
-    };
 
-    resetInactivityTimer();
-
-    const activityEvents = ['mousemove', 'keydown', 'touchstart', 'scroll', 'click'];
-    activityEvents.forEach(evt => window.addEventListener(evt, resetInactivityTimer));
 
     const syncHandler = (payload: any) => {
       if (payload.pacientes && payload.pacientes.length > 0) setPacientes(payload.pacientes);

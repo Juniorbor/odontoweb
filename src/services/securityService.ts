@@ -231,5 +231,5 @@ export function setTempoAutoLogoutMinutos(minutos: number) {
 
 export function getTempoAutoLogoutMinutos(): number {
   const salvo = localStorage.getItem(KEYS_SEGURANCA.AUTO_LOGOUT_KEY);
-  return salvo !== null ? Number(salvo) : 15; // 15 minutos padrão
+  return salvo !== null ? Number(salvo) : 0; // 0 = Desativado por padrão
 }
