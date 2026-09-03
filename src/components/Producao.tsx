@@ -5,6 +5,7 @@ import { WhatsappNotificacoes } from './WhatsappNotificacoes';
 import {
   BarChart3,
   Plus,
+  Edit2,
   Search,
   Filter,
   Download,
@@ -105,9 +106,10 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   const [regiaoFiltro, setRegiaoFiltro] = useState<string>('Todas');
   const [busca, setBusca] = useState<string>('');
 
-  // Modal Novo Registro
+  // Modal Novo / Editar Registro
   const [modalAberto, setModalAberto] = useState<boolean>(false);
   const [modalZerarAberto, setModalZerarAberto] = useState<boolean>(false);
+  const [itemEditando, setItemEditando] = useState<ItemProducaoTomo | null>(null);
 
   const [novoProprietario, setNovoProprietario] = useState<'Fernando' | 'Bernardo'>('Fernando');
   const [novoId, setNovoId] = useState<string>(`${Math.floor(10000 + Math.random() * 90000)}`);
@@ -116,6 +118,32 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   const [novaRegiao, setNovaRegiao] = useState<'TRAÇADO' | 'UM DENTE' | 'MAX OU MAND' | 'MAX E MAND'>('MAX OU MAND');
   const [novoValor, setNovoValor] = useState<number>(15);
   const [novaUnidade, setNovaUnidade] = useState<typeof CLINICAS_FERNANDO[number] | typeof CLINICAS_BERNARDO[number]>('Ariquemes');
+
+  // Abrir Modal para Novo Registro
+  const handleAbrirNovoModal = () => {
+    setItemEditando(null);
+    setNovoId(`${Math.floor(10000 + Math.random() * 90000)}`);
+    setNovaData(new Date().toISOString().split('T')[0]);
+    setNovoNome('');
+    setNovaRegiao('MAX OU MAND');
+    setNovoValor(15);
+    setNovoProprietario('Fernando');
+    setNovaUnidade(CLINICAS_FERNANDO[0]);
+    setModalAberto(true);
+  };
+
+  // Abrir Modal para Editar Registro Existente
+  const handleAbrirEditarModal = (item: ItemProducaoTomo) => {
+    setItemEditando(item);
+    setNovoId(item.id);
+    setNovoProprietario(item.proprietario);
+    setNovaData(item.data);
+    setNovoNome(item.pacienteNome);
+    setNovaRegiao(item.regiao);
+    setNovoValor(item.valor);
+    setNovaUnidade(item.unidade);
+    setModalAberto(true);
+  };
 
   // Ao trocar o proprietário no modal, atualizar a lista de clínicas disponíveis
   const handleProprietarioChangeModal = (p: 'Fernando' | 'Bernardo') => {
@@ -140,7 +168,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
     e.preventDefault();
     if (!novoNome) return;
 
-    const novoItem: ItemProducaoTomo = {
+    const itemProcessado: ItemProducaoTomo = {
       id: novoId || `${Date.now()}`,
       data: novaData,
       pacienteNome: novoNome.toUpperCase(),
@@ -150,8 +178,16 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
       proprietario: novoProprietario
     };
 
-    updateItensECloud([novoItem, ...itens]);
+    let listaAtualizada: ItemProducaoTomo[];
+    if (itemEditando) {
+      listaAtualizada = itens.map((i) => (i.id === itemEditando.id ? itemProcessado : i));
+    } else {
+      listaAtualizada = [itemProcessado, ...itens];
+    }
+
+    updateItensECloud(listaAtualizada);
     setModalAberto(false);
+    setItemEditando(null);
     setNovoNome('');
     setNovoId(`${Math.floor(10000 + Math.random() * 90000)}`);
   };
@@ -375,7 +411,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
 
           <button
             type="button"
-            onClick={() => setModalAberto(true)}
+            onClick={handleAbrirNovoModal}
             className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-semibold px-5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-teal-600/25 transition-all cursor-pointer w-full sm:w-auto"
           >
             <Plus className="w-4.5 h-4.5" /> + Registrar Exame de Tomografia
@@ -862,13 +898,22 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
                     </td>
                     <td className="p-3 font-extrabold text-emerald-400 whitespace-nowrap">R$ {item.valor.toFixed(2)}</td>
                     <td className="p-3 text-right">
-                      <button
-                        onClick={() => handleDeleteItem(item.id)}
-                        className="p-1.5 bg-slate-800 hover:bg-rose-900/60 text-rose-400 rounded-xl transition-colors cursor-pointer"
-                        title="Excluir Registro Permanetemente"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => handleAbrirEditarModal(item)}
+                          className="p-1.5 bg-slate-800 hover:bg-teal-900/60 text-teal-400 rounded-xl transition-colors cursor-pointer border border-slate-700"
+                          title="Editar Registro de Tomografia"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteItem(item.id)}
+                          className="p-1.5 bg-slate-800 hover:bg-rose-900/60 text-rose-400 rounded-xl transition-colors cursor-pointer border border-slate-700"
+                          title="Excluir Registro Permanentemente"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -925,7 +970,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
           }`}>
             <div className="flex items-center justify-between border-b border-slate-800/40 pb-3">
               <h3 className="text-lg font-extrabold flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-teal-500" /> Registrar Exame de Tomografia
+                <BarChart3 className="w-5 h-5 text-teal-500" /> {itemEditando ? `Editar Registro #${itemEditando.id}` : 'Registrar Exame de Tomografia'}
               </h3>
               <button onClick={() => setModalAberto(false)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
@@ -1064,9 +1109,9 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-extrabold rounded-xl shadow-lg shadow-teal-600/30 cursor-pointer"
+                  className="px-5 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-extrabold rounded-xl shadow-lg shadow-teal-600/30 cursor-pointer"
                 >
-                  Confirmar e Salvar
+                  {itemEditando ? 'Salvar Alterações' : 'Confirmar e Salvar'}
                 </button>
               </div>
             </form>
