@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { ItemProducaoTomo } from '../types';
-import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, getUserKeys } from '../services/cloudSync';
+import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, getUserKeys, getItemJSON } from '../services/cloudSync';
 import { WhatsappNotificacoes } from './WhatsappNotificacoes';
 import {
   BarChart3,
@@ -35,17 +35,8 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   const STORAGE_KEY = userKeys.PRODUCAO;
 
   // Inicializa a lista de registros. Se houver dados salvos no localStorage, utiliza-os.
-  // Caso contrário, inicia SEM INFORMAÇÃO NENHUMA (lista vazia []).
   const [itens, setItens] = useState<ItemProducaoTomo[]>(() => {
-    const salvo = localStorage.getItem(STORAGE_KEY);
-    if (salvo !== null) {
-      try {
-        return JSON.parse(salvo);
-      } catch (e) {
-        console.error('Erro ao ler registros do localStorage:', e);
-      }
-    }
-    return [];
+    return getItemJSON<ItemProducaoTomo[]>(STORAGE_KEY, []);
   });
 
   const [sincronizando, setSincronizando] = useState<boolean>(false);
@@ -67,7 +58,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   useEffect(() => {
     setSincronizando(true);
     pullFromCloud((payload) => {
-      if (payload.producao) {
+      if (Array.isArray(payload.producao) && payload.producao.length > 0) {
         setItens(payload.producao);
       }
       setSincronizando(false);

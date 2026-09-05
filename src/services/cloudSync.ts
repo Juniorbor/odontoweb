@@ -165,6 +165,9 @@ export async function pullFromCloud(
   isSyncing = true;
   const keys = getUserKeys(usuarioId);
 
+  const localProducao = getItemJSON(keys.PRODUCAO, []);
+  const localFinanceiro = getItemJSON(keys.FINANCEIRO, []);
+
   try {
     let url = `${getCloudEndpoint()}?usuarioId=${encodeURIComponent(usuarioId || 'usr-admin-master')}`;
     if (usuarioLogadoInfo && usuarioId) {
@@ -176,6 +179,11 @@ export async function pullFromCloud(
     });
     
     if (!res.ok) {
+      onUpdate({
+        producao: localProducao,
+        financeiro: localFinanceiro,
+        onlineUsers: []
+      });
       isSyncing = false;
       return false;
     }
@@ -186,34 +194,54 @@ export async function pullFromCloud(
     const remoteTimestamp = cloudData.updatedAt || 0;
     const localTimestamp = Number(localStorage.getItem(keys.LAST_UPDATE) || '0');
 
-    if (remoteTimestamp === 0 && localTimestamp > 0) {
+    const remoteHasData = (Array.isArray(cloudData.producao) && cloudData.producao.length > 0) ||
+                          (Array.isArray(cloudData.financeiro) && cloudData.financeiro.length > 0);
+
+    // Se a nuvem estiver vazia/zerada e o dispositivo local tiver registros, envia os dados locais para a nuvem
+    if (!remoteHasData && (localProducao.length > 0 || localFinanceiro.length > 0)) {
       pushToCloud({
-        producao: getItemJSON(keys.PRODUCAO, []),
-        financeiro: getItemJSON(keys.FINANCEIRO, []),
+        producao: localProducao,
+        financeiro: localFinanceiro,
         pacientes: getItemJSON(KEYS.PACIENTES, []),
         consultas: getItemJSON(KEYS.CONSULTAS, []),
         fotografias: getItemJSON(KEYS.FOTOGRAFIAS, [])
       }, usuarioId, usuarioLogadoInfo);
+
+      onUpdate({
+        ...cloudData,
+        producao: localProducao,
+        financeiro: localFinanceiro
+      });
       isSyncing = false;
       return true;
     }
 
-    if (remoteTimestamp > localTimestamp) {
-      if (cloudData.producao) {
+    if (remoteTimestamp > localTimestamp && remoteHasData) {
+      if (Array.isArray(cloudData.producao) && cloudData.producao.length > 0) {
         localStorage.setItem(keys.PRODUCAO, JSON.stringify(cloudData.producao));
       }
-      if (cloudData.financeiro) {
+      if (Array.isArray(cloudData.financeiro) && cloudData.financeiro.length > 0) {
         localStorage.setItem(keys.FINANCEIRO, JSON.stringify(cloudData.financeiro));
       }
       localStorage.setItem(keys.LAST_UPDATE, remoteTimestamp.toString());
+      onUpdate(cloudData);
+    } else {
+      // Preserva os dados locais seguros e mistura os usuarios online
+      onUpdate({
+        ...cloudData,
+        producao: localProducao.length > 0 ? localProducao : (cloudData.producao || []),
+        financeiro: localFinanceiro.length > 0 ? localFinanceiro : (cloudData.financeiro || [])
+      });
     }
 
-    // Sempre entrega dados de presenca onlineUsers para a UI
-    onUpdate(cloudData);
     isSyncing = false;
     return true;
   } catch (e) {
-    // Silencioso em offline
+    onUpdate({
+      producao: localProducao,
+      financeiro: localFinanceiro,
+      onlineUsers: []
+    });
   }
 
   isSyncing = false;
@@ -240,7 +268,17 @@ export function subscribeLocalBroadcast(onUpdate: (payload: CloudDataPayload) =>
 
 export function getItemJSON<T = any>(key: string, fallback: T): T {
   try {
-    const item = localStorage.getItem(key);
+    let item = localStorage.getItem(key);
+    if (!item && key.includes('odonto_producao_registros')) {
+      item = localStorage.getItem('odonto_producao_registros_usr_admin_master') ||
+             localStorage.getItem('odonto_producao_registros_v2') ||
+             localStorage.getItem('odonto_producao_registros');
+    }
+    if (!item && key.includes('odonto_financeiro_pessoal')) {
+      item = localStorage.getItem('odonto_financeiro_pessoal_usr_admin_master') ||
+             localStorage.getItem('odonto_financeiro_pessoal_v1') ||
+             localStorage.getItem('odonto_financeiro_pessoal');
+    }
     if (!item) return fallback;
     const parsed = JSON.parse(item);
     if (parsed === null || parsed === undefined) return fallback;

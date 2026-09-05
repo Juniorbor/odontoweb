@@ -17,7 +17,7 @@ import {
   Users
 } from 'lucide-react';
 
-import { getUserKeys, getProducaoComoTransacoes } from '../services/cloudSync';
+import { getUserKeys, getProducaoComoTransacoes, getItemJSON } from '../services/cloudSync';
 
 interface DashboardProps {
   onNavigate: (tab: string) => void;
@@ -38,31 +38,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const chaveFinanceiro = userKeys.FINANCEIRO;
 
   const [transacoesFinanceiras, setTransacoesFinanceiras] = useState<TransacaoPessoal[]>(() => {
-    const salvo = localStorage.getItem(chaveFinanceiro);
-    if (salvo) {
-      try {
-        const parsed = JSON.parse(salvo);
-        if (Array.isArray(parsed)) return parsed;
-      } catch (e) {}
-    }
-    return [];
+    return getItemJSON<TransacaoPessoal[]>(chaveFinanceiro, []);
   });
 
   // Atualização em tempo real quando ocorrem novos lançamentos ou exclusões no localStorage
   useEffect(() => {
     const atualizar = () => {
-      const f = localStorage.getItem(chaveFinanceiro);
-      if (f) {
-        try {
-          const parsed = JSON.parse(f);
-          if (Array.isArray(parsed)) setTransacoesFinanceiras(parsed);
-          else setTransacoesFinanceiras([]);
-        } catch (e) {
-          setTransacoesFinanceiras([]);
-        }
-      } else {
-        setTransacoesFinanceiras([]);
-      }
+      const dados = getItemJSON<TransacaoPessoal[]>(chaveFinanceiro, []);
+      setTransacoesFinanceiras(dados);
     };
 
     atualizar();

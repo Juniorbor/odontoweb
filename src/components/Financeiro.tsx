@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { TransacaoPessoal } from '../types';
-import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, getUserKeys, getProducaoComoTransacoes } from '../services/cloudSync';
+import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, getUserKeys, getProducaoComoTransacoes, getItemJSON } from '../services/cloudSync';
 import { LeitorComprovanteOCR } from './LeitorComprovanteOCR';
 import { DREGerencial } from './DREGerencial';
 import { CartoesEMetas } from './CartoesEMetas';
@@ -59,16 +59,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
   const STORAGE_KEY = userKeys.FINANCEIRO;
 
   const [transacoes, setTransacoes] = useState<TransacaoPessoal[]>(() => {
-    const salvo = localStorage.getItem(STORAGE_KEY);
-    if (salvo !== null) {
-      try {
-        const parsed = JSON.parse(salvo);
-        if (Array.isArray(parsed)) return parsed;
-      } catch (e) {
-        console.error('Erro ao ler transações pessoais do localStorage:', e);
-      }
-    }
-    return [];
+    return getItemJSON<TransacaoPessoal[]>(STORAGE_KEY, []);
   });
 
   const [sincronizando, setSincronizando] = useState<boolean>(false);
@@ -100,7 +91,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
     // 1. Busca imediata na nuvem ao abrir
     setSincronizando(true);
     pullFromCloud((payload) => {
-      if (payload.financeiro) {
+      if (Array.isArray(payload.financeiro) && payload.financeiro.length > 0) {
         setTransacoes(payload.financeiro);
       }
       setSincronizando(false);
