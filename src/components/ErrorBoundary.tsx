@@ -22,10 +22,6 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public handleRecover = () => {
-    try {
-      localStorage.clear();
-      sessionStorage.clear();
-    } catch (e) {}
     window.location.reload();
   };
 

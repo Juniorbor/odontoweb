@@ -88,11 +88,18 @@ export async function pushToCloud(
     const timestamp = Date.now();
     const keys = getUserKeys(usuarioId);
 
-    // Salva imediatamente em localStorage local no repositório isolado do usuário
-    if (Array.isArray(data.producao)) {
+    // Salva imediatamente em localStorage local no repositório isolado do usuário + Backup Permanente de Tripla Redundância
+    if (Array.isArray(data.producao) && data.producao.length > 0) {
+      localStorage.setItem(keys.PRODUCAO, JSON.stringify(data.producao));
+      localStorage.setItem('odonto_producao_backup_permanent', JSON.stringify(data.producao));
+    } else if (Array.isArray(data.producao)) {
       localStorage.setItem(keys.PRODUCAO, JSON.stringify(data.producao));
     }
-    if (Array.isArray(data.financeiro)) {
+
+    if (Array.isArray(data.financeiro) && data.financeiro.length > 0) {
+      localStorage.setItem(keys.FINANCEIRO, JSON.stringify(data.financeiro));
+      localStorage.setItem('odonto_financeiro_backup_permanent', JSON.stringify(data.financeiro));
+    } else if (Array.isArray(data.financeiro)) {
       localStorage.setItem(keys.FINANCEIRO, JSON.stringify(data.financeiro));
     }
     if (Array.isArray(data.pacientes)) {
@@ -269,13 +276,15 @@ export function subscribeLocalBroadcast(onUpdate: (payload: CloudDataPayload) =>
 export function getItemJSON<T = any>(key: string, fallback: T): T {
   try {
     let item = localStorage.getItem(key);
-    if (!item && key.includes('odonto_producao_registros')) {
-      item = localStorage.getItem('odonto_producao_registros_usr_admin_master') ||
+    if ((!item || item === '[]') && key.includes('odonto_producao_registros')) {
+      item = localStorage.getItem('odonto_producao_backup_permanent') ||
+             localStorage.getItem('odonto_producao_registros_usr_admin_master') ||
              localStorage.getItem('odonto_producao_registros_v2') ||
              localStorage.getItem('odonto_producao_registros');
     }
-    if (!item && key.includes('odonto_financeiro_pessoal')) {
-      item = localStorage.getItem('odonto_financeiro_pessoal_usr_admin_master') ||
+    if ((!item || item === '[]') && key.includes('odonto_financeiro_pessoal')) {
+      item = localStorage.getItem('odonto_financeiro_backup_permanent') ||
+             localStorage.getItem('odonto_financeiro_pessoal_usr_admin_master') ||
              localStorage.getItem('odonto_financeiro_pessoal_v1') ||
              localStorage.getItem('odonto_financeiro_pessoal');
     }
