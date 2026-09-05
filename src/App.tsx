@@ -99,18 +99,9 @@ export function App() {
     localStorage.setItem(KEYS.FOTOGRAFIAS, JSON.stringify(fotografias));
   }, [fotografias]);
 
-  // Garantir que o Dashboard, Produção e Financeiro do Admin e do Sistema fiquem 100% ZERADOS
+  // Preservação Estrita de Dados de Produção e Financeiro (Diretiva #9)
   useEffect(() => {
-    const RESET_ZERADO_KEY = 'odonto_reset_100pct_zerado_v5';
-    if (!localStorage.getItem(RESET_ZERADO_KEY)) {
-      const adminKeys = getUserKeys('usr-admin-master');
-      localStorage.setItem(adminKeys.FINANCEIRO, JSON.stringify([]));
-      localStorage.setItem(adminKeys.PRODUCAO, JSON.stringify([]));
-      localStorage.setItem('odonto_financeiro_pessoal_v1', JSON.stringify([]));
-      localStorage.setItem('odonto_producao_registros_v2', JSON.stringify([]));
-      localStorage.setItem(RESET_ZERADO_KEY, 'true');
-      pushToCloud({ financeiro: [], producao: [] }, 'usr-admin-master');
-    }
+    localStorage.setItem('odonto_reset_100pct_zerado_v5', 'true');
   }, []);
 
   // Presença de Usuários Online em Tempo Real

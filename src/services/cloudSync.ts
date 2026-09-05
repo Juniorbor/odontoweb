@@ -88,17 +88,25 @@ export async function pushToCloud(
     const timestamp = Date.now();
     const keys = getUserKeys(usuarioId);
 
-    // Salva imediatamente em localStorage local no repositório isolado do usuário + Backup Permanente de Tripla Redundância
+    // Salva imediatamente em localStorage local no repositório isolado do usuário + Backup Permanente de Quad-Redundância
     if (Array.isArray(data.producao) && data.producao.length > 0) {
-      localStorage.setItem(keys.PRODUCAO, JSON.stringify(data.producao));
-      localStorage.setItem('odonto_producao_backup_permanent', JSON.stringify(data.producao));
+      const str = JSON.stringify(data.producao);
+      localStorage.setItem(keys.PRODUCAO, str);
+      localStorage.setItem('odonto_producao_backup_permanent', str);
+      localStorage.setItem('odonto_producao_registros_usr_admin_master', str);
+      localStorage.setItem('odonto_producao_registros_v2', str);
+      localStorage.setItem('odonto_producao_registros', str);
     } else if (Array.isArray(data.producao)) {
       localStorage.setItem(keys.PRODUCAO, JSON.stringify(data.producao));
     }
 
     if (Array.isArray(data.financeiro) && data.financeiro.length > 0) {
-      localStorage.setItem(keys.FINANCEIRO, JSON.stringify(data.financeiro));
-      localStorage.setItem('odonto_financeiro_backup_permanent', JSON.stringify(data.financeiro));
+      const str = JSON.stringify(data.financeiro);
+      localStorage.setItem(keys.FINANCEIRO, str);
+      localStorage.setItem('odonto_financeiro_backup_permanent', str);
+      localStorage.setItem('odonto_financeiro_pessoal_usr_admin_master', str);
+      localStorage.setItem('odonto_financeiro_pessoal_v1', str);
+      localStorage.setItem('odonto_financeiro_pessoal', str);
     } else if (Array.isArray(data.financeiro)) {
       localStorage.setItem(keys.FINANCEIRO, JSON.stringify(data.financeiro));
     }
@@ -225,10 +233,18 @@ export async function pullFromCloud(
 
     if (remoteTimestamp > localTimestamp && remoteHasData) {
       if (Array.isArray(cloudData.producao) && cloudData.producao.length > 0) {
-        localStorage.setItem(keys.PRODUCAO, JSON.stringify(cloudData.producao));
+        const str = JSON.stringify(cloudData.producao);
+        localStorage.setItem(keys.PRODUCAO, str);
+        localStorage.setItem('odonto_producao_backup_permanent', str);
+        localStorage.setItem('odonto_producao_registros_usr_admin_master', str);
+        localStorage.setItem('odonto_producao_registros_v2', str);
       }
       if (Array.isArray(cloudData.financeiro) && cloudData.financeiro.length > 0) {
-        localStorage.setItem(keys.FINANCEIRO, JSON.stringify(cloudData.financeiro));
+        const str = JSON.stringify(cloudData.financeiro);
+        localStorage.setItem(keys.FINANCEIRO, str);
+        localStorage.setItem('odonto_financeiro_backup_permanent', str);
+        localStorage.setItem('odonto_financeiro_pessoal_usr_admin_master', str);
+        localStorage.setItem('odonto_financeiro_pessoal_v1', str);
       }
       localStorage.setItem(keys.LAST_UPDATE, remoteTimestamp.toString());
       onUpdate(cloudData);
@@ -276,20 +292,50 @@ export function subscribeLocalBroadcast(onUpdate: (payload: CloudDataPayload) =>
 export function getItemJSON<T = any>(key: string, fallback: T): T {
   try {
     let item = localStorage.getItem(key);
-    if ((!item || item === '[]') && key.includes('odonto_producao_registros')) {
-      item = localStorage.getItem('odonto_producao_backup_permanent') ||
-             localStorage.getItem('odonto_producao_registros_usr_admin_master') ||
-             localStorage.getItem('odonto_producao_registros_v2') ||
-             localStorage.getItem('odonto_producao_registros');
+    let parsed = item ? JSON.parse(item) : null;
+
+    if ((!Array.isArray(parsed) || parsed.length === 0) && key.includes('odonto_producao_registros')) {
+      const keysToTry = [
+        'odonto_producao_backup_permanent',
+        'odonto_producao_registros_usr_admin_master',
+        'odonto_producao_registros_v2',
+        'odonto_producao_registros'
+      ];
+      for (const k of keysToTry) {
+        const candidateItem = localStorage.getItem(k);
+        if (candidateItem) {
+          try {
+            const candidateParsed = JSON.parse(candidateItem);
+            if (Array.isArray(candidateParsed) && candidateParsed.length > 0) {
+              parsed = candidateParsed;
+              break;
+            }
+          } catch {}
+        }
+      }
     }
-    if ((!item || item === '[]') && key.includes('odonto_financeiro_pessoal')) {
-      item = localStorage.getItem('odonto_financeiro_backup_permanent') ||
-             localStorage.getItem('odonto_financeiro_pessoal_usr_admin_master') ||
-             localStorage.getItem('odonto_financeiro_pessoal_v1') ||
-             localStorage.getItem('odonto_financeiro_pessoal');
+
+    if ((!Array.isArray(parsed) || parsed.length === 0) && key.includes('odonto_financeiro_pessoal')) {
+      const keysToTry = [
+        'odonto_financeiro_backup_permanent',
+        'odonto_financeiro_pessoal_usr_admin_master',
+        'odonto_financeiro_pessoal_v1',
+        'odonto_financeiro_pessoal'
+      ];
+      for (const k of keysToTry) {
+        const candidateItem = localStorage.getItem(k);
+        if (candidateItem) {
+          try {
+            const candidateParsed = JSON.parse(candidateItem);
+            if (Array.isArray(candidateParsed) && candidateParsed.length > 0) {
+              parsed = candidateParsed;
+              break;
+            }
+          } catch {}
+        }
+      }
     }
-    if (!item) return fallback;
-    const parsed = JSON.parse(item);
+
     if (parsed === null || parsed === undefined) return fallback;
     return parsed;
   } catch {

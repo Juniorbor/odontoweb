@@ -73,10 +73,26 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
     ...prodSegura
   ];
 
+  // Salvamento automático permanente em localStorage local
+  useEffect(() => {
+    if (Array.isArray(transacoes) && transacoes.length > 0) {
+      const str = JSON.stringify(transacoes);
+      localStorage.setItem(STORAGE_KEY, str);
+      localStorage.setItem('odonto_financeiro_backup_permanent', str);
+      localStorage.setItem('odonto_financeiro_pessoal_usr_admin_master', str);
+      localStorage.setItem('odonto_financeiro_pessoal_v1', str);
+    }
+  }, [transacoes, STORAGE_KEY]);
+
   // Função central para salvar e sincronizar instantaneamente na nuvem para todos os dispositivos
   const updateTransacoesECloud = (novas: TransacaoPessoal[]) => {
     setTransacoes(novas);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(novas));
+    const str = JSON.stringify(novas);
+    localStorage.setItem(STORAGE_KEY, str);
+    localStorage.setItem('odonto_financeiro_backup_permanent', str);
+    localStorage.setItem('odonto_financeiro_pessoal_usr_admin_master', str);
+    localStorage.setItem('odonto_financeiro_pessoal_v1', str);
+    localStorage.setItem('odonto_financeiro_pessoal', str);
     pushToCloud({ financeiro: novas }, usuarioId);
   };
 
@@ -99,7 +115,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
 
     // 2. Escuta alterações locais de abas simultâneas via BroadcastChannel
     const unsubscribeBroadcast = subscribeLocalBroadcast((payload) => {
-      if (payload.financeiro) {
+      if (Array.isArray(payload.financeiro) && payload.financeiro.length > 0) {
         setTransacoes(payload.financeiro);
       }
     }, usuarioId);
@@ -107,7 +123,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
     // 3. Polling contínuo a cada 2 segundos
     const interval = setInterval(() => {
       pullFromCloud((payload) => {
-        if (payload.financeiro) {
+        if (Array.isArray(payload.financeiro) && payload.financeiro.length > 0) {
           setTransacoes(payload.financeiro);
         }
       }, false, usuarioId);
@@ -115,8 +131,10 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
 
     const handleFocus = () => {
       pullFromCloud((payload) => {
-        if (payload.financeiro) setTransacoes(payload.financeiro);
-      }, true);
+        if (Array.isArray(payload.financeiro) && payload.financeiro.length > 0) {
+          setTransacoes(payload.financeiro);
+        }
+      }, true, usuarioId);
     };
 
     window.addEventListener('focus', handleFocus);
@@ -125,7 +143,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
       clearInterval(interval);
       window.removeEventListener('focus', handleFocus);
     };
-  }, []);
+  }, [usuarioId]);
 
   const [subAbaFinanceiro, setSubAbaFinanceiro] = useState<'lancamentos' | 'calendario' | '503020' | 'recibo' | 'metas' | 'graficos' | 'dre' | 'cartoes'>('lancamentos');
 

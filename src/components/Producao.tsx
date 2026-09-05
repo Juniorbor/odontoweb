@@ -44,13 +44,24 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
 
   // Salvamento automático permanente em localStorage local
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(itens));
+    if (Array.isArray(itens) && itens.length > 0) {
+      const str = JSON.stringify(itens);
+      localStorage.setItem(STORAGE_KEY, str);
+      localStorage.setItem('odonto_producao_backup_permanent', str);
+      localStorage.setItem('odonto_producao_registros_usr_admin_master', str);
+      localStorage.setItem('odonto_producao_registros_v2', str);
+    }
   }, [itens, STORAGE_KEY]);
 
   // Função central para salvar localmente e enviar à nuvem sem sobregravar na carga inicial
   const updateItensECloud = (novosItens: ItemProducaoTomo[]) => {
     setItens(novosItens);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(novosItens));
+    const str = JSON.stringify(novosItens);
+    localStorage.setItem(STORAGE_KEY, str);
+    localStorage.setItem('odonto_producao_backup_permanent', str);
+    localStorage.setItem('odonto_producao_registros_usr_admin_master', str);
+    localStorage.setItem('odonto_producao_registros_v2', str);
+    localStorage.setItem('odonto_producao_registros', str);
     pushToCloud({ producao: novosItens }, usuarioId);
   };
 
@@ -62,26 +73,28 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
         setItens(payload.producao);
       }
       setSincronizando(false);
-    }, true);
+    }, true, usuarioId);
 
     const unsubscribeBroadcast = subscribeLocalBroadcast((payload) => {
-      if (payload.producao) {
+      if (Array.isArray(payload.producao) && payload.producao.length > 0) {
         setItens(payload.producao);
       }
-    });
+    }, usuarioId);
 
     const interval = setInterval(() => {
       pullFromCloud((payload) => {
-        if (payload.producao) {
+        if (Array.isArray(payload.producao) && payload.producao.length > 0) {
           setItens(payload.producao);
         }
-      });
+      }, false, usuarioId);
     }, 2000);
 
     const handleFocus = () => {
       pullFromCloud((payload) => {
-        if (payload.producao) setItens(payload.producao);
-      }, true);
+        if (Array.isArray(payload.producao) && payload.producao.length > 0) {
+          setItens(payload.producao);
+        }
+      }, true, usuarioId);
     };
 
     window.addEventListener('focus', handleFocus);
@@ -90,7 +103,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
       clearInterval(interval);
       window.removeEventListener('focus', handleFocus);
     };
-  }, []);
+  }, [usuarioId]);
 
   const [proprietarioFiltro, setProprietarioFiltro] = useState<'Todos' | 'Fernando' | 'Bernardo'>('Todos');
   const [unidadeFiltro, setUnidadeFiltro] = useState<string>('Todas');
