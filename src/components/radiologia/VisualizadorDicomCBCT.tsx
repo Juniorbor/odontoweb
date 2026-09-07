@@ -4,7 +4,10 @@ import {
   Shield,
   RefreshCw,
   FileCheck,
-  FolderOpen
+  FolderOpen,
+  RotateCw,
+  FlipHorizontal,
+  Sparkles
 } from 'lucide-react';
 import {
   carregarArquivoDicomOuImagem,
@@ -28,6 +31,15 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
   const [fatiaSagital, setFatiaSagital] = useState<number>(1);
   const [totalCortes, setTotalCortes] = useState<number>(100);
   const [espacamentoMm, setEspacamentoMm] = useState<number>(0.5);
+
+  // Estados de Rotação e Espelhamento dos Cortes
+  const [rotacaoAxial, setRotacaoAxial] = useState<number>(0);
+  const [rotacaoCoronal, setRotacaoCoronal] = useState<number>(90);
+  const [rotacaoSagital, setRotacaoSagital] = useState<number>(0);
+  const [espelharAxial, setEspelharAxial] = useState<boolean>(false);
+  const [espelharCoronal, setEspelharCoronal] = useState<boolean>(false);
+  const [espelharSagital, setEspelharSagital] = useState<boolean>(false);
+  const [nitidezHD, setNitidezHD] = useState<boolean>(true);
 
   // Presets de Janelamento DICOM (Window Width / Window Level)
   const [janelaPreset, setJanelaPreset] = useState<'osseo' | 'dente' | 'moles'>('osseo');
@@ -117,6 +129,17 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
           </label>
 
           <button
+            onClick={() => setNitidezHD(!nitidezHD)}
+            className={`px-3 py-2 rounded-2xl border text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
+              nitidezHD
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                : 'bg-slate-800 text-slate-400 border-slate-700'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" /> Nitidez HD: {nitidezHD ? 'ON' : 'OFF'}
+          </button>
+
+          <button
             onClick={() => setCrosshairAtivo(!crosshairAtivo)}
             className={`px-3 py-2 rounded-2xl border text-xs font-extrabold transition-all cursor-pointer ${
               crosshairAtivo
@@ -152,7 +175,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
         <div className="p-3.5 rounded-2xl bg-slate-900 border border-teal-500/40 flex flex-wrap items-center justify-between text-xs text-slate-300 gap-3">
           <div className="flex items-center gap-2">
             <FileCheck className="w-4 h-4 text-teal-400" />
-            <span className="font-extrabold text-white">Série Tomográfica DICOM:</span>
+            <span className="font-extrabold text-white">Série Tomográfica DICOM HD:</span>
             <span className="font-mono text-teal-300">
               {dicomSlices.length > 0 ? `${dicomSlices.length} cortes milimetrados carregados` : 'Volume Carregado'} | {dicomMeta.fileName}
             </span>
@@ -168,7 +191,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
 
       {carregandoDicom && (
         <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center gap-2 text-indigo-300 text-xs font-extrabold animate-pulse">
-          <RefreshCw className="w-4 h-4 animate-spin" /> Carregando e ordenando todos os cortes milimetrados da pasta DICOM...
+          <RefreshCw className="w-4 h-4 animate-spin" /> Processando nitidez HD e alinhando cortes DICOM...
         </div>
       )}
 
@@ -183,26 +206,48 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
             <span className="text-xs font-extrabold text-teal-400 flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-teal-400"></span> Corte Axial (Top-Down)
             </span>
-            <span className="text-[10px] font-mono font-bold text-slate-400">
-              Fat. {fatiaAxial}/{totalCortes} (Z: {getSliceMm(fatiaAxial)} mm)
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setRotacaoAxial((r) => (r + 90) % 360)}
+                title="Girar Corte 90°"
+                className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-400 transition-all cursor-pointer"
+              >
+                <RotateCw className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setEspelharAxial((f) => !f)}
+                title="Espelhar Horizontal"
+                className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-400 transition-all cursor-pointer"
+              >
+                <FlipHorizontal className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-[10px] font-mono font-bold text-slate-400">
+                Fat. {fatiaAxial}/{totalCortes} ({getSliceMm(fatiaAxial)} mm)
+              </span>
+            </div>
           </div>
 
           <div className="relative rounded-2xl overflow-hidden bg-black flex items-center justify-center min-h-[300px] border border-slate-800 group">
-            {/* Renderização da Fatia DICOM Atual */}
             <div className="relative w-full h-[300px] bg-slate-950 flex items-center justify-center overflow-hidden">
               {getSliceUrl(fatiaAxial) ? (
                 <img
                   src={getSliceUrl(fatiaAxial)!}
                   alt={`Corte DICOM Axial ${fatiaAxial}`}
-                  className="absolute inset-0 w-full h-full object-contain transition-all duration-150"
+                  className="absolute inset-0 w-full h-full object-contain transition-all duration-200"
                   style={{
-                    filter: janelaPreset === 'dente' ? 'brightness(130%) contrast(170%)' : janelaPreset === 'moles' ? 'brightness(90%) contrast(85%)' : 'brightness(100%) contrast(120%)'
+                    filter: `${
+                      janelaPreset === 'dente'
+                        ? 'brightness(135%) contrast(175%)'
+                        : janelaPreset === 'moles'
+                        ? 'brightness(90%) contrast(90%)'
+                        : 'brightness(105%) contrast(135%)'
+                    } ${nitidezHD ? 'drop-shadow(0 0 1px rgba(255,255,255,0.3))' : ''}`,
+                    transform: `rotate(${rotacaoAxial}deg) scaleX(${espelharAxial ? -1 : 1})`,
+                    imageRendering: nitidezHD ? 'crisp-edges' : 'auto'
                   }}
                 />
               ) : null}
 
-              {/* Vetores do Corte & Crosshair */}
               <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full p-4 pointer-events-none">
                 {!imagemDicomLoadedUrl && dicomSlices.length === 0 && (
                   <path
@@ -234,7 +279,6 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               </svg>
             </div>
 
-            {/* CONTROLE DESLIZANTE DA FATIA AXIAL */}
             <div className="absolute bottom-3 left-3 right-3 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2">
               <span className="text-[10px] font-mono text-slate-400">Slice:</span>
               <input
@@ -257,9 +301,25 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
             <span className="text-xs font-extrabold text-sky-400 flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-sky-400"></span> Corte Coronal (Frontal)
             </span>
-            <span className="text-[10px] font-mono font-bold text-slate-400">
-              Fat. {fatiaCoronal}/{totalCortes} (Z: {getSliceMm(fatiaCoronal)} mm)
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setRotacaoCoronal((r) => (r + 90) % 360)}
+                title="Girar Corte 90°"
+                className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-400 transition-all cursor-pointer"
+              >
+                <RotateCw className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setEspelharCoronal((f) => !f)}
+                title="Espelhar Horizontal"
+                className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-400 transition-all cursor-pointer"
+              >
+                <FlipHorizontal className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-[10px] font-mono font-bold text-slate-400">
+                Fat. {fatiaCoronal}/{totalCortes} ({getSliceMm(fatiaCoronal)} mm)
+              </span>
+            </div>
           </div>
 
           <div className="relative rounded-2xl overflow-hidden bg-black flex items-center justify-center min-h-[300px] border border-slate-800">
@@ -268,10 +328,17 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
                 <img
                   src={getSliceUrl(fatiaCoronal)!}
                   alt={`Corte DICOM Coronal ${fatiaCoronal}`}
-                  className="absolute inset-0 w-full h-full object-contain transition-all duration-150"
+                  className="absolute inset-0 w-full h-full object-contain transition-all duration-200"
                   style={{
-                    filter: janelaPreset === 'dente' ? 'brightness(130%) contrast(170%)' : janelaPreset === 'moles' ? 'brightness(90%) contrast(85%)' : 'brightness(100%) contrast(120%)',
-                    transform: 'rotate(90deg)'
+                    filter: `${
+                      janelaPreset === 'dente'
+                        ? 'brightness(135%) contrast(175%)'
+                        : janelaPreset === 'moles'
+                        ? 'brightness(90%) contrast(90%)'
+                        : 'brightness(105%) contrast(135%)'
+                    } ${nitidezHD ? 'drop-shadow(0 0 1px rgba(255,255,255,0.3))' : ''}`,
+                    transform: `rotate(${rotacaoCoronal}deg) scaleX(${espelharCoronal ? -1 : 1})`,
+                    imageRendering: nitidezHD ? 'crisp-edges' : 'auto'
                   }}
                 />
               ) : null}
@@ -328,9 +395,25 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
             <span className="text-xs font-extrabold text-rose-400 flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-rose-400"></span> Corte Sagital (Seccional Implante)
             </span>
-            <span className="text-[10px] font-mono font-bold text-slate-400">
-              Fat. {fatiaSagital}/{totalCortes} (Z: {getSliceMm(fatiaSagital)} mm)
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setRotacaoSagital((r) => (r + 90) % 360)}
+                title="Girar Corte 90°"
+                className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-400 transition-all cursor-pointer"
+              >
+                <RotateCw className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setEspelharSagital((f) => !f)}
+                title="Espelhar Horizontal"
+                className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-400 transition-all cursor-pointer"
+              >
+                <FlipHorizontal className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-[10px] font-mono font-bold text-slate-400">
+                Fat. {fatiaSagital}/{totalCortes} ({getSliceMm(fatiaSagital)} mm)
+              </span>
+            </div>
           </div>
 
           <div className="relative rounded-2xl overflow-hidden bg-black flex items-center justify-center min-h-[300px] border border-slate-800">
@@ -339,10 +422,17 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
                 <img
                   src={getSliceUrl(fatiaSagital)!}
                   alt={`Corte DICOM Sagital ${fatiaSagital}`}
-                  className="absolute inset-0 w-full h-full object-contain transition-all duration-150"
+                  className="absolute inset-0 w-full h-full object-contain transition-all duration-200"
                   style={{
-                    filter: janelaPreset === 'dente' ? 'brightness(130%) contrast(170%)' : janelaPreset === 'moles' ? 'brightness(90%) contrast(85%)' : 'brightness(100%) contrast(120%)',
-                    transform: 'scaleX(-1)'
+                    filter: `${
+                      janelaPreset === 'dente'
+                        ? 'brightness(135%) contrast(175%)'
+                        : janelaPreset === 'moles'
+                        ? 'brightness(90%) contrast(90%)'
+                        : 'brightness(105%) contrast(135%)'
+                    } ${nitidezHD ? 'drop-shadow(0 0 1px rgba(255,255,255,0.3))' : ''}`,
+                    transform: `rotate(${rotacaoSagital}deg) scaleX(${espelharSagital ? -1 : 1})`,
+                    imageRendering: nitidezHD ? 'crisp-edges' : 'auto'
                   }}
                 />
               ) : null}

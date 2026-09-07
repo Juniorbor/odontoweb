@@ -256,14 +256,21 @@ export async function carregarArquivoDicomOuImagem(file: File): Promise<ParsedDi
                 if (val > maxVal) maxVal = val;
               }
             }
-            const range = maxVal - minVal || 1;
+            
+            // Normalização de contraste HD com percentis de corte (Remove ruído e fumaça cinza)
+            const lowPercentile = minVal + (maxVal - minVal) * 0.04;
+            const highPercentile = maxVal - (maxVal - minVal) * 0.04;
+            const range = highPercentile - lowPercentile || 1;
 
             for (let i = 0; i < totalPixels; i++) {
               const byteOffset = rawOffset + i * 2;
               let gray8 = 128;
               if (byteOffset + 1 < buffer.length) {
                 const val = buffer[byteOffset] | (buffer[byteOffset + 1] << 8);
-                gray8 = Math.min(255, Math.max(0, Math.floor(((val - minVal) / range) * 255)));
+                const normalized = Math.min(1, Math.max(0, (val - lowPercentile) / range));
+                // Curva Sigmoide S-Curve para realce de esmalte e osso denso
+                const enhanced = Math.pow(normalized, 0.88);
+                gray8 = Math.min(255, Math.max(0, Math.floor(enhanced * 255)));
               }
               const pxIdx = i * 4;
               data[pxIdx] = gray8;     // R
