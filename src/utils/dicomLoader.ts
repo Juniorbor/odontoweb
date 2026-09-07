@@ -677,67 +677,43 @@ function gerarVisualizacaoAxialSintetica(
 ): ParsedDicomResult {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
-  canvas.height = 768;
+  canvas.height = 1024;
   const ctx = canvas.getContext('2d');
 
   if (ctx) {
     ctx.fillStyle = '#020617';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const grad = ctx.createRadialGradient(512, 384, 50, 512, 384, 500);
+    const grad = ctx.createRadialGradient(512, 512, 50, 512, 512, 500);
     grad.addColorStop(0, '#1E293B');
     grad.addColorStop(0.5, '#0F172A');
     grad.addColorStop(1, '#020617');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Contorno do Arco Ósseo Mandibular Axial
-    ctx.strokeStyle = '#CBD5E1';
-    ctx.lineWidth = 16;
+    // Contorno de densidade óssea mandibular axial limpo e realista em escala de cinza
+    ctx.strokeStyle = 'rgba(203, 213, 225, 0.7)';
+    ctx.lineWidth = 14;
     ctx.beginPath();
-    ctx.arc(512, 450, 280, Math.PI * 1.15, Math.PI * 1.85);
+    ctx.arc(512, 520, 320, Math.PI * 1.15, Math.PI * 1.85);
     ctx.stroke();
 
-    // Raízes e Dentes em Projeção Axial
-    ctx.fillStyle = '#FFFFFF';
+    // Densidades dentárias em escala de cinza radiológica
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
     for (let i = 0; i < 14; i++) {
       const angle = Math.PI * 1.18 + (i * (Math.PI * 0.65 / 13));
-      const x = 512 + Math.cos(angle) * 280;
-      const y = 450 + Math.sin(angle) * 280;
+      const x = 512 + Math.cos(angle) * 320;
+      const y = 520 + Math.sin(angle) * 320;
       ctx.beginPath();
-      ctx.arc(x, y, 16, 0, Math.PI * 2);
+      ctx.arc(x, y, 14, 0, Math.PI * 2);
       ctx.fill();
     }
-
-    ctx.strokeStyle = '#EF4444';
-    ctx.lineWidth = 4;
-    ctx.setLineDash([8, 6]);
-    ctx.beginPath();
-    ctx.arc(512, 470, 240, Math.PI * 1.2, Math.PI * 1.8);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-    ctx.fillRect(30, 30, 420, 140);
-    ctx.strokeStyle = '#38BDF8';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(30, 30, 420, 140);
-
-    ctx.fillStyle = '#38BDF8';
-    ctx.font = 'bold 18px monospace';
-    ctx.fillText(`CORTE AXIAL TOMOGRÁFICO (.DCM)`, 45, 60);
-
-    ctx.fillStyle = '#F8FAFC';
-    ctx.font = '14px sans-serif';
-    ctx.fillText(`Arquivo: ${fileName} (${fileSizeKb} KB)`, 45, 90);
-    ctx.fillText(`Modalidade: ${meta.modality} | Resolução: ${meta.columns}x${meta.rows}`, 45, 115);
-    ctx.fillText(`Paciente: ${meta.patientName}`, 45, 140);
   }
 
   return {
     url: canvas.toDataURL('image/png'),
     width: 1024,
-    height: 768,
+    height: 1024,
     isDicom: true,
     meta: { ...meta, fileName, fileSizeKb }
   };
@@ -746,165 +722,84 @@ function gerarVisualizacaoAxialSintetica(
 /**
  * Gera um Corte Coronal Tomográfico Frontal Autêntico (Vista Frontal Maxila/Mandíbula/Seios Maxilares)
  */
-function gerarVisualizacaoCoronalSintetica(index: number, total: number, patientName: string): string {
+function gerarVisualizacaoCoronalSintetica(_index: number, _total: number, _patientName: string): string {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
-  canvas.height = 768;
+  canvas.height = 1024;
   const ctx = canvas.getContext('2d');
   if (!ctx) return '';
 
   ctx.fillStyle = '#020617';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const grad = ctx.createRadialGradient(512, 384, 50, 512, 384, 500);
+  const grad = ctx.createRadialGradient(512, 512, 50, 512, 512, 500);
   grad.addColorStop(0, '#1E293B');
   grad.addColorStop(0.5, '#0F172A');
   grad.addColorStop(1, '#020617');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Seios Maxilares Esquerdo e Direito (Corte Frontal Coronal)
+  // Seios Maxilares (Corte Coronal)
   ctx.fillStyle = '#020617';
-  ctx.strokeStyle = '#64748B';
-  ctx.lineWidth = 4;
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.ellipse(360, 310, 90, 60, 0, 0, Math.PI * 2);
+  ctx.ellipse(360, 420, 90, 60, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.ellipse(664, 310, 90, 60, 0, 0, Math.PI * 2);
+  ctx.ellipse(664, 420, 90, 60, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
 
-  // Cavidade e Septo Nasal Frontal
-  ctx.strokeStyle = '#94A3B8';
-  ctx.lineWidth = 5;
-  ctx.beginPath();
-  ctx.moveTo(512, 220);
-  ctx.lineTo(512, 370);
-  ctx.stroke();
-
-  // Arco Ósseo Maxilar Superior e Mandibular Inferior no Corte Coronal
-  ctx.strokeStyle = '#CBD5E1';
+  // Arco Ósseo Maxilar e Mandibular no Corte Coronal (Limpo e sem anotações)
+  ctx.strokeStyle = 'rgba(203, 213, 225, 0.7)';
   ctx.lineWidth = 14;
   ctx.beginPath();
-  ctx.ellipse(512, 380, 260, 70, 0, 0, Math.PI * 2);
+  ctx.ellipse(512, 490, 260, 70, 0, 0, Math.PI * 2);
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.ellipse(512, 530, 240, 80, 0, 0, Math.PI * 2);
+  ctx.ellipse(512, 640, 240, 80, 0, 0, Math.PI * 2);
   ctx.stroke();
-
-  // Dentes Superiores e Inferiores em Oclusão Frontal
-  ctx.fillStyle = '#FFFFFF';
-  for (let i = 0; i < 12; i++) {
-    const x = 320 + i * 35;
-    ctx.fillRect(x, 420, 22, 35);
-    ctx.fillRect(x + 2, 460, 22, 35);
-  }
-
-  // Trajeto do Nervo Alveolar em Vermelho no Corte Coronal (Forame Mentual)
-  ctx.fillStyle = '#EF4444';
-  ctx.beginPath();
-  ctx.arc(380, 545, 12, 0, Math.PI * 2);
-  ctx.arc(644, 545, 12, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Etiqueta DICOM Coronal
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-  ctx.fillRect(30, 30, 460, 100);
-  ctx.strokeStyle = '#38BDF8';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(30, 30, 460, 100);
-
-  ctx.fillStyle = '#38BDF8';
-  ctx.font = 'bold 16px monospace';
-  ctx.fillText(`CORTE CORONAL REAIS (VISTA FRONTAL)`, 45, 60);
-  ctx.fillStyle = '#F8FAFC';
-  ctx.font = '13px sans-serif';
-  ctx.fillText(`Fatia: ${index}/${total} | Paciente: ${patientName}`, 45, 85);
-  ctx.fillText(`Plano Ortogonal: X-Z (Anterior-Posterior)`, 45, 110);
 
   return canvas.toDataURL('image/png');
 }
 
 /**
- * Gera um Corte Sagital Tomográfico Seccional Autêntico (Vista Lateral Mandíbula/Condilo/Ramo/Implante)
+ * Gera um Corte Sagital Tomográfico Seccional Autêntico (Vista Lateral Mandíbula/Condilo/Ramo)
  */
-function gerarVisualizacaoSagitalSintetica(index: number, total: number, patientName: string): string {
+function gerarVisualizacaoSagitalSintetica(_index: number, _total: number, _patientName: string): string {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
-  canvas.height = 768;
+  canvas.height = 1024;
   const ctx = canvas.getContext('2d');
   if (!ctx) return '';
 
   ctx.fillStyle = '#020617';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const grad = ctx.createRadialGradient(512, 384, 50, 512, 384, 500);
+  const grad = ctx.createRadialGradient(512, 512, 50, 512, 512, 500);
   grad.addColorStop(0, '#1E293B');
   grad.addColorStop(0.5, '#0F172A');
   grad.addColorStop(1, '#020617');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Perfil Lateral Ósseo Mandibular (Corte Sagital / Seccional)
-  // Côncreo do Côncalo, Ramo Ascendente, Gônio e Mento
-  ctx.strokeStyle = '#CBD5E1';
+  // Perfil Lateral Ósseo Mandibular Limpo (Corte Sagital / Seccional)
+  ctx.strokeStyle = 'rgba(203, 213, 225, 0.7)';
   ctx.lineWidth = 14;
   ctx.beginPath();
-  ctx.moveTo(250, 180); // Cabeça do Côndilo
-  ctx.lineTo(280, 450); // Ramo Mandibular Posterior
-  ctx.lineTo(400, 580); // Ângulo Mandibular (Gônio)
-  ctx.lineTo(750, 560); // Base da Mandíbula até o Mento
-  ctx.lineTo(780, 420); // Crista Alveolar Anterior
-  ctx.lineTo(500, 420); // Crista Alveolar Posterior
-  ctx.lineTo(400, 220); // Processo Coronóide
+  ctx.moveTo(250, 280); // Cabeça do Côndilo
+  ctx.lineTo(280, 550); // Ramo Mandibular Posterior
+  ctx.lineTo(400, 680); // Ângulo Mandibular (Gônio)
+  ctx.lineTo(750, 660); // Base da Mandíbula até o Mento
+  ctx.lineTo(780, 520); // Crista Alveolar Anterior
+  ctx.lineTo(500, 520); // Crista Alveolar Posterior
+  ctx.lineTo(400, 320); // Processo Coronóide
   ctx.closePath();
   ctx.stroke();
-
-  // Dente Molar Seccionado em Vista Sagital
-  ctx.fillStyle = '#FFFFFF';
-  ctx.beginPath();
-  ctx.moveTo(560, 330);
-  ctx.lineTo(640, 330);
-  ctx.lineTo(630, 430);
-  ctx.lineTo(570, 430);
-  ctx.closePath();
-  ctx.fill();
-
-  // Cilindro de Implante Simulado no Corte Sagital Seccional
-  ctx.fillStyle = '#10B981';
-  ctx.fillRect(580, 425, 40, 110);
-  ctx.strokeStyle = '#F59E0B';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([4, 4]);
-  ctx.strokeRect(574, 420, 52, 120);
-  ctx.setLineDash([]);
-
-  // Traçado Vermelho do Nervo Alveolar Inferior passando abaixo das raízes no Corte Sagital
-  ctx.strokeStyle = '#EF4444';
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  ctx.moveTo(300, 360);
-  ctx.bezierCurveTo(340, 520, 520, 540, 720, 500);
-  ctx.stroke();
-
-  // Etiqueta DICOM Sagital
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-  ctx.fillRect(30, 30, 460, 100);
-  ctx.strokeStyle = '#F43F5E';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(30, 30, 460, 100);
-
-  ctx.fillStyle = '#F43F5E';
-  ctx.font = 'bold 16px monospace';
-  ctx.fillText(`CORTE SAGITAL REAIS (VISTA SECCIONAL)`, 45, 60);
-  ctx.fillStyle = '#F8FAFC';
-  ctx.font = '13px sans-serif';
-  ctx.fillText(`Fatia: ${index}/${total} | Paciente: ${patientName}`, 45, 85);
-  ctx.fillText(`Plano Ortogonal: Y-Z (Lateral Direita/Esquerda)`, 45, 110);
 
   return canvas.toDataURL('image/png');
 }

@@ -53,9 +53,9 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
 
   // Presets de Janelamento DICOM (Window Width / Window Level)
   const [janelaPreset, setJanelaPreset] = useState<'osseo' | 'dente' | 'moles'>('osseo');
-  const [crosshairAtivo, setCrosshairAtivo] = useState<boolean>(true);
-  const [destacarNervoAlveolar, setDestacarNervoAlveolar] = useState<boolean>(true);
-  const [simuladorImplante, setSimuladorImplante] = useState<boolean>(true);
+  const [crosshairAtivo, setCrosshairAtivo] = useState<boolean>(false);
+  const [destacarNervoAlveolar, setDestacarNervoAlveolar] = useState<boolean>(false);
+  const [simuladorImplante, setSimuladorImplante] = useState<boolean>(false);
   const [tamanhoImplante, setTamanhoImplante] = useState<string>('Ø 4.0mm x 11.5mm');
 
   // Serie de Fatias Tomograficas DICOM por Plano Ortogonal (.dcm)
@@ -308,17 +308,6 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               ) : null}
 
               <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full p-4 pointer-events-none">
-                {!imagemDicomLoadedUrl && dicomSlicesAxial.length === 0 && (
-                  <path
-                    d="M 40 160 C 40 60, 160 60, 160 160 C 130 150, 70 150, 40 160 Z"
-                    fill="none"
-                    stroke={janelaPreset === 'osseo' ? '#94A3B8' : '#CBD5E1'}
-                    strokeWidth="14"
-                    strokeLinecap="round"
-                    opacity="0.85"
-                  />
-                )}
-
                 {destacarNervoAlveolar && (
                   <path
                     d="M 50 145 C 50 80, 150 80, 150 145"
@@ -410,15 +399,6 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               ) : null}
 
               <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full p-4 pointer-events-none">
-                {!imagemDicomLoadedUrl && dicomSlicesCoronal.length === 0 && (
-                  <>
-                    <ellipse cx="100" cy="70" rx="60" ry="30" fill="none" stroke="#64748B" strokeWidth="12" />
-                    <ellipse cx="100" cy="140" rx="55" ry="25" fill="none" stroke="#94A3B8" strokeWidth="12" />
-                    <ellipse cx="70" cy="75" rx="18" ry="12" fill="#020617" stroke="#475569" strokeWidth="1.5" />
-                    <ellipse cx="130" cy="75" rx="18" ry="12" fill="#020617" stroke="#475569" strokeWidth="1.5" />
-                  </>
-                )}
-
                 {destacarNervoAlveolar && (
                   <g>
                     <circle cx="70" cy="142" r="5" fill="#EF4444" opacity="0.9" />
@@ -511,15 +491,6 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               ) : null}
 
               <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full p-4 pointer-events-none">
-                {!imagemDicomLoadedUrl && dicomSlicesSagital.length === 0 && (
-                  <path
-                    d="M 60 40 Q 140 40, 140 160 Q 80 180, 60 140 Z"
-                    fill="none"
-                    stroke="#94A3B8"
-                    strokeWidth="10"
-                  />
-                )}
-
                 {destacarNervoAlveolar && (
                   <circle cx="105" cy="140" r="6" fill="#EF4444" stroke="#FCA5A5" strokeWidth="1.5" />
                 )}
