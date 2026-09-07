@@ -258,7 +258,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
     );
   };
 
-  const transacoesFiltradas = transacoesCombinadas.filter((t) => {
+  const transacoesFiltradas = transSeguras.filter((t) => {
     const atendeTipo = filtroTipo === 'Todos' || t.tipo === filtroTipo;
     const atendeCat = filtroCategoria === 'Todas' || t.categoria === filtroCategoria;
     const atendeBusca = t.descricao.toLowerCase().includes(busca.toLowerCase());
