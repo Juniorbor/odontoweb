@@ -225,8 +225,34 @@ export async function carregarArquivoDicomOuImagem(file: File): Promise<ParsedDi
       }
 
       // PROCURA 2: Pixels Raw Não-Comprimidos em Grayscale (8-bit ou 16-bit)
-      const pixelTagIdx = findByteSequence(buffer, [0x70, 0x7e, 0x10, 0x00]);
-      const rawOffset = pixelTagIdx !== -1 ? pixelTagIdx + 12 : 132;
+      // Tag (7FE0, 0010) Pixel Data em Little Endian: [0xE0, 0x7F, 0x10, 0x00]
+      let pixelTagIdx = findByteSequence(buffer, [0xe0, 0x7f, 0x10, 0x00]);
+      if (pixelTagIdx === -1) {
+        // Fallback para Big Endian: [0x7F, 0xE0, 0x00, 0x10]
+        pixelTagIdx = findByteSequence(buffer, [0x7f, 0xe0, 0x00, 0x10]);
+      }
+
+      // Tag (0028, 0103) Pixel Representation (0 = Unsigned, 1 = Signed 2's complement Int16)
+      let isSignedInt16 = false;
+      const pixelRepIdx = findByteSequence(buffer, [0x28, 0x00, 0x03, 0x01]);
+      if (pixelRepIdx !== -1 && pixelRepIdx + 9 < buffer.length) {
+        const repVal = buffer[pixelRepIdx + 8] | (buffer[pixelRepIdx + 9] << 8);
+        if (repVal === 1) isSignedInt16 = true;
+      }
+
+      // Calcula offset exato dos pixels (Explicit VR OB/OW = +12 bytes, Implicit VR = +8 bytes)
+      let rawOffset = 132;
+      if (pixelTagIdx !== -1) {
+        rawOffset = pixelTagIdx + 8;
+        if (pixelTagIdx + 6 < buffer.length) {
+          const vr1 = buffer[pixelTagIdx + 4];
+          const vr2 = buffer[pixelTagIdx + 5];
+          // Se VR for 'OB', 'OW' ou 'UN'
+          if ((vr1 === 0x4f && (vr2 === 0x42 || vr2 === 0x57)) || (vr1 === 0x55 && vr2 === 0x4e)) {
+            rawOffset = pixelTagIdx + 12;
+          }
+        }
+      }
 
       const width = headerMeta.columns;
       const height = headerMeta.rows;
@@ -244,32 +270,37 @@ export async function carregarArquivoDicomOuImagem(file: File): Promise<ParsedDi
           const is16Bit = headerMeta.bitsAllocated === 16;
           const totalPixels = width * height;
 
-          let minVal = 65535;
-          let maxVal = 0;
-
           if (is16Bit) {
+            const rawValues = new Float32Array(totalPixels);
+            let minVal = Infinity;
+            let maxVal = -Infinity;
+
             for (let i = 0; i < totalPixels; i++) {
               const byteOffset = rawOffset + i * 2;
               if (byteOffset + 1 < buffer.length) {
-                const val = buffer[byteOffset] | (buffer[byteOffset + 1] << 8);
-                if (val < minVal) minVal = val;
-                if (val > maxVal) maxVal = val;
+                let val16 = buffer[byteOffset] | (buffer[byteOffset + 1] << 8);
+                // Converte complemento de 2 para Int16 negativo se PixelRepresentation === 1
+                if (isSignedInt16 && (val16 & 0x8000)) {
+                  val16 = val16 - 65536;
+                }
+                rawValues[i] = val16;
+                if (val16 < minVal) minVal = val16;
+                if (val16 > maxVal) maxVal = val16;
               }
             }
-            
-            // Normalização de contraste HD com percentis de corte (Remove ruído e fumaça cinza)
-            const lowPercentile = minVal + (maxVal - minVal) * 0.04;
-            const highPercentile = maxVal - (maxVal - minVal) * 0.04;
+
+            // Janelamento HD para Tecido Ósseo (Bone Window HU)
+            const lowPercentile = minVal + (maxVal - minVal) * 0.08;
+            const highPercentile = maxVal - (maxVal - minVal) * 0.02;
             const range = highPercentile - lowPercentile || 1;
 
             for (let i = 0; i < totalPixels; i++) {
-              const byteOffset = rawOffset + i * 2;
-              let gray8 = 128;
-              if (byteOffset + 1 < buffer.length) {
-                const val = buffer[byteOffset] | (buffer[byteOffset + 1] << 8);
+              const val = rawValues[i];
+              let gray8 = 0;
+              if (val > lowPercentile) {
                 const normalized = Math.min(1, Math.max(0, (val - lowPercentile) / range));
-                // Curva Sigmoide S-Curve para realce de esmalte e osso denso
-                const enhanced = Math.pow(normalized, 0.88);
+                // Curva Sigmoide S-Curve para realce de tecido ósseo e esmalte dental
+                const enhanced = Math.pow(normalized, 0.72);
                 gray8 = Math.min(255, Math.max(0, Math.floor(enhanced * 255)));
               }
               const pxIdx = i * 4;
