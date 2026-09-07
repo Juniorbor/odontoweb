@@ -8,6 +8,7 @@ import {
   LogOut,
   FileSpreadsheet,
   Database,
+  Box,
   X
 } from 'lucide-react';
 
@@ -45,6 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const allMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Activity },
     { id: 'producao', label: 'Produção', icon: FileSpreadsheet },
+    { id: 'radiologia', label: 'Radiologia & DICOM 3D', icon: Box, badge: '3D' },
     { id: 'financeiro', label: 'Financeiro', icon: DollarSign, badge: badgeCounts?.pendentes ? `! ${badgeCounts.pendentes}` : undefined },
     { id: 'relatorios', label: 'Relatórios', icon: BarChart3 },
     { id: 'bancodedados', label: 'Banco de Dados', icon: Database, badge: 'SEGURA' },

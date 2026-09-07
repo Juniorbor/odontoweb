@@ -7,6 +7,7 @@ import { Odontograma } from './components/Odontograma';
 import { RadiografiaViewer } from './components/RadiografiaViewer';
 import { FotografiasGaleria } from './components/FotografiasGaleria';
 import { Producao } from './components/Producao';
+import { PainelRadiologiaMain } from './components/radiologia/PainelRadiologiaMain';
 import { AIAssistant } from './components/AIAssistant';
 import { Financeiro } from './components/Financeiro';
 import { Relatorios } from './components/Relatorios';
@@ -543,6 +544,13 @@ export function App() {
 
           {activeTab === 'producao' && usuarioLogado?.role !== 'cliente' && (
             <Producao darkMode={darkMode} usuarioId={usuarioLogado?.id} />
+          )}
+
+          {activeTab === 'radiologia' && (
+            <PainelRadiologiaMain
+              darkMode={darkMode}
+              pacienteNome={pacienteOdontograma?.nome || 'Paciente Exemplo'}
+            />
           )}
 
           {activeTab === 'odontograma' && (
