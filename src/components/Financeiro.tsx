@@ -75,7 +75,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
 
   // Salvamento automático permanente em localStorage local
   useEffect(() => {
-    if (Array.isArray(transacoes) && transacoes.length > 0) {
+    if (Array.isArray(transacoes)) {
       const str = JSON.stringify(transacoes);
       localStorage.setItem(STORAGE_KEY, str);
       localStorage.setItem('odonto_financeiro_backup_permanent', str);
@@ -107,7 +107,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
     // 1. Busca imediata na nuvem ao abrir
     setSincronizando(true);
     pullFromCloud((payload) => {
-      if (Array.isArray(payload.financeiro) && payload.financeiro.length > 0) {
+      if (Array.isArray(payload.financeiro)) {
         setTransacoes(payload.financeiro);
       }
       setSincronizando(false);
@@ -115,7 +115,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
 
     // 2. Escuta alterações locais de abas simultâneas via BroadcastChannel
     const unsubscribeBroadcast = subscribeLocalBroadcast((payload) => {
-      if (Array.isArray(payload.financeiro) && payload.financeiro.length > 0) {
+      if (Array.isArray(payload.financeiro)) {
         setTransacoes(payload.financeiro);
       }
     }, usuarioId);
@@ -123,7 +123,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
     // 3. Polling contínuo a cada 2 segundos
     const interval = setInterval(() => {
       pullFromCloud((payload) => {
-        if (Array.isArray(payload.financeiro) && payload.financeiro.length > 0) {
+        if (Array.isArray(payload.financeiro)) {
           setTransacoes(payload.financeiro);
         }
       }, false, usuarioId);
@@ -131,7 +131,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
 
     const handleFocus = () => {
       pullFromCloud((payload) => {
-        if (Array.isArray(payload.financeiro) && payload.financeiro.length > 0) {
+        if (Array.isArray(payload.financeiro)) {
           setTransacoes(payload.financeiro);
         }
       }, true, usuarioId);

@@ -209,11 +209,8 @@ export async function pullFromCloud(
     const remoteTimestamp = cloudData.updatedAt || 0;
     const localTimestamp = Number(localStorage.getItem(keys.LAST_UPDATE) || '0');
 
-    const remoteHasData = (Array.isArray(cloudData.producao) && cloudData.producao.length > 0) ||
-                          (Array.isArray(cloudData.financeiro) && cloudData.financeiro.length > 0);
-
-    // Se a nuvem estiver vazia/zerada e o dispositivo local tiver registros, envia os dados locais para a nuvem
-    if (!remoteHasData && (localProducao.length > 0 || localFinanceiro.length > 0)) {
+    // Se a nuvem estiver com timestamp zerado (cold start da serverless) e o dispositivo local tiver registros, envia os dados locais para a nuvem
+    if (remoteTimestamp === 0 && (localProducao.length > 0 || localFinanceiro.length > 0)) {
       pushToCloud({
         producao: localProducao,
         financeiro: localFinanceiro,
@@ -231,15 +228,16 @@ export async function pullFromCloud(
       return true;
     }
 
-    if (remoteTimestamp > localTimestamp && remoteHasData) {
-      if (Array.isArray(cloudData.producao) && cloudData.producao.length > 0) {
+    // Se o timestamp remoto for mais recente que o local, adota integralmente os dados atualizados da nuvem (incluindo exclusões efetuadas em outro dispositivo)
+    if (remoteTimestamp > localTimestamp) {
+      if (Array.isArray(cloudData.producao)) {
         const str = JSON.stringify(cloudData.producao);
         localStorage.setItem(keys.PRODUCAO, str);
         localStorage.setItem('odonto_producao_backup_permanent', str);
         localStorage.setItem('odonto_producao_registros_usr_admin_master', str);
         localStorage.setItem('odonto_producao_registros_v2', str);
       }
-      if (Array.isArray(cloudData.financeiro) && cloudData.financeiro.length > 0) {
+      if (Array.isArray(cloudData.financeiro)) {
         const str = JSON.stringify(cloudData.financeiro);
         localStorage.setItem(keys.FINANCEIRO, str);
         localStorage.setItem('odonto_financeiro_backup_permanent', str);
@@ -252,8 +250,8 @@ export async function pullFromCloud(
       // Preserva os dados locais seguros e mistura os usuarios online
       onUpdate({
         ...cloudData,
-        producao: localProducao.length > 0 ? localProducao : (cloudData.producao || []),
-        financeiro: localFinanceiro.length > 0 ? localFinanceiro : (cloudData.financeiro || [])
+        producao: localProducao,
+        financeiro: localFinanceiro
       });
     }
 
@@ -292,9 +290,9 @@ export function subscribeLocalBroadcast(onUpdate: (payload: CloudDataPayload) =>
 export function getItemJSON<T = any>(key: string, fallback: T): T {
   try {
     let item = localStorage.getItem(key);
-    let parsed = item ? JSON.parse(item) : null;
 
-    if ((!Array.isArray(parsed) || parsed.length === 0) && key.includes('odonto_producao_registros')) {
+    // Se a chave for estritamente nula (sem registro salvo ainda), procura nos backups legados
+    if (item === null && key.includes('odonto_producao_registros')) {
       const keysToTry = [
         'odonto_producao_backup_permanent',
         'odonto_producao_registros_usr_admin_master',
@@ -303,19 +301,14 @@ export function getItemJSON<T = any>(key: string, fallback: T): T {
       ];
       for (const k of keysToTry) {
         const candidateItem = localStorage.getItem(k);
-        if (candidateItem) {
-          try {
-            const candidateParsed = JSON.parse(candidateItem);
-            if (Array.isArray(candidateParsed) && candidateParsed.length > 0) {
-              parsed = candidateParsed;
-              break;
-            }
-          } catch {}
+        if (candidateItem !== null) {
+          item = candidateItem;
+          break;
         }
       }
     }
 
-    if ((!Array.isArray(parsed) || parsed.length === 0) && key.includes('odonto_financeiro_pessoal')) {
+    if (item === null && key.includes('odonto_financeiro_pessoal')) {
       const keysToTry = [
         'odonto_financeiro_backup_permanent',
         'odonto_financeiro_pessoal_usr_admin_master',
@@ -324,18 +317,15 @@ export function getItemJSON<T = any>(key: string, fallback: T): T {
       ];
       for (const k of keysToTry) {
         const candidateItem = localStorage.getItem(k);
-        if (candidateItem) {
-          try {
-            const candidateParsed = JSON.parse(candidateItem);
-            if (Array.isArray(candidateParsed) && candidateParsed.length > 0) {
-              parsed = candidateParsed;
-              break;
-            }
-          } catch {}
+        if (candidateItem !== null) {
+          item = candidateItem;
+          break;
         }
       }
     }
 
+    if (item === null || item === undefined) return fallback;
+    const parsed = JSON.parse(item);
     if (parsed === null || parsed === undefined) return fallback;
     return parsed;
   } catch {

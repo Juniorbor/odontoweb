@@ -44,7 +44,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
 
   // Salvamento automático permanente em localStorage local
   useEffect(() => {
-    if (Array.isArray(itens) && itens.length > 0) {
+    if (Array.isArray(itens)) {
       const str = JSON.stringify(itens);
       localStorage.setItem(STORAGE_KEY, str);
       localStorage.setItem('odonto_producao_backup_permanent', str);
@@ -69,21 +69,21 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   useEffect(() => {
     setSincronizando(true);
     pullFromCloud((payload) => {
-      if (Array.isArray(payload.producao) && payload.producao.length > 0) {
+      if (Array.isArray(payload.producao)) {
         setItens(payload.producao);
       }
       setSincronizando(false);
     }, true, usuarioId);
 
     const unsubscribeBroadcast = subscribeLocalBroadcast((payload) => {
-      if (Array.isArray(payload.producao) && payload.producao.length > 0) {
+      if (Array.isArray(payload.producao)) {
         setItens(payload.producao);
       }
     }, usuarioId);
 
     const interval = setInterval(() => {
       pullFromCloud((payload) => {
-        if (Array.isArray(payload.producao) && payload.producao.length > 0) {
+        if (Array.isArray(payload.producao)) {
           setItens(payload.producao);
         }
       }, false, usuarioId);
@@ -91,7 +91,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
 
     const handleFocus = () => {
       pullFromCloud((payload) => {
-        if (Array.isArray(payload.producao) && payload.producao.length > 0) {
+        if (Array.isArray(payload.producao)) {
           setItens(payload.producao);
         }
       }, true, usuarioId);
