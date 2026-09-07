@@ -12,7 +12,9 @@ import {
   Sliders,
   Sparkles,
   Upload,
-  RefreshCw
+  RefreshCw,
+  Trash2,
+  Settings
 } from 'lucide-react';
 import { carregarArquivoDicomOuImagem } from '../../utils/dicomLoader';
 
@@ -53,9 +55,12 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
   const [exameSelecionado, setExameSelecionado] = useState(RADIOGRAFIAS_EXEMPLO[0]);
   const [imagemCustomUrl, setImagemCustomUrl] = useState<string | null>(null);
 
+  // Dimensões internas da imagem
+  const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 800, height: 600 });
+
   // Controles de Imagem
   const [brilho, setBrilho] = useState<number>(0); // -100 a 100
-  const [contraste, setContraste] = useState<number>(100); // 0 a 200%
+  const [contraste, setContraste] = useState<number>(100); // 0 a 300%
   const [inverter, setInverter] = useState<boolean>(false);
   const [sharpen, setSharpen] = useState<boolean>(false);
   const [paletaCor, setPaletaCor] = useState<'normal' | 'jet' | 'bone' | 'sepia'>('normal');
@@ -63,19 +68,21 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
   // Ferramentas de Zoom & Pan
   const [zoom, setZoom] = useState<number>(1);
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isDraggingPan, setIsDraggingPan] = useState<boolean>(false);
+  const [dragStartPan, setDragStartPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // Ferramentas de Medição
   const [modoFerramenta, setModoFerramenta] = useState<'navegar' | 'regua' | 'angulo'>('navegar');
   const [pontosRegua, setPontosRegua] = useState<{ x: number; y: number }[]>([]);
   const [pontosAngulo, setPontosAngulo] = useState<{ x: number; y: number }[]>([]);
-  const [calibracaoMmPorPixel] = useState<number>(0.08); // 0.08mm por pixel padrão
+  const [mousePos, setMousePos] = useState<{ x: number; y: number } | null>(null);
+  const [draggedPoint, setDraggedPoint] = useState<{ type: 'regua' | 'angulo'; index: number } | null>(null);
+  const [calibracaoMmPorPixel, setCalibracaoMmPorPixel] = useState<number>(0.08); // 0.08mm por pixel padrão
 
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Redefinir Ajustes de Imagem
+  // Redefinir Ajustes de Imagem e Medições
   const handleResetFiltros = () => {
     setBrilho(0);
     setContraste(100);
@@ -86,6 +93,8 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
     setPan({ x: 0, y: 0 });
     setPontosRegua([]);
     setPontosAngulo([]);
+    setMousePos(null);
+    setDraggedPoint(null);
   };
 
   // Upload de Imagem do Usuário (Suporta .dcm, .dicom e formatos padrão)
@@ -121,8 +130,11 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
     img.src = imagemCustomUrl || exameSelecionado.url;
 
     img.onload = () => {
-      canvas.width = img.naturalWidth || 800;
-      canvas.height = img.naturalHeight || 600;
+      const w = img.naturalWidth || 800;
+      const h = img.naturalHeight || 600;
+      canvas.width = w;
+      canvas.height = h;
+      setDimensions({ width: w, height: h });
 
       // Aplicação dos Filtros CSS no Contexto do Canvas
       let filterString = `brightness(${100 + brilho}%) contrast(${contraste}%)`;
@@ -149,62 +161,109 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
     };
   }, [exameSelecionado, imagemCustomUrl, brilho, contraste, inverter, sharpen, paletaCor]);
 
-  // Handlers de Pan (Arrastar Imagem)
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (modoFerramenta === 'navegar') {
-      setIsDragging(true);
-      setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
-    } else if (modoFerramenta === 'regua') {
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const x = (e.clientX - rect.left - pan.x) / zoom;
-      const y = (e.clientY - rect.top - pan.y) / zoom;
+  // Converter coordenadas do cursor na tela para coordenadas internas do Canvas
+  const getCanvasCoords = (e: React.MouseEvent): { x: number; y: number } => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = Math.max(0, Math.min(canvas.width, (e.clientX - rect.left) * scaleX));
+    const y = Math.max(0, Math.min(canvas.height, (e.clientY - rect.top) * scaleY));
+    return { x, y };
+  };
 
-      if (pontosRegua.length >= 2) {
-        setPontosRegua([{ x, y }]);
+  // Verificar se o clique está próximo a algum ponto existente para arrastar
+  const findNearbyPoint = (coords: { x: number; y: number }, thresholdPx = 30) => {
+    const threshold = thresholdPx * (dimensions.width / 800);
+    
+    // Checa pontos da régua
+    for (let i = 0; i < pontosRegua.length; i++) {
+      const p = pontosRegua[i];
+      const dist = Math.hypot(p.x - coords.x, p.y - coords.y);
+      if (dist <= threshold) {
+        return { type: 'regua' as const, index: i };
+      }
+    }
+    // Checa pontos do ângulo
+    for (let i = 0; i < pontosAngulo.length; i++) {
+      const p = pontosAngulo[i];
+      const dist = Math.hypot(p.x - coords.x, p.y - coords.y);
+      if (dist <= threshold) {
+        return { type: 'angulo' as const, index: i };
+      }
+    }
+    return null;
+  };
+
+  // Handlers de Interação com Mouse
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const coords = getCanvasCoords(e);
+    
+    // Tenta capturar ponto para arrastar
+    const nearby = findNearbyPoint(coords);
+    if (nearby) {
+      setDraggedPoint(nearby);
+      return;
+    }
+
+    if (modoFerramenta === 'navegar') {
+      setIsDraggingPan(true);
+      setDragStartPan({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    } else if (modoFerramenta === 'regua') {
+      if (pontosRegua.length >= 2 || pontosRegua.length === 0) {
+        setPontosRegua([coords]);
       } else {
-        setPontosRegua([...pontosRegua, { x, y }]);
+        setPontosRegua([...pontosRegua, coords]);
       }
     } else if (modoFerramenta === 'angulo') {
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const x = (e.clientX - rect.left - pan.x) / zoom;
-      const y = (e.clientY - rect.top - pan.y) / zoom;
-
-      if (pontosAngulo.length >= 3) {
-        setPontosAngulo([{ x, y }]);
+      if (pontosAngulo.length >= 3 || pontosAngulo.length === 0) {
+        setPontosAngulo([coords]);
       } else {
-        setPontosAngulo([...pontosAngulo, { x, y }]);
+        setPontosAngulo([...pontosAngulo, coords]);
       }
     }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging && modoFerramenta === 'navegar') {
-      setPan({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
+    const coords = getCanvasCoords(e);
+    setMousePos(coords);
+
+    if (draggedPoint) {
+      if (draggedPoint.type === 'regua') {
+        const novos = [...pontosRegua];
+        novos[draggedPoint.index] = coords;
+        setPontosRegua(novos);
+      } else if (draggedPoint.type === 'angulo') {
+        const novos = [...pontosAngulo];
+        novos[draggedPoint.index] = coords;
+        setPontosAngulo(novos);
+      }
+      return;
+    }
+
+    if (isDraggingPan && modoFerramenta === 'navegar') {
+      setPan({ x: e.clientX - dragStartPan.x, y: e.clientY - dragStartPan.y });
     }
   };
 
   const handleMouseUp = () => {
-    setIsDragging(false);
+    setIsDraggingPan(false);
+    setDraggedPoint(null);
   };
 
   // Cálculo da distância medida em mm pela régua
-  const calcularDistanciaMm = () => {
-    if (pontosRegua.length < 2) return 0;
-    const dx = pontosRegua[1].x - pontosRegua[0].x;
-    const dy = pontosRegua[1].y - pontosRegua[0].y;
+  const calcularDistanciaMm = (p0 = pontosRegua[0], p1 = pontosRegua[1]) => {
+    if (!p0 || !p1) return '0.00';
+    const dx = p1.x - p0.x;
+    const dy = p1.y - p0.y;
     const distanciaPixels = Math.sqrt(dx * dx + dy * dy);
     return (distanciaPixels * calibracaoMmPorPixel).toFixed(2);
   };
 
-  // Cálculo do ângulo em graus formado por 3 pontos
-  const calcularAnguloGraus = () => {
-    if (pontosAngulo.length < 3) return 0;
-    const p1 = pontosAngulo[0];
-    const p2 = pontosAngulo[1]; // Vértice
-    const p3 = pontosAngulo[2];
-
+  // Cálculo do ângulo em graus formado por 3 pontos (P1 é o vértice)
+  const calcularAnguloGraus = (p1 = pontosAngulo[0], p2 = pontosAngulo[1], p3 = pontosAngulo[2]) => {
+    if (!p1 || !p2 || !p3) return '0.0';
     const a = Math.atan2(p1.y - p2.y, p1.x - p2.x);
     const b = Math.atan2(p3.y - p2.y, p3.x - p2.x);
     let angulo = ((a - b) * 180) / Math.PI;
@@ -212,6 +271,10 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
     if (angulo > 180) angulo = 360 - angulo;
     return angulo.toFixed(1);
   };
+
+  // Ponto dinâmico para pré-visualização (Rubberband)
+  const reguaEndTarget = pontosRegua.length === 1 ? mousePos || pontosRegua[0] : pontosRegua[1];
+  const anguloEndTarget = pontosAngulo.length === 1 ? mousePos || pontosAngulo[0] : pontosAngulo.length === 2 ? mousePos || pontosAngulo[1] : pontosAngulo[2];
 
   return (
     <div className="space-y-6">
@@ -310,6 +373,31 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
             </div>
           </div>
 
+          {/* SELETOR DE CALIBRAÇÃO MM/PIXEL */}
+          <div className="space-y-2 pt-2 border-t border-slate-800">
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                <Settings className="w-3.5 h-3.5 text-teal-400" /> Calibração (mm/px)
+              </label>
+              <span className="text-xs font-mono text-teal-400 font-bold">{calibracaoMmPorPixel.toFixed(3)} mm/px</span>
+            </div>
+            <div className="grid grid-cols-4 gap-1.5">
+              {[0.05, 0.08, 0.10, 0.12].map((val) => (
+                <button
+                  key={val}
+                  onClick={() => setCalibracaoMmPorPixel(val)}
+                  className={`py-1 rounded-lg text-[11px] font-mono border font-extrabold transition-all cursor-pointer ${
+                    calibracaoMmPorPixel === val
+                      ? 'bg-teal-500/20 text-teal-300 border-teal-500'
+                      : 'bg-slate-800/60 text-slate-400 border-slate-750 hover:bg-slate-800 hover:text-slate-200'
+                  }`}
+                >
+                  {val.toFixed(2)}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* BRILHO & CONTRASTE */}
           <div className="space-y-4 pt-2 border-t border-slate-800">
             <div>
@@ -401,28 +489,39 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
           </div>
 
           {/* PAINEL DE RESULTADOS DAS MEDIÇÕES */}
-          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
-            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
-              Resultados de Medição Digital
-            </span>
+          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                Resultados de Medição Digital
+              </span>
+              {(pontosRegua.length > 0 || pontosAngulo.length > 0) && (
+                <button
+                  onClick={() => { setPontosRegua([]); setPontosAngulo([]); }}
+                  className="text-[10px] font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer"
+                  title="Limpar todas as medições"
+                >
+                  <Trash2 className="w-3 h-3" /> Limpar
+                </button>
+              )}
+            </div>
 
-            {pontosRegua.length === 2 && (
-              <div className="flex justify-between items-center text-xs font-extrabold text-amber-400">
+            {pontosRegua.length >= 2 && (
+              <div className="flex justify-between items-center text-xs font-extrabold text-amber-400 bg-amber-500/10 p-2 rounded-xl border border-amber-500/20">
                 <span>Distância Medida:</span>
-                <span className="text-sm font-mono">{calcularDistanciaMm()} mm</span>
+                <span className="text-sm font-mono font-black">{calcularDistanciaMm()} mm</span>
               </div>
             )}
 
-            {pontosAngulo.length === 3 && (
-              <div className="flex justify-between items-center text-xs font-extrabold text-indigo-400">
+            {pontosAngulo.length >= 3 && (
+              <div className="flex justify-between items-center text-xs font-extrabold text-indigo-400 bg-indigo-500/10 p-2 rounded-xl border border-indigo-500/20">
                 <span>Ângulo Medido:</span>
-                <span className="text-sm font-mono">{calcularAnguloGraus()}°</span>
+                <span className="text-sm font-mono font-black">{calcularAnguloGraus()}°</span>
               </div>
             )}
 
             {pontosRegua.length < 2 && pontosAngulo.length < 3 && (
               <p className="text-[11px] text-slate-500">
-                Selecione a ferramenta Régua ou Ângulo e marque os pontos na imagem para medir em tempo real.
+                Clique na imagem com a ferramenta <strong className="text-amber-400">Régua</strong> (2 pontos) ou <strong className="text-indigo-400">Ângulo</strong> (3 pontos) para medir com precisão milimétrica. Arraste qualquer ponto para recalibrar.
               </p>
             )}
           </div>
@@ -441,9 +540,10 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          className={`lg:col-span-3 rounded-3xl border shadow-2xl relative overflow-hidden flex items-center justify-center min-h-[550px] select-none cursor-grab active:cursor-grabbing ${
-            darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-100 border-slate-300'
-          }`}
+          onMouseLeave={handleMouseUp}
+          className={`lg:col-span-3 rounded-3xl border shadow-2xl relative overflow-hidden flex items-center justify-center min-h-[550px] select-none ${
+            modoFerramenta === 'navegar' ? 'cursor-grab active:cursor-grabbing' : 'cursor-crosshair'
+          } ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-100 border-slate-300'}`}
         >
           {/* BARRA DE ZOOM FLUTUANTE */}
           <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md p-1.5 rounded-2xl border border-slate-800 shadow-xl">
@@ -478,77 +578,164 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
             style={{
               transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
               transformOrigin: 'center center',
-              transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+              transition: isDraggingPan ? 'none' : 'transform 0.1s ease-out'
             }}
-            className="relative flex items-center justify-center"
+            className="relative flex items-center justify-center inline-block"
           >
-            <canvas ref={canvasRef} className="rounded-xl shadow-2xl max-w-full max-h-[500px]" />
+            <canvas ref={canvasRef} className="rounded-xl shadow-2xl max-w-full max-h-[500px] block" />
 
             {/* CAMADA DE SOBREPOSIÇÃO SVG PARA RÉGUA E ÂNGULO */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none">
-              {/* Renderização da Régua */}
-              {pontosRegua.length === 2 && (
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
+              preserveAspectRatio="none"
+            >
+              {/* Renderização da Régua (Pontos definidos ou pré-visualização) */}
+              {(pontosRegua.length > 0 && reguaEndTarget) && (
                 <g>
                   <line
                     x1={pontosRegua[0].x}
                     y1={pontosRegua[0].y}
-                    x2={pontosRegua[1].x}
-                    y2={pontosRegua[1].y}
+                    x2={reguaEndTarget.x}
+                    y2={reguaEndTarget.y}
                     stroke="#F59E0B"
-                    strokeWidth="3"
-                    strokeDasharray="4 2"
+                    strokeWidth={dimensions.width * 0.004}
+                    strokeDasharray={pontosRegua.length === 1 ? '6 4' : undefined}
                   />
-                  <circle cx={pontosRegua[0].x} cy={pontosRegua[0].y} r="5" fill="#F59E0B" />
-                  <circle cx={pontosRegua[1].x} cy={pontosRegua[1].y} r="5" fill="#F59E0B" />
-                  <rect
-                    x={(pontosRegua[0].x + pontosRegua[1].x) / 2 - 35}
-                    y={(pontosRegua[0].y + pontosRegua[1].y) / 2 - 12}
-                    width="70"
-                    height="24"
-                    rx="6"
-                    fill="#0F172A"
-                    stroke="#F59E0B"
-                  />
-                  <text
-                    x={(pontosRegua[0].x + pontosRegua[1].x) / 2}
-                    y={(pontosRegua[0].y + pontosRegua[1].y) / 2 + 4}
+                  {/* Ponto P0 */}
+                  <circle
+                    cx={pontosRegua[0].x}
+                    cy={pontosRegua[0].y}
+                    r={dimensions.width * 0.008}
                     fill="#F59E0B"
-                    fontSize="11"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    {calcularDistanciaMm()} mm
-                  </text>
+                    stroke="#0F172A"
+                    strokeWidth={dimensions.width * 0.002}
+                  />
+                  {/* Ponto P1 / target */}
+                  <circle
+                    cx={reguaEndTarget.x}
+                    cy={reguaEndTarget.y}
+                    r={dimensions.width * 0.008}
+                    fill="#F59E0B"
+                    stroke="#0F172A"
+                    strokeWidth={dimensions.width * 0.002}
+                  />
+
+                  {/* Badge com valor em mm */}
+                  <g transform={`translate(${(pontosRegua[0].x + reguaEndTarget.x) / 2}, ${(pontosRegua[0].y + reguaEndTarget.y) / 2})`}>
+                    <rect
+                      x={-dimensions.width * 0.045}
+                      y={-dimensions.height * 0.02}
+                      width={dimensions.width * 0.09}
+                      height={dimensions.height * 0.04}
+                      rx="6"
+                      fill="#0F172A"
+                      stroke="#F59E0B"
+                      strokeWidth="1.5"
+                    />
+                    <text
+                      x="0"
+                      y={dimensions.height * 0.008}
+                      fill="#F59E0B"
+                      fontSize={dimensions.width * 0.015}
+                      fontWeight="bold"
+                      textAnchor="middle"
+                    >
+                      {calcularDistanciaMm(pontosRegua[0], reguaEndTarget)} mm
+                    </text>
+                  </g>
                 </g>
               )}
 
-              {/* Renderização do Transferidor de Ângulo */}
-              {pontosAngulo.length === 3 && (
+              {/* Renderização do Transferidor de Ângulo (3 pontos: P0 -> P1 [Vértice] -> P2) */}
+              {pontosAngulo.length > 0 && (
                 <g>
-                  <line x1={pontosAngulo[0].x} y1={pontosAngulo[0].y} x2={pontosAngulo[1].x} y2={pontosAngulo[1].y} stroke="#6366F1" strokeWidth="3" />
-                  <line x1={pontosAngulo[1].x} y1={pontosAngulo[1].y} x2={pontosAngulo[2].x} y2={pontosAngulo[2].y} stroke="#6366F1" strokeWidth="3" />
-                  <circle cx={pontosAngulo[0].x} cy={pontosAngulo[0].y} r="5" fill="#6366F1" />
-                  <circle cx={pontosAngulo[1].x} cy={pontosAngulo[1].y} r="6" fill="#10B981" />
-                  <circle cx={pontosAngulo[2].x} cy={pontosAngulo[2].y} r="5" fill="#6366F1" />
-                  <rect
-                    x={pontosAngulo[1].x - 30}
-                    y={pontosAngulo[1].y - 30}
-                    width="60"
-                    height="22"
-                    rx="6"
-                    fill="#0F172A"
-                    stroke="#6366F1"
-                  />
-                  <text
-                    x={pontosAngulo[1].x}
-                    y={pontosAngulo[1].y - 15}
-                    fill="#6366F1"
-                    fontSize="11"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                  >
-                    {calcularAnguloGraus()}°
-                  </text>
+                  {/* Linha P0 -> P1 (Vértice) */}
+                  {pontosAngulo.length >= 2 && (
+                    <line
+                      x1={pontosAngulo[0].x}
+                      y1={pontosAngulo[0].y}
+                      x2={pontosAngulo[1].x}
+                      y2={pontosAngulo[1].y}
+                      stroke="#6366F1"
+                      strokeWidth={dimensions.width * 0.004}
+                    />
+                  )}
+
+                  {/* Linha P1 -> P2 ou preview */}
+                  {anguloEndTarget && (
+                    <line
+                      x1={pontosAngulo[1] ? pontosAngulo[1].x : pontosAngulo[0].x}
+                      y1={pontosAngulo[1] ? pontosAngulo[1].y : pontosAngulo[0].y}
+                      x2={anguloEndTarget.x}
+                      y2={anguloEndTarget.y}
+                      stroke="#6366F1"
+                      strokeWidth={dimensions.width * 0.004}
+                      strokeDasharray={pontosAngulo.length < 3 ? '6 4' : undefined}
+                    />
+                  )}
+
+                  {/* Círculo P0 */}
+                  {pontosAngulo[0] && (
+                    <circle
+                      cx={pontosAngulo[0].x}
+                      cy={pontosAngulo[0].y}
+                      r={dimensions.width * 0.008}
+                      fill="#6366F1"
+                      stroke="#0F172A"
+                      strokeWidth="2"
+                    />
+                  )}
+
+                  {/* Vértice P1 */}
+                  {pontosAngulo[1] && (
+                    <circle
+                      cx={pontosAngulo[1].x}
+                      cy={pontosAngulo[1].y}
+                      r={dimensions.width * 0.01}
+                      fill="#10B981"
+                      stroke="#0F172A"
+                      strokeWidth="2"
+                    />
+                  )}
+
+                  {/* Círculo P2 ou target */}
+                  {anguloEndTarget && (
+                    <circle
+                      cx={anguloEndTarget.x}
+                      cy={anguloEndTarget.y}
+                      r={dimensions.width * 0.008}
+                      fill="#6366F1"
+                      stroke="#0F172A"
+                      strokeWidth="2"
+                    />
+                  )}
+
+                  {/* Badge com valor em Graus */}
+                  {pontosAngulo.length >= 2 && anguloEndTarget && (
+                    <g transform={`translate(${pontosAngulo[1] ? pontosAngulo[1].x : pontosAngulo[0].x}, ${(pontosAngulo[1] ? pontosAngulo[1].y : pontosAngulo[0].y) - dimensions.height * 0.04})`}>
+                      <rect
+                        x={-dimensions.width * 0.04}
+                        y={-dimensions.height * 0.08}
+                        width={dimensions.width * 0.08}
+                        height={dimensions.height * 0.04}
+                        rx="6"
+                        fill="#0F172A"
+                        stroke="#6366F1"
+                        strokeWidth="1.5"
+                      />
+                      <text
+                        x="0"
+                        y={-dimensions.height * 0.055}
+                        fill="#6366F1"
+                        fontSize={dimensions.width * 0.015}
+                        fontWeight="bold"
+                        textAnchor="middle"
+                      >
+                        {calcularAnguloGraus(pontosAngulo[0], pontosAngulo[1] || pontosAngulo[0], anguloEndTarget)}°
+                      </text>
+                    </g>
+                  )}
                 </g>
               )}
             </svg>
