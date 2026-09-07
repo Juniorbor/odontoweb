@@ -501,29 +501,29 @@ export async function carregarSerieDicomOuArquivos(files: FileList | File[]): Pr
 /**
  * Reconstrói 1 fatia no Plano Coronal (Frontal X-Z) a partir da matriz de volume 3D
  */
-function reconstruirPlanoCoronal(yPos: number, width: number, _height: number, depth: number, volume: Uint8Array[]): string {
+function reconstruirPlanoCoronal(yPos: number, width: number, height: number, depth: number, volume: Uint8Array[]): string {
   const canvas = document.createElement('canvas');
-  const sliceHeight = Math.max(256, depth * 3);
+  const targetHeight = height > 0 ? height : width;
   canvas.width = width;
-  canvas.height = sliceHeight;
+  canvas.height = targetHeight;
   const ctx = canvas.getContext('2d');
   if (!ctx) return '';
 
-  const imageData = ctx.createImageData(width, sliceHeight);
+  const imageData = ctx.createImageData(width, targetHeight);
   const data = imageData.data;
 
-  const scaleZ = sliceHeight / depth;
+  const scaleZ = targetHeight / depth;
 
   for (let z = 0; z < depth; z++) {
     const slicePixels = volume[z];
     if (!slicePixels) continue;
 
-    const startCanvasY = Math.floor(sliceHeight - 1 - (z + 1) * scaleZ);
-    const endCanvasY = Math.floor(sliceHeight - 1 - z * scaleZ);
+    const startCanvasY = Math.floor(targetHeight - 1 - (z + 1) * scaleZ);
+    const endCanvasY = Math.floor(targetHeight - 1 - z * scaleZ);
 
     for (let x = 0; x < width; x++) {
       const val = slicePixels[yPos * width + x] || 0;
-      for (let cy = Math.max(0, startCanvasY); cy <= Math.min(sliceHeight - 1, endCanvasY); cy++) {
+      for (let cy = Math.max(0, startCanvasY); cy <= Math.min(targetHeight - 1, endCanvasY); cy++) {
         const pxIdx = (cy * width + x) * 4;
         data[pxIdx] = val;     // R
         data[pxIdx + 1] = val; // G
@@ -542,28 +542,29 @@ function reconstruirPlanoCoronal(yPos: number, width: number, _height: number, d
  */
 function reconstruirPlanoSagital(xPos: number, width: number, height: number, depth: number, volume: Uint8Array[]): string {
   const canvas = document.createElement('canvas');
-  const sliceHeight = Math.max(256, depth * 3);
-  canvas.width = height;
-  canvas.height = sliceHeight;
+  const targetWidth = height > 0 ? height : width;
+  const targetHeight = width > 0 ? width : height;
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
   const ctx = canvas.getContext('2d');
   if (!ctx) return '';
 
-  const imageData = ctx.createImageData(height, sliceHeight);
+  const imageData = ctx.createImageData(targetWidth, targetHeight);
   const data = imageData.data;
 
-  const scaleZ = sliceHeight / depth;
+  const scaleZ = targetHeight / depth;
 
   for (let z = 0; z < depth; z++) {
     const slicePixels = volume[z];
     if (!slicePixels) continue;
 
-    const startCanvasY = Math.floor(sliceHeight - 1 - (z + 1) * scaleZ);
-    const endCanvasY = Math.floor(sliceHeight - 1 - z * scaleZ);
+    const startCanvasY = Math.floor(targetHeight - 1 - (z + 1) * scaleZ);
+    const endCanvasY = Math.floor(targetHeight - 1 - z * scaleZ);
 
     for (let y = 0; y < height; y++) {
       const val = slicePixels[y * width + xPos] || 0;
-      for (let cy = Math.max(0, startCanvasY); cy <= Math.min(sliceHeight - 1, endCanvasY); cy++) {
-        const pxIdx = (cy * height + y) * 4;
+      for (let cy = Math.max(0, startCanvasY); cy <= Math.min(targetHeight - 1, endCanvasY); cy++) {
+        const pxIdx = (cy * targetWidth + y) * 4;
         data[pxIdx] = val;     // R
         data[pxIdx + 1] = val; // G
         data[pxIdx + 2] = val; // B
