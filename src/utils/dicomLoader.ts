@@ -499,37 +499,58 @@ export async function carregarSerieDicomOuArquivos(files: FileList | File[]): Pr
 }
 
 /**
- * Reconstrói 1 fatia no Plano Coronal (Frontal X-Z) a partir da matriz de volume 3D
+ * Reconstrói 1 fatia no Plano Coronal (Frontal X-Z) com Interpolação Bilinear HD e Supersampling
  */
 function reconstruirPlanoCoronal(yPos: number, width: number, height: number, depth: number, volume: Uint8Array[]): string {
   const canvas = document.createElement('canvas');
-  const targetHeight = height > 0 ? height : width;
-  canvas.width = width;
-  canvas.height = targetHeight;
+  const outW = Math.max(1024, width);
+  const outH = Math.max(1024, height > 0 ? height : width);
+  canvas.width = outW;
+  canvas.height = outH;
   const ctx = canvas.getContext('2d');
   if (!ctx) return '';
 
-  const imageData = ctx.createImageData(width, targetHeight);
+  const imageData = ctx.createImageData(outW, outH);
   const data = imageData.data;
 
-  const scaleZ = targetHeight / depth;
+  for (let cy = 0; cy < outH; cy++) {
+    const srcZ = ((outH - 1 - cy) / (outH - 1)) * (depth - 1);
+    const z0 = Math.floor(srcZ);
+    const z1 = Math.min(depth - 1, z0 + 1);
+    const zWeight = srcZ - z0;
 
-  for (let z = 0; z < depth; z++) {
-    const slicePixels = volume[z];
-    if (!slicePixels) continue;
+    const slice0 = volume[z0];
+    const slice1 = volume[z1];
 
-    const startCanvasY = Math.floor(targetHeight - 1 - (z + 1) * scaleZ);
-    const endCanvasY = Math.floor(targetHeight - 1 - z * scaleZ);
+    if (!slice0) continue;
 
-    for (let x = 0; x < width; x++) {
-      const val = slicePixels[yPos * width + x] || 0;
-      for (let cy = Math.max(0, startCanvasY); cy <= Math.min(targetHeight - 1, endCanvasY); cy++) {
-        const pxIdx = (cy * width + x) * 4;
-        data[pxIdx] = val;     // R
-        data[pxIdx + 1] = val; // G
-        data[pxIdx + 2] = val; // B
-        data[pxIdx + 3] = 255; // A
+    for (let cx = 0; cx < outW; cx++) {
+      const srcX = (cx / (outW - 1)) * (width - 1);
+      const x0 = Math.floor(srcX);
+      const x1 = Math.min(width - 1, x0 + 1);
+      const xWeight = srcX - x0;
+
+      // Amostragem na fatia z0
+      const v0_0 = slice0[yPos * width + x0] || 0;
+      const v0_1 = slice0[yPos * width + x1] || 0;
+      const val0 = v0_0 * (1 - xWeight) + v0_1 * xWeight;
+
+      // Amostragem na fatia z1
+      let val1 = val0;
+      if (slice1) {
+        const v1_0 = slice1[yPos * width + x0] || 0;
+        const v1_1 = slice1[yPos * width + x1] || 0;
+        val1 = v1_0 * (1 - xWeight) + v1_1 * xWeight;
       }
+
+      // Interpolação final no eixo Z
+      const finalVal = Math.min(255, Math.max(0, Math.round(val0 * (1 - zWeight) + val1 * zWeight)));
+
+      const pxIdx = (cy * outW + cx) * 4;
+      data[pxIdx] = finalVal;     // R
+      data[pxIdx + 1] = finalVal; // G
+      data[pxIdx + 2] = finalVal; // B
+      data[pxIdx + 3] = 255;      // A
     }
   }
 
@@ -538,38 +559,59 @@ function reconstruirPlanoCoronal(yPos: number, width: number, height: number, de
 }
 
 /**
- * Reconstrói 1 fatia no Plano Sagital (Lateral Y-Z) a partir da matriz de volume 3D
+ * Reconstrói 1 fatia no Plano Sagital (Lateral Y-Z) com Interpolação Bilinear HD e Supersampling
  */
 function reconstruirPlanoSagital(xPos: number, width: number, height: number, depth: number, volume: Uint8Array[]): string {
   const canvas = document.createElement('canvas');
-  const targetWidth = height > 0 ? height : width;
-  const targetHeight = width > 0 ? width : height;
-  canvas.width = targetWidth;
-  canvas.height = targetHeight;
+  const srcH = height > 0 ? height : width;
+  const outW = Math.max(1024, srcH);
+  const outH = Math.max(1024, width);
+  canvas.width = outW;
+  canvas.height = outH;
   const ctx = canvas.getContext('2d');
   if (!ctx) return '';
 
-  const imageData = ctx.createImageData(targetWidth, targetHeight);
+  const imageData = ctx.createImageData(outW, outH);
   const data = imageData.data;
 
-  const scaleZ = targetHeight / depth;
+  for (let cy = 0; cy < outH; cy++) {
+    const srcZ = ((outH - 1 - cy) / (outH - 1)) * (depth - 1);
+    const z0 = Math.floor(srcZ);
+    const z1 = Math.min(depth - 1, z0 + 1);
+    const zWeight = srcZ - z0;
 
-  for (let z = 0; z < depth; z++) {
-    const slicePixels = volume[z];
-    if (!slicePixels) continue;
+    const slice0 = volume[z0];
+    const slice1 = volume[z1];
 
-    const startCanvasY = Math.floor(targetHeight - 1 - (z + 1) * scaleZ);
-    const endCanvasY = Math.floor(targetHeight - 1 - z * scaleZ);
+    if (!slice0) continue;
 
-    for (let y = 0; y < height; y++) {
-      const val = slicePixels[y * width + xPos] || 0;
-      for (let cy = Math.max(0, startCanvasY); cy <= Math.min(targetHeight - 1, endCanvasY); cy++) {
-        const pxIdx = (cy * targetWidth + y) * 4;
-        data[pxIdx] = val;     // R
-        data[pxIdx + 1] = val; // G
-        data[pxIdx + 2] = val; // B
-        data[pxIdx + 3] = 255; // A
+    for (let cx = 0; cx < outW; cx++) {
+      const srcY = (cx / (outW - 1)) * (srcH - 1);
+      const y0 = Math.floor(srcY);
+      const y1 = Math.min(srcH - 1, y0 + 1);
+      const yWeight = srcY - y0;
+
+      // Amostragem na fatia z0
+      const v0_0 = slice0[y0 * width + xPos] || 0;
+      const v0_1 = slice0[y1 * width + xPos] || 0;
+      const val0 = v0_0 * (1 - yWeight) + v0_1 * yWeight;
+
+      // Amostragem na fatia z1
+      let val1 = val0;
+      if (slice1) {
+        const v1_0 = slice1[y0 * width + xPos] || 0;
+        const v1_1 = slice1[y1 * width + xPos] || 0;
+        val1 = v1_0 * (1 - yWeight) + v1_1 * yWeight;
       }
+
+      // Interpolação final no eixo Z
+      const finalVal = Math.min(255, Math.max(0, Math.round(val0 * (1 - zWeight) + val1 * zWeight)));
+
+      const pxIdx = (cy * outW + cx) * 4;
+      data[pxIdx] = finalVal;     // R
+      data[pxIdx + 1] = finalVal; // G
+      data[pxIdx + 2] = finalVal; // B
+      data[pxIdx + 3] = 255;      // A
     }
   }
 
