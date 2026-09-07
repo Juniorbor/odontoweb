@@ -277,14 +277,14 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
   const anguloEndTarget = pontosAngulo.length === 1 ? mousePos || pontosAngulo[0] : pontosAngulo.length === 2 ? mousePos || pontosAngulo[1] : pontosAngulo[2];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* SELETOR DE EXAMES E TOOLBAR SUPERIOR */}
-      <div className={`p-4 rounded-3xl border shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 ${
+      <div className={`p-3 rounded-2xl border shadow-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 ${
         darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
       }`}>
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
-            <Eye className="w-4 h-4 text-teal-400" /> Exames do Paciente:
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
+            <Eye className="w-3.5 h-3.5 text-teal-400" /> Exames:
           </span>
           {RADIOGRAFIAS_EXEMPLO.map((ex) => (
             <button
@@ -294,7 +294,7 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
                 setExameSelecionado(ex);
                 handleResetFiltros();
               }}
-              className={`px-3.5 py-2 rounded-2xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-2 border ${
+              className={`px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold transition-all cursor-pointer flex items-center gap-1.5 border ${
                 exameSelecionado.id === ex.id
                   ? 'bg-gradient-to-r from-teal-500 to-emerald-600 text-white border-teal-400 shadow-md'
                   : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800'
@@ -304,89 +304,89 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
             </button>
           ))}
 
-          <label className="px-3.5 py-2 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-extrabold cursor-pointer border border-slate-700 flex items-center gap-1.5 transition-all">
-            <Upload className="w-4 h-4 text-teal-400" /> Upload de Imagem DICOM/Raio-X
+          <label className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-extrabold cursor-pointer border border-slate-700 flex items-center gap-1.5 transition-all">
+            <Upload className="w-3.5 h-3.5 text-teal-400" /> Upload DICOM/Raio-X
             <input type="file" accept=".dcm,.dicom,image/*" onChange={handleFileUpload} className="hidden" />
           </label>
         </div>
 
         {/* STATUS DO EXAME SELECIONADO */}
-        <div className="flex items-center gap-2 text-xs">
+        <div className="flex items-center gap-2 text-[11px]">
           <span className="text-slate-400">Paciente: <strong className="text-white">{pacienteNome}</strong></span>
           <span className="text-slate-500">|</span>
-          <span className="px-2.5 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20 font-mono font-bold">
+          <span className="px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20 font-mono font-bold text-[10px]">
             {exameSelecionado.tipo}
           </span>
         </div>
       </div>
 
       {/* PAINEL CENTRAL DE VISUALIZAÇÃO E CONTROLES */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         
         {/* COLUNA ESQUERDA: CONTROLES DE IMAGEM & MEDIÇÃO */}
-        <div className={`p-6 rounded-3xl border shadow-xl space-y-6 lg:col-span-1 ${
+        <div className={`p-4 rounded-2xl border shadow-xl space-y-4 lg:col-span-1 ${
           darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
         }`}>
-          <div className="border-b border-slate-800 pb-3">
-            <h3 className="font-extrabold text-sm flex items-center gap-2 text-teal-400">
-              <Sliders className="w-4 h-4 text-teal-400" /> Ferramentas Radiológicas
+          <div className="border-b border-slate-800 pb-2">
+            <h3 className="font-black text-xs flex items-center gap-1.5 text-teal-400">
+              <Sliders className="w-3.5 h-3.5 text-teal-400" /> Ferramentas Radiológicas
             </h3>
-            <p className="text-[11px] text-slate-400 mt-0.5">Ajustes diagnósticos em tempo real</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Ajustes diagnósticos em tempo real</p>
           </div>
 
           {/* MODO DE INTERAÇÃO */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 block">Modo da Ferramenta</label>
-            <div className="grid grid-cols-3 gap-2">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-bold text-slate-400 block">Modo da Ferramenta</label>
+            <div className="grid grid-cols-3 gap-1.5">
               <button
                 onClick={() => setModoFerramenta('navegar')}
-                className={`p-2.5 rounded-xl text-xs font-extrabold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
+                className={`p-2 rounded-xl text-[11px] font-extrabold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
                   modoFerramenta === 'navegar'
                     ? 'bg-teal-600 text-white border-teal-400 shadow'
                     : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:text-white'
                 }`}
               >
-                <Eye className="w-4 h-4" /> Mover
+                <Eye className="w-3.5 h-3.5" /> Mover
               </button>
 
               <button
                 onClick={() => setModoFerramenta('regua')}
-                className={`p-2.5 rounded-xl text-xs font-extrabold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
+                className={`p-2 rounded-xl text-[11px] font-extrabold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
                   modoFerramenta === 'regua'
                     ? 'bg-amber-600 text-white border-amber-400 shadow'
                     : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:text-white'
                 }`}
               >
-                <Ruler className="w-4 h-4" /> Régua (mm)
+                <Ruler className="w-3.5 h-3.5" /> Régua (mm)
               </button>
 
               <button
                 onClick={() => setModoFerramenta('angulo')}
-                className={`p-2.5 rounded-xl text-xs font-extrabold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
+                className={`p-2 rounded-xl text-[11px] font-extrabold flex flex-col items-center gap-1 border transition-all cursor-pointer ${
                   modoFerramenta === 'angulo'
                     ? 'bg-indigo-600 text-white border-indigo-400 shadow'
                     : 'bg-slate-800/80 text-slate-400 border-slate-700 hover:text-white'
                 }`}
               >
-                <Compass className="w-4 h-4" /> Ângulo (°)
+                <Compass className="w-3.5 h-3.5" /> Ângulo (°)
               </button>
             </div>
           </div>
 
           {/* SELETOR DE CALIBRAÇÃO MM/PIXEL */}
-          <div className="space-y-2 pt-2 border-t border-slate-800">
+          <div className="space-y-1.5 pt-2 border-t border-slate-800">
             <div className="flex justify-between items-center">
-              <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                <Settings className="w-3.5 h-3.5 text-teal-400" /> Calibração (mm/px)
+              <label className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
+                <Settings className="w-3 h-3 text-teal-400" /> Calibração (mm/px)
               </label>
-              <span className="text-xs font-mono text-teal-400 font-bold">{calibracaoMmPorPixel.toFixed(3)} mm/px</span>
+              <span className="text-[11px] font-mono text-teal-400 font-bold">{calibracaoMmPorPixel.toFixed(3)} mm/px</span>
             </div>
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-4 gap-1">
               {[0.05, 0.08, 0.10, 0.12].map((val) => (
                 <button
                   key={val}
                   onClick={() => setCalibracaoMmPorPixel(val)}
-                  className={`py-1 rounded-lg text-[11px] font-mono border font-extrabold transition-all cursor-pointer ${
+                  className={`py-0.5 rounded-lg text-[10px] font-mono border font-extrabold transition-all cursor-pointer ${
                     calibracaoMmPorPixel === val
                       ? 'bg-teal-500/20 text-teal-300 border-teal-500'
                       : 'bg-slate-800/60 text-slate-400 border-slate-750 hover:bg-slate-800 hover:text-slate-200'
@@ -399,11 +399,11 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
           </div>
 
           {/* BRILHO & CONTRASTE */}
-          <div className="space-y-4 pt-2 border-t border-slate-800">
+          <div className="space-y-3 pt-2 border-t border-slate-800">
             <div>
-              <div className="flex justify-between items-center text-xs font-bold mb-1">
+              <div className="flex justify-between items-center text-[11px] font-bold mb-1">
                 <span className="text-slate-300 flex items-center gap-1.5">
-                  <Sun className="w-4 h-4 text-amber-400" /> Brilho
+                  <Sun className="w-3.5 h-3.5 text-amber-400" /> Brilho
                 </span>
                 <span className="font-mono text-teal-400">{brilho > 0 ? `+${brilho}` : brilho}%</span>
               </div>
@@ -413,14 +413,14 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
                 max="100"
                 value={brilho}
                 onChange={(e) => setBrilho(Number(e.target.value))}
-                className="w-full accent-teal-500 cursor-pointer"
+                className="w-full accent-teal-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
               />
             </div>
 
             <div>
-              <div className="flex justify-between items-center text-xs font-bold mb-1">
+              <div className="flex justify-between items-center text-[11px] font-bold mb-1">
                 <span className="text-slate-300 flex items-center gap-1.5">
-                  <Contrast className="w-4 h-4 text-sky-400" /> Contraste
+                  <Contrast className="w-3.5 h-3.5 text-sky-400" /> Contraste
                 </span>
                 <span className="font-mono text-sky-400">{contraste}%</span>
               </div>
@@ -430,52 +430,52 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
                 max="300"
                 value={contraste}
                 onChange={(e) => setContraste(Number(e.target.value))}
-                className="w-full accent-sky-500 cursor-pointer"
+                className="w-full accent-sky-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
               />
             </div>
           </div>
 
           {/* EFEITOS ESPECIAIS RADIOLÓGICOS */}
-          <div className="space-y-3 pt-2 border-t border-slate-800">
-            <label className="text-xs font-bold text-slate-400 block">Filtros Radiológicos Especializados</label>
+          <div className="space-y-2.5 pt-2 border-t border-slate-800">
+            <label className="text-[11px] font-bold text-slate-400 block">Filtros Radiológicos</label>
             
             <button
               onClick={() => setInverter(!inverter)}
-              className={`w-full p-2.5 rounded-2xl text-xs font-extrabold flex items-center justify-between border transition-all cursor-pointer ${
+              className={`w-full p-2 rounded-xl text-[11px] font-extrabold flex items-center justify-between border transition-all cursor-pointer ${
                 inverter
                   ? 'bg-rose-500/20 text-rose-400 border-rose-500/40 shadow-md'
                   : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-755'
               }`}
             >
-              <span className="flex items-center gap-2">
-                <RotateCcw className="w-4 h-4" /> Inversão Negativa / Raio-X
+              <span className="flex items-center gap-1.5">
+                <RotateCcw className="w-3.5 h-3.5" /> Inversão Negativa / Raio-X
               </span>
-              <span className="font-mono text-[10px] uppercase font-bold">{inverter ? 'ATIVO' : 'DESL'}</span>
+              <span className="font-mono text-[9px] uppercase font-bold">{inverter ? 'ATIVO' : 'DESL'}</span>
             </button>
 
             <button
               onClick={() => setSharpen(!sharpen)}
-              className={`w-full p-2.5 rounded-2xl text-xs font-extrabold flex items-center justify-between border transition-all cursor-pointer ${
+              className={`w-full p-2 rounded-xl text-[11px] font-extrabold flex items-center justify-between border transition-all cursor-pointer ${
                 sharpen
                   ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-md'
                   : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-755'
               }`}
             >
-              <span className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-400" /> Nitidez Digital (Digital Sharpen)
+              <span className="flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Nitidez Digital (Sharpen)
               </span>
-              <span className="font-mono text-[10px] uppercase font-bold">{sharpen ? 'ATIVO' : 'DESL'}</span>
+              <span className="font-mono text-[9px] uppercase font-bold">{sharpen ? 'ATIVO' : 'DESL'}</span>
             </button>
 
             {/* SELETOR DE MAPA DE CALOR PSEUDO-COR */}
-            <div className="space-y-1.5 pt-1">
-              <span className="text-[11px] font-bold text-slate-400 block">Mapa de Calor (Densidade Óssea)</span>
-              <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1 pt-1">
+              <span className="text-[10px] font-bold text-slate-400 block">Mapa de Calor (Densidade Óssea)</span>
+              <div className="grid grid-cols-2 gap-1.5">
                 {(['normal', 'jet', 'bone', 'sepia'] as const).map((pal) => (
                   <button
                     key={pal}
                     onClick={() => setPaletaCor(pal)}
-                    className={`p-2 rounded-xl text-xs font-bold uppercase border transition-all cursor-pointer ${
+                    className={`p-1.5 rounded-lg text-[10px] font-bold uppercase border transition-all cursor-pointer ${
                       paletaCor === pal
                         ? 'bg-teal-600 text-white border-teal-400 shadow'
                         : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
@@ -489,15 +489,15 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
           </div>
 
           {/* PAINEL DE RESULTADOS DAS MEDIÇÕES */}
-          <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
-                Resultados de Medição Digital
+          <div className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-1.5">
+              <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                Resultados de Medição
               </span>
               {(pontosRegua.length > 0 || pontosAngulo.length > 0) && (
                 <button
                   onClick={() => { setPontosRegua([]); setPontosAngulo([]); }}
-                  className="text-[10px] font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer"
+                  className="text-[9px] font-bold text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer"
                   title="Limpar todas as medições"
                 >
                   <Trash2 className="w-3 h-3" /> Limpar
@@ -506,31 +506,31 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
             </div>
 
             {pontosRegua.length >= 2 && (
-              <div className="flex justify-between items-center text-xs font-extrabold text-amber-400 bg-amber-500/10 p-2 rounded-xl border border-amber-500/20">
-                <span>Distância Medida:</span>
-                <span className="text-sm font-mono font-black">{calcularDistanciaMm()} mm</span>
+              <div className="flex justify-between items-center text-[11px] font-extrabold text-amber-400 bg-amber-500/10 p-1.5 rounded-lg border border-amber-500/20">
+                <span>Distância:</span>
+                <span className="text-xs font-mono font-black">{calcularDistanciaMm()} mm</span>
               </div>
             )}
 
             {pontosAngulo.length >= 3 && (
-              <div className="flex justify-between items-center text-xs font-extrabold text-indigo-400 bg-indigo-500/10 p-2 rounded-xl border border-indigo-500/20">
-                <span>Ângulo Medido:</span>
-                <span className="text-sm font-mono font-black">{calcularAnguloGraus()}°</span>
+              <div className="flex justify-between items-center text-[11px] font-extrabold text-indigo-400 bg-indigo-500/10 p-1.5 rounded-lg border border-indigo-500/20">
+                <span>Ângulo:</span>
+                <span className="text-xs font-mono font-black">{calcularAnguloGraus()}°</span>
               </div>
             )}
 
             {pontosRegua.length < 2 && pontosAngulo.length < 3 && (
-              <p className="text-[11px] text-slate-500">
-                Clique na imagem com a ferramenta <strong className="text-amber-400">Régua</strong> (2 pontos) ou <strong className="text-indigo-400">Ângulo</strong> (3 pontos) para medir com precisão milimétrica. Arraste qualquer ponto para recalibrar.
+              <p className="text-[10px] text-slate-500 leading-tight">
+                Clique na imagem com a <strong className="text-amber-400">Régua</strong> (2 pts) ou <strong className="text-indigo-400">Ângulo</strong> (3 pts) para medir. Arraste qualquer ponto para recalibrar.
               </p>
             )}
           </div>
 
           <button
             onClick={handleResetFiltros}
-            className="w-full py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-extrabold border border-slate-700 flex items-center justify-center gap-2 cursor-pointer transition-all"
+            className="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-extrabold border border-slate-700 flex items-center justify-center gap-1.5 cursor-pointer transition-all"
           >
-            <RefreshCw className="w-4 h-4 text-teal-400" /> Redefinir Todos os Filtros
+            <RefreshCw className="w-3.5 h-3.5 text-teal-400" /> Redefinir Filtros
           </button>
         </div>
 
@@ -541,20 +541,20 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
-          className={`lg:col-span-3 rounded-3xl border shadow-2xl relative overflow-hidden flex items-center justify-center min-h-[550px] select-none ${
+          className={`lg:col-span-3 rounded-2xl border shadow-xl relative overflow-hidden flex items-center justify-center min-h-[460px] max-h-[480px] select-none ${
             modoFerramenta === 'navegar' ? 'cursor-grab active:cursor-grabbing' : 'cursor-crosshair'
           } ${darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-100 border-slate-300'}`}
         >
           {/* BARRA DE ZOOM FLUTUANTE */}
-          <div className="absolute top-4 right-4 z-20 flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md p-1.5 rounded-2xl border border-slate-800 shadow-xl">
+          <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-slate-900/90 backdrop-blur-md p-1 rounded-xl border border-slate-800 shadow-lg">
             <button
               onClick={() => setZoom((z) => Math.max(0.2, z - 0.2))}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white cursor-pointer"
+              className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white cursor-pointer"
               title="Reduzir Zoom"
             >
-              <ZoomOut className="w-4 h-4" />
+              <ZoomOut className="w-3.5 h-3.5" />
             </button>
-            <span className="font-mono text-xs font-extrabold text-teal-400 px-2">
+            <span className="font-mono text-[11px] font-extrabold text-teal-400 px-1.5">
               {Math.round(zoom * 100)}%
             </span>
             <button

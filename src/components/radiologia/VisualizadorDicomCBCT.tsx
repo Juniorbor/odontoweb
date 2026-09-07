@@ -164,25 +164,25 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* TOOLBAR SUPERIOR DO VISUALIZADOR DICOM CBCT */}
-      <div className={`p-4 rounded-3xl border shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 ${
+      <div className={`p-3 rounded-2xl border shadow-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 ${
         darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
       }`}>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 bg-indigo-500/10 px-3 py-1.5 rounded-2xl border border-indigo-500/30">
-            <Box className="w-4 h-4 text-indigo-400" />
-            <span className="text-xs font-mono font-extrabold text-indigo-300">{nomeArquivoDicom}</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 bg-indigo-500/10 px-2.5 py-1 rounded-xl border border-indigo-500/30">
+            <Box className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="text-[11px] font-mono font-extrabold text-indigo-300 truncate max-w-[200px]">{nomeArquivoDicom}</span>
           </div>
 
-          <label className="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-xs font-extrabold cursor-pointer shadow-lg shadow-teal-500/20 flex items-center gap-1.5 transition-all">
-            <FolderOpen className="w-4 h-4" /> Selecionar Todos os Cortes DICOM da Pasta (.dcm)
+          <label className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-[11px] font-extrabold cursor-pointer shadow-md shadow-teal-500/20 flex items-center gap-1.5 transition-all">
+            <FolderOpen className="w-3.5 h-3.5" /> Selecionar Cortes DICOM (.dcm)
             <input type="file" multiple accept=".dcm,.dicom,.zip,image/*" onChange={handleFileUpload} className="hidden" />
           </label>
 
           <button
             onClick={() => setNitidezHD(!nitidezHD)}
-            className={`px-3 py-2 rounded-2xl border text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-extrabold transition-all cursor-pointer flex items-center gap-1.5 ${
               nitidezHD
                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                 : 'bg-slate-800 text-slate-400 border-slate-700'
@@ -193,7 +193,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
 
           <button
             onClick={() => setCrosshairAtivo(!crosshairAtivo)}
-            className={`px-3 py-2 rounded-2xl border text-xs font-extrabold transition-all cursor-pointer ${
+            className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-extrabold transition-all cursor-pointer ${
               crosshairAtivo
                 ? 'bg-sky-500/10 text-sky-400 border-sky-500/30'
                 : 'bg-slate-800 text-slate-400 border-slate-700'
@@ -204,19 +204,19 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
         </div>
 
         {/* PRESETS DE JANELAMENTO ÓSSEO / DENTAL */}
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="text-slate-400 font-bold">Janelamento:</span>
+        <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+          <span className="text-slate-400 font-bold">Janela:</span>
           {(['osseo', 'dente', 'moles'] as const).map((p) => (
             <button
               key={p}
               onClick={() => setJanelaPreset(p)}
-              className={`px-3 py-1.5 rounded-xl font-extrabold border transition-all cursor-pointer uppercase text-[10px] ${
+              className={`px-2.5 py-1 rounded-lg font-extrabold border transition-all cursor-pointer uppercase text-[10px] ${
                 janelaPreset === p
                   ? 'bg-teal-600 text-white border-teal-400 shadow'
                   : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
               }`}
             >
-              {p === 'osseo' ? 'Tecido Ósseo (WW 2000)' : p === 'dente' ? 'Esmalte & Dente (WW 4000)' : 'Tecidos Moles'}
+              {p === 'osseo' ? 'Tecido Ósseo' : p === 'dente' ? 'Esmalte & Dente' : 'Tecidos Moles'}
             </button>
           ))}
         </div>
@@ -224,16 +224,16 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
 
       {/* BANNER DE METADADOS DICOM DA SÉRIE DE CORTES */}
       {dicomMeta && (
-        <div className="p-3.5 rounded-2xl bg-slate-900 border border-teal-500/40 flex flex-wrap items-center justify-between text-xs text-slate-300 gap-3">
+        <div className="p-2.5 rounded-xl bg-slate-900 border border-teal-500/40 flex flex-wrap items-center justify-between text-[11px] text-slate-300 gap-2">
           <div className="flex items-center gap-2">
-            <FileCheck className="w-4 h-4 text-teal-400" />
+            <FileCheck className="w-3.5 h-3.5 text-teal-400" />
             <span className="font-extrabold text-white">Série Tomográfica DICOM HD (MPR 3D):</span>
             <span className="font-mono text-teal-300">
               {dicomSlicesAxial.length > 0 ? `${dicomSlicesAxial.length} Axiais | ${dicomSlicesCoronal.length} Coronais | ${dicomSlicesSagital.length} Sagitais` : 'Volume Carregado'} | {dicomMeta.fileName}
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-4 text-[11px] font-mono">
-            <span>Espaçamento: <strong className="text-teal-400">{espacamentoMm} mm/corte</strong></span>
+          <div className="flex flex-wrap items-center gap-3 text-[10px] font-mono">
+            <span>Espaçamento: <strong className="text-teal-400">{espacamentoMm} mm</strong></span>
             <span>Modalidade: <strong className="text-teal-400">{dicomMeta.modality}</strong></span>
             <span>Resolução: <strong className="text-teal-400">{dicomMeta.columns}x{dicomMeta.rows}</strong></span>
             <span>Paciente: <strong className="text-white">{dicomMeta.patientName}</strong></span>
@@ -242,52 +242,52 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
       )}
 
       {carregandoDicom && (
-        <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center gap-2 text-indigo-300 text-xs font-extrabold animate-pulse">
-          <RefreshCw className="w-4 h-4 animate-spin" /> Processando reconstrução 3D MPR (Axial, Coronal e Sagital)...
+        <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center gap-2 text-indigo-300 text-[11px] font-extrabold animate-pulse">
+          <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Processando reconstrução 3D MPR (Axial, Coronal e Sagital)...
         </div>
       )}
 
       {/* PAINEL CENTRAL MULTIPLANAR RECONSTRUCTION (MPR 3-VIEWPORTS HD) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
 
         {/* VIEWPORT 1: CORTE AXIAL (VISTA SUPERIOR) */}
-        <div className={`p-4 rounded-3xl border shadow-xl space-y-3 ${
+        <div className={`p-3 rounded-2xl border shadow-lg space-y-2 ${
           darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
         }`}>
-          <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-            <span className="text-xs font-extrabold text-teal-400 flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-teal-400"></span> Corte Axial (Top-Down)
+          <div className="flex justify-between items-center border-b border-slate-800 pb-1.5">
+            <span className="text-[11px] font-extrabold text-teal-400 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-teal-400"></span> Corte Axial (Superior)
             </span>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => setRotacaoAxial((r) => (r + 90) % 360)}
                 title="Girar Corte 90°"
                 className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-400 transition-all cursor-pointer"
               >
-                <RotateCw className="w-3.5 h-3.5" />
+                <RotateCw className="w-3 h-3" />
               </button>
               <button
                 onClick={() => setEspelharAxial((f) => !f)}
                 title="Espelhar Horizontal"
                 className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-400 transition-all cursor-pointer"
               >
-                <FlipHorizontal className="w-3.5 h-3.5" />
+                <FlipHorizontal className="w-3 h-3" />
               </button>
               <button
                 onClick={() => { setZoomLevel(100); setCorteExpandido('axial'); }}
                 title="Visualizar em Tamanho Real HD"
-                className="p-1 px-2 rounded-lg bg-teal-500/20 hover:bg-teal-500/40 text-teal-300 transition-all cursor-pointer flex items-center gap-1 text-[10px] font-extrabold"
+                className="p-0.5 px-1.5 rounded-lg bg-teal-500/20 hover:bg-teal-500/40 text-teal-300 transition-all cursor-pointer flex items-center gap-1 text-[9px] font-extrabold"
               >
-                <Maximize2 className="w-3.5 h-3.5" /> 1:1 HD
+                <Maximize2 className="w-3 h-3" /> 1:1
               </button>
-              <span className="text-[10px] font-mono font-bold text-slate-400">
-                Fat. {fatiaAxial}/{totalAxial} ({getSliceAxialMm(fatiaAxial)} mm)
+              <span className="text-[9px] font-mono font-bold text-slate-400">
+                {fatiaAxial}/{totalAxial} ({getSliceAxialMm(fatiaAxial)}mm)
               </span>
             </div>
           </div>
 
-          <div className="relative rounded-2xl overflow-hidden bg-black flex items-center justify-center min-h-[420px] border border-slate-800 group">
-            <div className="relative w-full h-[420px] bg-slate-950 flex items-center justify-center overflow-hidden">
+          <div className="relative rounded-xl overflow-hidden bg-black flex items-center justify-center min-h-[350px] h-[350px] border border-slate-800 group">
+            <div className="relative w-full h-[350px] bg-slate-950 flex items-center justify-center overflow-hidden">
               {getSliceAxialUrl(fatiaAxial) ? (
                 <img
                   src={getSliceAxialUrl(fatiaAxial)!}
@@ -327,58 +327,58 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               </svg>
             </div>
 
-            <div className="absolute bottom-3 left-3 right-3 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2">
-              <span className="text-[10px] font-mono text-slate-400">Slice:</span>
+            <div className="absolute bottom-2 left-2 right-2 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded-lg border border-slate-800 flex items-center gap-2">
+              <span className="text-[9px] font-mono text-slate-400">Slice:</span>
               <input
                 type="range"
                 min="1"
                 max={totalAxial}
                 value={fatiaAxial}
                 onChange={(e) => setFatiaAxial(Number(e.target.value))}
-                className="w-full accent-teal-400 cursor-pointer"
+                className="w-full accent-teal-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
               />
             </div>
           </div>
         </div>
 
         {/* VIEWPORT 2: CORTE CORONAL (VISTA FRONTAL) */}
-        <div className={`p-4 rounded-3xl border shadow-xl space-y-3 ${
+        <div className={`p-3 rounded-2xl border shadow-lg space-y-2 ${
           darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
         }`}>
-          <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-            <span className="text-xs font-extrabold text-sky-400 flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-sky-400"></span> Corte Coronal (Frontal Ortogonal)
+          <div className="flex justify-between items-center border-b border-slate-800 pb-1.5">
+            <span className="text-[11px] font-extrabold text-sky-400 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-sky-400"></span> Corte Coronal (Frontal)
             </span>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => setRotacaoCoronal((r) => (r + 90) % 360)}
                 title="Girar Corte 90°"
                 className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-400 transition-all cursor-pointer"
               >
-                <RotateCw className="w-3.5 h-3.5" />
+                <RotateCw className="w-3 h-3" />
               </button>
               <button
                 onClick={() => setEspelharCoronal((f) => !f)}
                 title="Espelhar Horizontal"
                 className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-400 transition-all cursor-pointer"
               >
-                <FlipHorizontal className="w-3.5 h-3.5" />
+                <FlipHorizontal className="w-3 h-3" />
               </button>
               <button
                 onClick={() => { setZoomLevel(100); setCorteExpandido('coronal'); }}
                 title="Visualizar em Tamanho Real HD"
-                className="p-1 px-2 rounded-lg bg-sky-500/20 hover:bg-sky-500/40 text-sky-300 transition-all cursor-pointer flex items-center gap-1 text-[10px] font-extrabold"
+                className="p-0.5 px-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/40 text-sky-300 transition-all cursor-pointer flex items-center gap-1 text-[9px] font-extrabold"
               >
-                <Maximize2 className="w-3.5 h-3.5" /> 1:1 HD
+                <Maximize2 className="w-3 h-3" /> 1:1
               </button>
-              <span className="text-[10px] font-mono font-bold text-slate-400">
-                Fat. {fatiaCoronal}/{totalCoronal} ({getSliceCoronalMm(fatiaCoronal)} mm)
+              <span className="text-[9px] font-mono font-bold text-slate-400">
+                {fatiaCoronal}/{totalCoronal} ({getSliceCoronalMm(fatiaCoronal)}mm)
               </span>
             </div>
           </div>
 
-          <div className="relative rounded-2xl overflow-hidden bg-black flex items-center justify-center min-h-[420px] border border-slate-800">
-            <div className="relative w-full h-[420px] bg-slate-950 flex items-center justify-center overflow-hidden">
+          <div className="relative rounded-xl overflow-hidden bg-black flex items-center justify-center min-h-[350px] h-[350px] border border-slate-800">
+            <div className="relative w-full h-[350px] bg-slate-950 flex items-center justify-center overflow-hidden">
               {getSliceCoronalUrl(fatiaCoronal) ? (
                 <img
                   src={getSliceCoronalUrl(fatiaCoronal)!}
@@ -419,58 +419,58 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               </svg>
             </div>
 
-            <div className="absolute bottom-3 left-3 right-3 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2">
-              <span className="text-[10px] font-mono text-slate-400">Slice:</span>
+            <div className="absolute bottom-2 left-2 right-2 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded-lg border border-slate-800 flex items-center gap-2">
+              <span className="text-[9px] font-mono text-slate-400">Slice:</span>
               <input
                 type="range"
                 min="1"
                 max={totalCoronal}
                 value={fatiaCoronal}
                 onChange={(e) => setFatiaCoronal(Number(e.target.value))}
-                className="w-full accent-sky-400 cursor-pointer"
+                className="w-full accent-sky-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
               />
             </div>
           </div>
         </div>
 
         {/* VIEWPORT 3: CORTE SAGITAL (VISTA LATERAL / SECCIONAL) */}
-        <div className={`p-4 rounded-3xl border shadow-xl space-y-3 ${
+        <div className={`p-3 rounded-2xl border shadow-lg space-y-2 ${
           darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
         }`}>
-          <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-            <span className="text-xs font-extrabold text-rose-400 flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-400"></span> Corte Sagital (Lateral Ortogonal)
+          <div className="flex justify-between items-center border-b border-slate-800 pb-1.5">
+            <span className="text-[11px] font-extrabold text-rose-400 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-rose-400"></span> Corte Sagital (Lateral)
             </span>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
               <button
                 onClick={() => setRotacaoSagital((r) => (r + 90) % 360)}
                 title="Girar Corte 90°"
                 className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-400 transition-all cursor-pointer"
               >
-                <RotateCw className="w-3.5 h-3.5" />
+                <RotateCw className="w-3 h-3" />
               </button>
               <button
                 onClick={() => setEspelharSagital((f) => !f)}
                 title="Espelhar Horizontal"
                 className="p-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-400 transition-all cursor-pointer"
               >
-                <FlipHorizontal className="w-3.5 h-3.5" />
+                <FlipHorizontal className="w-3 h-3" />
               </button>
               <button
                 onClick={() => { setZoomLevel(100); setCorteExpandido('sagital'); }}
                 title="Visualizar em Tamanho Real HD"
-                className="p-1 px-2 rounded-lg bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 transition-all cursor-pointer flex items-center gap-1 text-[10px] font-extrabold"
+                className="p-0.5 px-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 transition-all cursor-pointer flex items-center gap-1 text-[9px] font-extrabold"
               >
-                <Maximize2 className="w-3.5 h-3.5" /> 1:1 HD
+                <Maximize2 className="w-3 h-3" /> 1:1
               </button>
-              <span className="text-[10px] font-mono font-bold text-slate-400">
-                Fat. {fatiaSagital}/{totalSagital} ({getSliceSagitalMm(fatiaSagital)} mm)
+              <span className="text-[9px] font-mono font-bold text-slate-400">
+                {fatiaSagital}/{totalSagital} ({getSliceSagitalMm(fatiaSagital)}mm)
               </span>
             </div>
           </div>
 
-          <div className="relative rounded-2xl overflow-hidden bg-black flex items-center justify-center min-h-[420px] border border-slate-800">
-            <div className="relative w-full h-[420px] bg-slate-950 flex items-center justify-center overflow-hidden">
+          <div className="relative rounded-xl overflow-hidden bg-black flex items-center justify-center min-h-[350px] h-[350px] border border-slate-800">
+            <div className="relative w-full h-[350px] bg-slate-950 flex items-center justify-center overflow-hidden">
               {getSliceSagitalUrl(fatiaSagital) ? (
                 <img
                   src={getSliceSagitalUrl(fatiaSagital)!}
@@ -508,15 +508,15 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               </svg>
             </div>
 
-            <div className="absolute bottom-3 left-3 right-3 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2">
-              <span className="text-[10px] font-mono text-slate-400">Slice:</span>
+            <div className="absolute bottom-2 left-2 right-2 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded-lg border border-slate-800 flex items-center gap-2">
+              <span className="text-[9px] font-mono text-slate-400">Slice:</span>
               <input
                 type="range"
                 min="1"
                 max={totalSagital}
                 value={fatiaSagital}
                 onChange={(e) => setFatiaSagital(Number(e.target.value))}
-                className="w-full accent-rose-400 cursor-pointer"
+                className="w-full accent-rose-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
               />
             </div>
           </div>
@@ -528,17 +528,17 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
       {corteExpandido && (
         <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-xl p-4 md:p-6 flex flex-col justify-between overflow-hidden">
           {/* BARRA SUPERIOR DO MODAL FULLSCREEN */}
-          <div className="flex flex-wrap justify-between items-center bg-slate-900 border border-slate-800 p-4 rounded-3xl gap-4">
-            <div className="flex items-center gap-3">
-              <span className={`w-3.5 h-3.5 rounded-full ${
+          <div className="flex flex-wrap justify-between items-center bg-slate-900 border border-slate-800 p-3 rounded-2xl gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className={`w-3 h-3 rounded-full ${
                 corteExpandido === 'axial' ? 'bg-teal-400' : corteExpandido === 'coronal' ? 'bg-sky-400' : 'bg-rose-400'
               }`}></span>
               <div>
-                <h2 className="text-sm font-extrabold text-white flex items-center gap-2">
+                <h2 className="text-xs font-black text-white flex items-center gap-2">
                   Corte {corteExpandido === 'axial' ? 'Axial (Superior)' : corteExpandido === 'coronal' ? 'Coronal (Frontal)' : 'Sagital (Lateral)'} — Tamanho Real HD
                 </h2>
-                <p className="text-xs font-mono text-slate-400">
-                  Resolução Nativa High-Definition 1024px | Fatia {
+                <p className="text-[11px] font-mono text-slate-400">
+                  Resolução Nativa 1024px | Fatia {
                     corteExpandido === 'axial' ? fatiaAxial : corteExpandido === 'coronal' ? fatiaCoronal : fatiaSagital
                   }/{
                     corteExpandido === 'axial' ? totalAxial : corteExpandido === 'coronal' ? totalCoronal : totalSagital
@@ -549,27 +549,27 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               {/* CONTROLES DE ZOOM NATIVO */}
-              <div className="flex items-center gap-2 bg-slate-800 p-1.5 rounded-2xl border border-slate-700">
+              <div className="flex items-center gap-1.5 bg-slate-800 p-1 rounded-xl border border-slate-700">
                 <button
                   onClick={() => setZoomLevel(z => Math.max(50, z - 25))}
-                  className="p-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white transition-all cursor-pointer"
+                  className="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition-all cursor-pointer"
                   title="Diminuir Zoom"
                 >
-                  <ZoomOut className="w-4 h-4" />
+                  <ZoomOut className="w-3.5 h-3.5" />
                 </button>
-                <span className="text-xs font-mono font-extrabold px-2 text-teal-400">{zoomLevel}%</span>
+                <span className="text-[11px] font-mono font-extrabold px-1.5 text-teal-400">{zoomLevel}%</span>
                 <button
                   onClick={() => setZoomLevel(z => Math.min(300, z + 25))}
-                  className="p-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white transition-all cursor-pointer"
+                  className="p-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition-all cursor-pointer"
                   title="Aumentar Zoom"
                 >
-                  <ZoomIn className="w-4 h-4" />
+                  <ZoomIn className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => setZoomLevel(100)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-xs font-extrabold text-slate-200 transition-all cursor-pointer"
+                  className="px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-[11px] font-extrabold text-slate-200 transition-all cursor-pointer"
                 >
                   100% (1:1)
                 </button>
@@ -577,15 +577,15 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
 
               <button
                 onClick={() => setCorteExpandido(null)}
-                className="p-2.5 px-4 rounded-2xl bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/30 transition-all cursor-pointer flex items-center gap-2 font-extrabold text-xs"
+                className="p-2 px-3 rounded-xl bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/30 transition-all cursor-pointer flex items-center gap-1.5 font-extrabold text-[11px]"
               >
-                <X className="w-4 h-4" /> Fechar Tamanho Real
+                <X className="w-3.5 h-3.5" /> Fechar
               </button>
             </div>
           </div>
 
           {/* VIEWPORT EM TAMANHO REAL HD (FULL RESOLUTION CANVAS) */}
-          <div className="flex-1 my-4 bg-black rounded-3xl border border-slate-800 relative flex items-center justify-center overflow-auto p-4">
+          <div className="flex-1 my-3 bg-black rounded-2xl border border-slate-800 relative flex items-center justify-center overflow-auto p-3">
             <div
               className="relative transition-all duration-200 flex items-center justify-center max-w-full max-h-full"
               style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center center' }}
@@ -599,7 +599,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
                   <img
                     src={url}
                     alt={`Corte DICOM HD Tamanho Real ${corteExpandido}`}
-                    className="rounded-2xl shadow-2xl transition-all duration-200 max-w-[85vh] max-h-[85vh] object-contain"
+                    className="rounded-xl shadow-2xl transition-all duration-200 max-w-[85vh] max-h-[85vh] object-contain"
                     style={{
                       filter: `${
                         janelaPreset === 'dente'
@@ -618,8 +618,8 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
           </div>
 
           {/* SLIDER DE FATIA EM TAMANHO REAL */}
-          <div className="bg-slate-900 border border-slate-800 p-4 rounded-3xl flex items-center gap-4">
-            <span className="text-xs font-mono font-bold text-slate-300 min-w-[140px]">
+          <div className="bg-slate-900 border border-slate-800 p-3 rounded-2xl flex items-center gap-3">
+            <span className="text-[11px] font-mono font-bold text-slate-300 min-w-[120px]">
               Slice {
                 corteExpandido === 'axial' ? fatiaAxial : corteExpandido === 'coronal' ? fatiaCoronal : fatiaSagital
               } / {
@@ -637,29 +637,29 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
                 else if (corteExpandido === 'coronal') setFatiaCoronal(val);
                 else setFatiaSagital(val);
               }}
-              className="w-full accent-teal-400 cursor-pointer h-2 bg-slate-800 rounded-lg"
+              className="w-full accent-teal-400 cursor-pointer h-1.5 bg-slate-800 rounded-lg"
             />
           </div>
         </div>
       )}
 
       {/* FERRAMENTAS DE PLANEJAMENTO DE IMPLANTES & NERVOS */}
-      <div className={`p-6 rounded-3xl border shadow-xl space-y-4 ${
+      <div className={`p-4 rounded-2xl border shadow-xl space-y-3 ${
         darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
       }`}>
-        <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-          <h3 className="font-extrabold text-sm flex items-center gap-2 text-emerald-400">
-            <Shield className="w-4 h-4 text-emerald-400" /> Planejamento Virtual de Implantes & Segurança Anatômica
+        <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+          <h3 className="font-extrabold text-xs flex items-center gap-1.5 text-emerald-400">
+            <Shield className="w-3.5 h-3.5 text-emerald-400" /> Planejamento Virtual de Implantes & Segurança Anatômica
           </h3>
-          <span className="text-xs text-slate-400 font-bold">Paciente: {pacienteNome}</span>
+          <span className="text-[11px] text-slate-400 font-bold">Paciente: {pacienteNome}</span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px]">
           
           {/* BOTÃO TOGGLE DE NERVO ALVEOLAR */}
           <button
             onClick={() => setDestacarNervoAlveolar(!destacarNervoAlveolar)}
-            className={`p-4 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+            className={`p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
               destacarNervoAlveolar
                 ? 'bg-rose-500/10 border-rose-500/40 text-rose-300'
                 : 'bg-slate-800 border-slate-700 text-slate-400'
@@ -667,15 +667,15 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
           >
             <div>
               <span className="font-extrabold text-white block">🔴 Nervo Alveolar Inferior</span>
-              <span className="text-[11px] text-slate-400">Destacar trajeto do canal mandibular</span>
+              <span className="text-[10px] text-slate-400">Destacar trajeto do canal mandibular</span>
             </div>
-            <span className="font-mono text-xs font-black">{destacarNervoAlveolar ? 'ATIVO' : 'DESL'}</span>
+            <span className="font-mono text-[11px] font-black">{destacarNervoAlveolar ? 'ATIVO' : 'DESL'}</span>
           </button>
 
           {/* BOTÃO TOGGLE DE SIMULADOR DE IMPLANTE 3D */}
           <button
             onClick={() => setSimuladorImplante(!simuladorImplante)}
-            className={`p-4 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+            className={`p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
               simuladorImplante
                 ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300'
                 : 'bg-slate-800 border-slate-700 text-slate-400'
@@ -683,18 +683,18 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
           >
             <div>
               <span className="font-extrabold text-white block">🦷 Cilindro de Implante 3D</span>
-              <span className="text-[11px] text-slate-400">Simulação dimensional em cortes MPR</span>
+              <span className="text-[10px] text-slate-400">Simulação dimensional em cortes MPR</span>
             </div>
-            <span className="font-mono text-xs font-black">{simuladorImplante ? 'ATIVO' : 'DESL'}</span>
+            <span className="font-mono text-[11px] font-black">{simuladorImplante ? 'ATIVO' : 'DESL'}</span>
           </button>
 
           {/* SELETOR DE TAMANHO DO IMPLANTE */}
-          <div className="p-4 rounded-2xl bg-slate-800 border border-slate-700 space-y-1.5">
+          <div className="p-3 rounded-xl bg-slate-800 border border-slate-700 space-y-1">
             <span className="font-extrabold text-slate-300 block">Tamanho do Implante</span>
             <select
               value={tamanhoImplante}
               onChange={(e) => setTamanhoImplante(e.target.value)}
-              className="w-full p-2 rounded-xl bg-slate-900 border border-slate-700 font-extrabold text-emerald-400 text-xs"
+              className="w-full p-1.5 rounded-lg bg-slate-900 border border-slate-700 font-extrabold text-emerald-400 text-[11px]"
             >
               <option value="Ø 3.5mm x 10.0mm">Ø 3.5mm x 10.0mm (Estreito)</option>
               <option value="Ø 3.75mm x 11.5mm">Ø 3.75mm x 11.5mm (Padrão)</option>

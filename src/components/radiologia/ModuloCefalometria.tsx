@@ -123,20 +123,20 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
   const diag = getDiagnosticoClasseEsqueletica();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* TOOLBAR SUPERIOR DO MÓDULO CEFAMÉTRICO */}
-      <div className={`p-4 rounded-3xl border shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 ${
+      <div className={`p-3 rounded-2xl border shadow-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 ${
         darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
       }`}>
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
-            <Compass className="w-4 h-4 text-indigo-400" /> Escolha o Padrão de Análise:
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
+            <Compass className="w-3.5 h-3.5 text-indigo-400" /> Padrão de Análise:
           </span>
           {(['Steiner', 'Ricketts', 'McNamara'] as const).map((an) => (
             <button
               key={an}
               onClick={() => setAnaliseSelecionada(an)}
-              className={`px-4 py-2 rounded-2xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-2 border ${
+              className={`px-3 py-1.5 rounded-xl text-[11px] font-extrabold transition-all cursor-pointer flex items-center gap-1.5 border ${
                 analiseSelecionada === an
                   ? 'bg-gradient-to-r from-indigo-600 to-sky-600 text-white border-indigo-400 shadow-md'
                   : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-800'
@@ -146,33 +146,33 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
             </button>
           ))}
 
-          <label className="px-3.5 py-2 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-extrabold cursor-pointer border border-slate-700 flex items-center gap-1.5 transition-all">
-            <Upload className="w-4 h-4 text-indigo-400" /> Upload de Telerradiografia DICOM
+          <label className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-extrabold cursor-pointer border border-slate-700 flex items-center gap-1.5 transition-all">
+            <Upload className="w-3.5 h-3.5 text-indigo-400" /> Upload Telerradiografia
             <input type="file" accept=".dcm,.dicom,image/*" onChange={handleFileUpload} className="hidden" />
           </label>
         </div>
 
         <button
           onClick={handleResetPontos}
-          className="px-3.5 py-2 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-extrabold border border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer"
+          className="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-extrabold border border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer"
         >
-          <RefreshCw className="w-4 h-4 text-indigo-400" /> Reposicionar Pontos
+          <RefreshCw className="w-3.5 h-3.5 text-indigo-400" /> Reposicionar Pontos
         </button>
       </div>
 
       {/* INTERFACE PRINCIPAL: CANVAS DE MARCAÇÃO + TABELA RESULTADOS */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
         {/* COLUNA ESQUERDA: CANVAS DE TELERRADIOGRAFIA E TRAÇADOS */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-3">
           <div
             ref={containerRef}
             onClick={handleCanvasClick}
-            className={`rounded-3xl border shadow-2xl relative overflow-hidden flex items-center justify-center min-h-[550px] select-none cursor-crosshair ${
+            className={`rounded-2xl border shadow-xl relative overflow-hidden flex items-center justify-center min-h-[460px] max-h-[480px] select-none cursor-crosshair ${
               darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-100 border-slate-300'
             }`}
           >
-            <img src={imagemUrl} alt="Telerradiografia Lateral" className="max-w-full max-h-[550px] rounded-2xl opacity-90" />
+            <img src={imagemUrl} alt="Telerradiografia Lateral" className="max-w-full max-h-[480px] rounded-xl opacity-90" />
 
             {/* SOBREPOSIÇÃO SVG DOS TRAÇADOS CEFAMÉTRICOS (STEINER/RICKETTS) */}
             <svg className="absolute inset-0 w-full h-full pointer-events-none">
@@ -202,16 +202,16 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
                     <circle
                       cx={p.x}
                       cy={p.y}
-                      r={isAtivo ? '8' : '5'}
+                      r={isAtivo ? '7' : '4.5'}
                       fill={isAtivo ? '#10B981' : '#6366F1'}
                       stroke="#FFFFFF"
-                      strokeWidth="2"
+                      strokeWidth="1.5"
                     />
                     <text
-                      x={p.x + 10}
+                      x={p.x + 8}
                       y={p.y + 4}
                       fill={isAtivo ? '#10B981' : '#FFFFFF'}
-                      fontSize="11"
+                      fontSize="10"
                       fontWeight="bold"
                       className="drop-shadow"
                     >
@@ -223,29 +223,29 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
             </svg>
 
             {/* GUIA DE MARCAÇÃO ATIVA (TOOLTIP FLUTUANTE) */}
-            <div className="absolute bottom-4 left-4 right-4 bg-slate-900/90 backdrop-blur-md p-3.5 rounded-2xl border border-slate-800 flex items-center justify-between shadow-2xl">
+            <div className="absolute bottom-3 left-3 right-3 bg-slate-900/90 backdrop-blur-md p-2.5 rounded-xl border border-slate-800 flex items-center justify-between shadow-lg">
               <div>
-                <span className="text-[10px] font-bold uppercase text-indigo-400 tracking-wider">
+                <span className="text-[9px] font-bold uppercase text-indigo-400 tracking-wider">
                   Ponto Cefalométrico Atual ({pontoAtivoIdx + 1}/{pontos.length})
                 </span>
-                <h4 className="text-sm font-extrabold text-white">{pontos[pontoAtivoIdx].nome}</h4>
-                <p className="text-[11px] text-slate-400">{pontos[pontoAtivoIdx].descricao}</p>
+                <h4 className="text-xs font-black text-white">{pontos[pontoAtivoIdx].nome}</h4>
+                <p className="text-[10px] text-slate-400 truncate max-w-[280px]">{pontos[pontoAtivoIdx].descricao}</p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   onClick={(e) => { e.stopPropagation(); setPontoAtivoIdx(Math.max(0, pontoAtivoIdx - 1)); }}
                   disabled={pontoAtivoIdx === 0}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 text-xs font-bold text-slate-300 border border-slate-700 disabled:opacity-40 cursor-pointer"
+                  className="px-2.5 py-1 rounded-lg bg-slate-800 text-[11px] font-bold text-slate-300 border border-slate-700 disabled:opacity-40 cursor-pointer"
                 >
                   Anterior
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); setPontoAtivoIdx(Math.min(pontos.length - 1, pontoAtivoIdx + 1)); }}
                   disabled={pontoAtivoIdx === pontos.length - 1}
-                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-extrabold text-white shadow-md border border-indigo-500 cursor-pointer"
+                  className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-[11px] font-extrabold text-white shadow-md border border-indigo-500 cursor-pointer"
                 >
-                  Próximo <ChevronRight className="w-3.5 h-3.5 inline" />
+                  Próximo <ChevronRight className="w-3 h-3 inline" />
                 </button>
               </div>
             </div>
@@ -253,58 +253,58 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
         </div>
 
         {/* COLUNA DIREITA: RESULTADOS TABELADOS E DIAGNÓSTICO */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           
           {/* CARD DE RESULTADOS DA ANÁLISE DE STEINER */}
-          <div className={`p-6 rounded-3xl border shadow-xl space-y-4 ${
+          <div className={`p-4 rounded-2xl border shadow-xl space-y-3 ${
             darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
           }`}>
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="font-extrabold text-sm flex items-center gap-2 text-indigo-400">
-                <Sparkles className="w-4 h-4 text-amber-400" /> Tabela Cefalométrica: {analiseSelecionada}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+              <h3 className="font-extrabold text-xs flex items-center gap-1.5 text-indigo-400">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Tabela: {analiseSelecionada}
               </h3>
-              <span className="text-[10px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full">
+              <span className="text-[9px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full">
                 {pacienteNome}
               </span>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
+              <table className="w-full text-[11px] text-left">
                 <thead>
-                  <tr className="border-b border-slate-800 text-slate-400 font-extrabold uppercase text-[10px]">
-                    <th className="py-2">Grandeza</th>
-                    <th className="py-2">Padrão Normativo</th>
-                    <th className="py-2">Medido</th>
-                    <th className="py-2 text-right">Status</th>
+                  <tr className="border-b border-slate-800 text-slate-400 font-extrabold uppercase text-[9px]">
+                    <th className="py-1.5">Grandeza</th>
+                    <th className="py-1.5">Norma</th>
+                    <th className="py-1.5">Medido</th>
+                    <th className="py-1.5 text-right">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 font-medium">
                   <tr>
-                    <td className="py-2.5 font-bold text-sky-400">SNA (Ângulo Maxilar)</td>
-                    <td className="py-2.5 text-slate-400">82,0° (±2°)</td>
-                    <td className="py-2.5 font-extrabold font-mono text-white">{sna}°</td>
-                    <td className="py-2.5 text-right font-bold text-emerald-400">Normal</td>
+                    <td className="py-1.5 font-bold text-sky-400">SNA (Maxilar)</td>
+                    <td className="py-1.5 text-slate-400">82,0° (±2°)</td>
+                    <td className="py-1.5 font-extrabold font-mono text-white">{sna}°</td>
+                    <td className="py-1.5 text-right font-bold text-emerald-400">Normal</td>
                   </tr>
 
                   <tr>
-                    <td className="py-2.5 font-bold text-rose-400">SNB (Ângulo Mandibular)</td>
-                    <td className="py-2.5 text-slate-400">80,0° (±2°)</td>
-                    <td className="py-2.5 font-extrabold font-mono text-white">{snb}°</td>
-                    <td className="py-2.5 text-right font-bold text-emerald-400">Normal</td>
+                    <td className="py-1.5 font-bold text-rose-400">SNB (Mandibular)</td>
+                    <td className="py-1.5 text-slate-400">80,0° (±2°)</td>
+                    <td className="py-1.5 font-extrabold font-mono text-white">{snb}°</td>
+                    <td className="py-1.5 text-right font-bold text-emerald-400">Normal</td>
                   </tr>
 
                   <tr className="bg-indigo-500/10">
-                    <td className="py-2.5 font-extrabold text-amber-400">ANB (Rel. Maxilomand.)</td>
-                    <td className="py-2.5 text-slate-400">2,0° (±2°)</td>
-                    <td className="py-2.5 font-black font-mono text-amber-400 text-sm">{anb}°</td>
-                    <td className="py-2.5 text-right font-bold text-amber-400">Classe II</td>
+                    <td className="py-1.5 font-extrabold text-amber-400">ANB (Rel. Maxilomand.)</td>
+                    <td className="py-1.5 text-slate-400">2,0° (±2°)</td>
+                    <td className="py-1.5 font-black font-mono text-amber-400 text-xs">{anb}°</td>
+                    <td className="py-1.5 text-right font-bold text-amber-400">Classe II</td>
                   </tr>
 
                   <tr>
-                    <td className="py-2.5 font-bold text-indigo-300">GoGn-SN (Plano Mandibular)</td>
-                    <td className="py-2.5 text-slate-400">32,0° (±3°)</td>
-                    <td className="py-2.5 font-extrabold font-mono text-white">{goGnSn}°</td>
-                    <td className="py-2.5 text-right font-bold text-emerald-400">Mesofacial</td>
+                    <td className="py-1.5 font-bold text-indigo-300">GoGn-SN (Plano Mand.)</td>
+                    <td className="py-1.5 text-slate-400">32,0° (±3°)</td>
+                    <td className="py-1.5 font-extrabold font-mono text-white">{goGnSn}°</td>
+                    <td className="py-1.5 text-right font-bold text-emerald-400">Mesofacial</td>
                   </tr>
                 </tbody>
               </table>
@@ -312,22 +312,22 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
           </div>
 
           {/* CARD DE CONCLUSÃO DIAGNÓSTICA AUTOMÁTICA */}
-          <div className={`p-6 rounded-3xl border shadow-xl space-y-3 ${
+          <div className={`p-4 rounded-2xl border shadow-xl space-y-2.5 ${
             darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
           }`}>
-            <span className="text-[10px] font-extrabold uppercase text-indigo-400 tracking-wider block">
+            <span className="text-[9px] font-extrabold uppercase text-indigo-400 tracking-wider block">
               Laudo Diagnóstico Automatizado
             </span>
 
-            <h4 className={`text-base font-black ${diag.cor}`}>{diag.classe}</h4>
-            <p className="text-xs text-slate-300 leading-relaxed font-normal">{diag.desc}</p>
+            <h4 className={`text-sm font-black ${diag.cor}`}>{diag.classe}</h4>
+            <p className="text-[11px] text-slate-300 leading-normal font-normal">{diag.desc}</p>
 
-            <div className="pt-3 border-t border-slate-800 flex justify-end">
+            <div className="pt-2 border-t border-slate-800 flex justify-end">
               <button
                 onClick={() => window.print()}
-                className="w-full bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-700 hover:to-sky-700 text-white font-extrabold py-2.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/25 cursor-pointer transition-all"
+                className="w-full bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-700 hover:to-sky-700 text-white font-extrabold py-2 rounded-xl text-[11px] flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/25 cursor-pointer transition-all"
               >
-                <Download className="w-4 h-4" /> Exportar Traçado & Laudo (PDF)
+                <Download className="w-3.5 h-3.5" /> Exportar Traçado & Laudo (PDF)
               </button>
             </div>
           </div>
