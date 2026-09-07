@@ -110,6 +110,14 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   const [regiaoFiltro, setRegiaoFiltro] = useState<string>('Todas');
   const [busca, setBusca] = useState<string>('');
 
+  // Paginação (10 Pacientes Visíveis por Página)
+  const [paginaAtual, setPaginaAtual] = useState<number>(1);
+  const ITENS_POR_PAGINA = 10;
+
+  useEffect(() => {
+    setPaginaAtual(1);
+  }, [proprietarioFiltro, unidadeFiltro, regiaoFiltro, busca]);
+
   // Modal Novo / Editar Registro
   const [modalAberto, setModalAberto] = useState<boolean>(false);
   const [modalZerarAberto, setModalZerarAberto] = useState<boolean>(false);
@@ -156,6 +164,16 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
       setNovaUnidade(CLINICAS_FERNANDO[0]);
     } else {
       setNovaUnidade(CLINICAS_BERNARDO[0]);
+    }
+  };
+
+  // Ao alterar a clínica no modal, vincular automaticamente o proprietário correspondente
+  const handleUnidadeChangeModal = (u: string) => {
+    setNovaUnidade(u as any);
+    if ((CLINICAS_FERNANDO as readonly string[]).includes(u)) {
+      setNovoProprietario('Fernando');
+    } else if ((CLINICAS_BERNARDO as readonly string[]).includes(u)) {
+      setNovoProprietario('Bernardo');
     }
   };
 
@@ -216,6 +234,11 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
     const atendeBusca = i.pacienteNome.toLowerCase().includes(busca.toLowerCase()) || i.id.includes(busca);
     return atendeProprietario && atendeUnidade && atendeRegiao && atendeBusca;
   });
+
+  // Paginação dos Itens Filtrados
+  const totalPaginas = Math.ceil(itensFiltrados.length / ITENS_POR_PAGINA) || 1;
+  const inicioIndex = (paginaAtual - 1) * ITENS_POR_PAGINA;
+  const itensPaginados = itensFiltrados.slice(inicioIndex, inicioIndex + ITENS_POR_PAGINA);
 
   // Estatísticas Separadas por Proprietário (Fernando vs Bernardo)
   const itensFernando = itens.filter((i) => i.proprietario === 'Fernando');
@@ -872,7 +895,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/40 font-medium">
-                {itensFiltrados.map((item) => (
+                {itensPaginados.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-800/50 transition-colors">
                     <td className="p-3">
                       <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-extrabold border ${
@@ -928,6 +951,75 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
           <div className="p-12 text-center text-xs text-slate-400 space-y-3">
             <p className="text-sm font-bold text-slate-300">Nenhum registro de tomografia encontrado.</p>
             <p>Clique em "+ Registrar Exame de Tomografia" para adicionar um novo exame a Fernando ou Bernardo!</p>
+          </div>
+        )}
+
+        {/* BARRA DE PAGINAÇÃO (10 PACIENTES POR PÁGINA) */}
+        {itensFiltrados.length > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-800/60 text-xs font-bold">
+            <div className="text-slate-400">
+              Mostrando <span className="text-white font-extrabold">{inicioIndex + 1}</span> até{' '}
+              <span className="text-white font-extrabold">{Math.min(inicioIndex + ITENS_POR_PAGINA, itensFiltrados.length)}</span> de{' '}
+              <span className="text-teal-400 font-extrabold">{itensFiltrados.length}</span> pacientes registrados
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
+              <button
+                onClick={() => setPaginaAtual((p) => Math.max(1, p - 1))}
+                disabled={paginaAtual === 1}
+                className={`px-3 py-1.5 rounded-xl border text-xs font-extrabold transition-all flex items-center gap-1 cursor-pointer ${
+                  paginaAtual === 1
+                    ? 'bg-slate-800/40 text-slate-600 border-slate-800 cursor-not-allowed'
+                    : 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700 hover:border-teal-500/50'
+                }`}
+              >
+                ← Anterior
+              </button>
+
+              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map((pg) => {
+                if (
+                  pg === 1 ||
+                  pg === totalPaginas ||
+                  (pg >= paginaAtual - 1 && pg <= paginaAtual + 1)
+                ) {
+                  return (
+                    <button
+                      key={pg}
+                      onClick={() => setPaginaAtual(pg)}
+                      className={`w-8 h-8 rounded-xl border text-xs font-extrabold transition-all cursor-pointer ${
+                        paginaAtual === pg
+                          ? 'bg-gradient-to-r from-teal-500 to-emerald-600 text-white border-teal-400 shadow-md shadow-teal-500/20'
+                          : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                      }`}
+                    >
+                      {pg}
+                    </button>
+                  );
+                } else if (
+                  (pg === 2 && paginaAtual > 3) ||
+                  (pg === totalPaginas - 1 && paginaAtual < totalPaginas - 2)
+                ) {
+                  return (
+                    <span key={pg} className="px-1 text-slate-500 font-bold">
+                      ...
+                    </span>
+                  );
+                }
+                return null;
+              })}
+
+              <button
+                onClick={() => setPaginaAtual((p) => Math.min(totalPaginas, p + 1))}
+                disabled={paginaAtual === totalPaginas}
+                className={`px-3 py-1.5 rounded-xl border text-xs font-extrabold transition-all flex items-center gap-1 cursor-pointer ${
+                  paginaAtual === totalPaginas
+                    ? 'bg-slate-800/40 text-slate-600 border-slate-800 cursor-not-allowed'
+                    : 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700 hover:border-teal-500/50'
+                }`}
+              >
+                Próximo →
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -1019,7 +1111,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
                   <label className="block font-bold text-slate-400 mb-1">Clínica / Unidade</label>
                   <select
                     value={novaUnidade}
-                    onChange={(e) => setNovaUnidade(e.target.value as any)}
+                    onChange={(e) => handleUnidadeChangeModal(e.target.value)}
                     className={`w-full p-2.5 rounded-xl border font-bold ${
                       darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
                     }`}
