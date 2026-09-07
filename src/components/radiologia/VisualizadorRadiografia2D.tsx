@@ -14,6 +14,7 @@ import {
   Upload,
   RefreshCw
 } from 'lucide-react';
+import { carregarArquivoDicomOuImagem } from '../../utils/dicomLoader';
 
 interface VisualizadorRadiografia2DProps {
   darkMode?: boolean;
@@ -87,20 +88,24 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
     setPontosAngulo([]);
   };
 
-  // Upload de Imagem do Usuário
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Upload de Imagem do Usuário (Suporta .dcm, .dicom e formatos padrão)
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      setImagemCustomUrl(url);
-      setExameSelecionado({
-        id: `custom-${Date.now()}`,
-        nome: file.name,
-        tipo: 'Imagem Carregada',
-        data: new Date().toISOString().split('T')[0],
-        url: url
-      });
-      handleResetFiltros();
+      try {
+        const result = await carregarArquivoDicomOuImagem(file);
+        setImagemCustomUrl(result.url);
+        setExameSelecionado({
+          id: `custom-${Date.now()}`,
+          nome: file.name,
+          tipo: result.isDicom ? 'Radiografia DICOM (.dcm)' : 'Imagem 2D Carregada',
+          data: new Date().toISOString().split('T')[0],
+          url: result.url
+        });
+        handleResetFiltros();
+      } catch (err) {
+        console.error('Erro ao ler radiografia DICOM:', err);
+      }
     }
   };
 
@@ -238,7 +243,7 @@ export const VisualizadorRadiografia2D: React.FC<VisualizadorRadiografia2DProps>
 
           <label className="px-3.5 py-2 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-extrabold cursor-pointer border border-slate-700 flex items-center gap-1.5 transition-all">
             <Upload className="w-4 h-4 text-teal-400" /> Upload de Imagem DICOM/Raio-X
-            <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+            <input type="file" accept=".dcm,.dicom,image/*" onChange={handleFileUpload} className="hidden" />
           </label>
         </div>
 

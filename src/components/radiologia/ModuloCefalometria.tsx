@@ -7,6 +7,7 @@ import {
   Sparkles,
   ChevronRight
 } from 'lucide-react';
+import { carregarArquivoDicomOuImagem } from '../../utils/dicomLoader';
 
 interface ModuloCefalometriaProps {
   darkMode?: boolean;
@@ -69,11 +70,16 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
     }
   };
 
-  // Upload de Imagem de Telerradiografia do Usuário
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Upload de Imagem de Telerradiografia do Usuário (Suporta .dcm, .dicom e imagens)
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImagemUrl(URL.createObjectURL(file));
+      try {
+        const result = await carregarArquivoDicomOuImagem(file);
+        setImagemUrl(result.url);
+      } catch (err) {
+        console.error('Erro ao carregar telerradiografia DICOM:', err);
+      }
     }
   };
 
@@ -141,8 +147,8 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
           ))}
 
           <label className="px-3.5 py-2 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-extrabold cursor-pointer border border-slate-700 flex items-center gap-1.5 transition-all">
-            <Upload className="w-4 h-4 text-indigo-400" /> Upload de Telerradiografia
-            <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+            <Upload className="w-4 h-4 text-indigo-400" /> Upload de Telerradiografia DICOM
+            <input type="file" accept=".dcm,.dicom,image/*" onChange={handleFileUpload} className="hidden" />
           </label>
         </div>
 

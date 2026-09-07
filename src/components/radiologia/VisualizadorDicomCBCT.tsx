@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import {
   Box,
   Upload,
-  Shield
+  Shield,
+  RefreshCw,
+  FileCheck
 } from 'lucide-react';
+import { carregarArquivoDicomOuImagem, type ParsedDicomResult } from '../../utils/dicomLoader';
 
 interface VisualizadorDicomCBCTProps {
   darkMode?: boolean;
@@ -28,11 +31,25 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
 
   // Amostra de Exame DICOM CBCT
   const [nomeArquivoDicom, setNomeArquivoDicom] = useState<string>('Tomografia_ConeBeam_Mandibula.dcm');
+  const [imagemDicomLoadedUrl, setImagemDicomLoadedUrl] = useState<string | null>(null);
+  const [carregandoDicom, setCarregandoDicom] = useState<boolean>(false);
+  const [dicomMeta, setDicomMeta] = useState<ParsedDicomResult['meta'] | null>(null);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setNomeArquivoDicom(file.name);
+    if (!file) return;
+
+    setCarregandoDicom(true);
+    setNomeArquivoDicom(file.name);
+
+    try {
+      const result = await carregarArquivoDicomOuImagem(file);
+      setImagemDicomLoadedUrl(result.url);
+      setDicomMeta(result.meta);
+    } catch (err) {
+      console.error('Erro ao processar arquivo DICOM:', err);
+    } finally {
+      setCarregandoDicom(false);
     }
   };
 
@@ -84,6 +101,29 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
         </div>
       </div>
 
+      {/* BANNER DE METADADOS DICOM QUANDO CARREGADO */}
+      {dicomMeta && (
+        <div className="p-3.5 rounded-2xl bg-slate-900 border border-teal-500/40 flex flex-wrap items-center justify-between text-xs text-slate-300 gap-3">
+          <div className="flex items-center gap-2">
+            <FileCheck className="w-4 h-4 text-teal-400" />
+            <span className="font-extrabold text-white">DICOM Carregado:</span>
+            <span className="font-mono text-teal-300">{dicomMeta.fileName} ({dicomMeta.fileSizeKb} KB)</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-4 text-[11px] font-mono">
+            <span>Modalidade: <strong className="text-teal-400">{dicomMeta.modality}</strong></span>
+            <span>Resolução: <strong className="text-teal-400">{dicomMeta.columns}x{dicomMeta.rows}</strong></span>
+            <span>Profundidade: <strong className="text-teal-400">{dicomMeta.bitsAllocated}-bit</strong></span>
+            <span>Paciente: <strong className="text-white">{dicomMeta.patientName}</strong></span>
+          </div>
+        </div>
+      )}
+
+      {carregandoDicom && (
+        <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center gap-2 text-indigo-300 text-xs font-extrabold animate-pulse">
+          <RefreshCw className="w-4 h-4 animate-spin" /> Processando tags DICOM e matriz de pixels...
+        </div>
+      )}
+
       {/* PAINEL CENTRAL MULTIPLANAR RECONSTRUCTION (MPR 3-VIEWPORTS) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
@@ -99,19 +139,32 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
           </div>
 
           <div className="relative rounded-2xl overflow-hidden bg-black flex items-center justify-center min-h-[300px] border border-slate-800 group">
-            {/* Simulação Visual do Corte Tomográfico Axial com Arco Dental */}
-            <div className="relative w-full h-[300px] bg-slate-950 flex items-center justify-center">
-              {/* Arco Mandibular Renderizado */}
-              <svg viewBox="0 0 200 200" className="w-full h-full p-4">
-                {/* Contorno Ósseo Mandibular */}
-                <path
-                  d="M 40 160 C 40 60, 160 60, 160 160 C 130 150, 70 150, 40 160 Z"
-                  fill="none"
-                  stroke={janelaPreset === 'osseo' ? '#94A3B8' : '#CBD5E1'}
-                  strokeWidth="14"
-                  strokeLinecap="round"
-                  opacity="0.85"
+            {/* Simulação Visual ou Renderização do DICOM Importado */}
+            <div className="relative w-full h-[300px] bg-slate-950 flex items-center justify-center overflow-hidden">
+              {imagemDicomLoadedUrl ? (
+                <img
+                  src={imagemDicomLoadedUrl}
+                  alt="Corte DICOM Axial"
+                  className="absolute inset-0 w-full h-full object-contain transition-opacity duration-300"
+                  style={{
+                    filter: janelaPreset === 'dente' ? 'brightness(130%) contrast(170%)' : janelaPreset === 'moles' ? 'brightness(90%) contrast(85%)' : 'brightness(100%) contrast(120%)',
+                    transform: `scale(${1 + (fatiaAxial - 50) * 0.004})`
+                  }}
                 />
+              ) : null}
+
+              {/* Arco Mandibular Renderizado & Sobreposição de Matriz */}
+              <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full p-4 pointer-events-none">
+                {!imagemDicomLoadedUrl && (
+                  <path
+                    d="M 40 160 C 40 60, 160 60, 160 160 C 130 150, 70 150, 40 160 Z"
+                    fill="none"
+                    stroke={janelaPreset === 'osseo' ? '#94A3B8' : '#CBD5E1'}
+                    strokeWidth="14"
+                    strokeLinecap="round"
+                    opacity="0.85"
+                  />
+                )}
 
                 {/* Traçado Vermelho do Nervo Alveolar Inferior no Corte Axial */}
                 {destacarNervoAlveolar && (
@@ -161,15 +214,28 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
           </div>
 
           <div className="relative rounded-2xl overflow-hidden bg-black flex items-center justify-center min-h-[300px] border border-slate-800">
-            <div className="relative w-full h-[300px] bg-slate-950 flex items-center justify-center">
-              <svg viewBox="0 0 200 200" className="w-full h-full p-4">
-                {/* Maxila e Mandíbula no Corte Coronal */}
-                <ellipse cx="100" cy="70" rx="60" ry="30" fill="none" stroke="#64748B" strokeWidth="12" />
-                <ellipse cx="100" cy="140" rx="55" ry="25" fill="none" stroke="#94A3B8" strokeWidth="12" />
+            <div className="relative w-full h-[300px] bg-slate-950 flex items-center justify-center overflow-hidden">
+              {imagemDicomLoadedUrl ? (
+                <img
+                  src={imagemDicomLoadedUrl}
+                  alt="Corte DICOM Coronal"
+                  className="absolute inset-0 w-full h-full object-contain transition-opacity duration-300"
+                  style={{
+                    filter: janelaPreset === 'dente' ? 'brightness(130%) contrast(170%)' : janelaPreset === 'moles' ? 'brightness(90%) contrast(85%)' : 'brightness(100%) contrast(120%)',
+                    transform: `scale(${1 + (fatiaCoronal - 50) * 0.004}) rotate(90deg)`
+                  }}
+                />
+              ) : null}
 
-                {/* Seio Maxilar Esquerdo/Direito */}
-                <ellipse cx="70" cy="75" rx="18" ry="12" fill="#020617" stroke="#475569" strokeWidth="1.5" />
-                <ellipse cx="130" cy="75" rx="18" ry="12" fill="#020617" stroke="#475569" strokeWidth="1.5" />
+              <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full p-4 pointer-events-none">
+                {!imagemDicomLoadedUrl && (
+                  <>
+                    <ellipse cx="100" cy="70" rx="60" ry="30" fill="none" stroke="#64748B" strokeWidth="12" />
+                    <ellipse cx="100" cy="140" rx="55" ry="25" fill="none" stroke="#94A3B8" strokeWidth="12" />
+                    <ellipse cx="70" cy="75" rx="18" ry="12" fill="#020617" stroke="#475569" strokeWidth="1.5" />
+                    <ellipse cx="130" cy="75" rx="18" ry="12" fill="#020617" stroke="#475569" strokeWidth="1.5" />
+                  </>
+                )}
 
                 {/* Canal Mandibular / Nervo Alveolar em Vermelho */}
                 {destacarNervoAlveolar && (
@@ -219,15 +285,28 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
           </div>
 
           <div className="relative rounded-2xl overflow-hidden bg-black flex items-center justify-center min-h-[300px] border border-slate-800">
-            <div className="relative w-full h-[300px] bg-slate-950 flex items-center justify-center">
-              <svg viewBox="0 0 200 200" className="w-full h-full p-4">
-                {/* Perfil 3D Ósseo Sagital da Crista Mandibular */}
-                <path
-                  d="M 60 40 Q 140 40, 140 160 Q 80 180, 60 140 Z"
-                  fill="none"
-                  stroke="#94A3B8"
-                  strokeWidth="10"
+            <div className="relative w-full h-[300px] bg-slate-950 flex items-center justify-center overflow-hidden">
+              {imagemDicomLoadedUrl ? (
+                <img
+                  src={imagemDicomLoadedUrl}
+                  alt="Corte DICOM Sagital"
+                  className="absolute inset-0 w-full h-full object-contain transition-opacity duration-300"
+                  style={{
+                    filter: janelaPreset === 'dente' ? 'brightness(130%) contrast(170%)' : janelaPreset === 'moles' ? 'brightness(90%) contrast(85%)' : 'brightness(100%) contrast(120%)',
+                    transform: `scale(${1 + (fatiaSagital - 50) * 0.004}) scaleX(-1)`
+                  }}
                 />
+              ) : null}
+
+              <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full p-4 pointer-events-none">
+                {!imagemDicomLoadedUrl && (
+                  <path
+                    d="M 60 40 Q 140 40, 140 160 Q 80 180, 60 140 Z"
+                    fill="none"
+                    stroke="#94A3B8"
+                    strokeWidth="10"
+                  />
+                )}
 
                 {/* Canal Mandibular / Nervo Alveolar em Vermelho */}
                 {destacarNervoAlveolar && (
