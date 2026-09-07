@@ -499,12 +499,12 @@ export async function carregarSerieDicomOuArquivos(files: FileList | File[]): Pr
 }
 
 /**
- * Reconstrói 1 fatia no Plano Coronal (Frontal X-Z) com Interpolação Bilinear HD e Supersampling
+ * Reconstrói 1 fatia no Plano Coronal (Frontal X-Z) mantendo proporções anatômicas físicas 1:1 sem esticar
  */
-function reconstruirPlanoCoronal(yPos: number, width: number, height: number, depth: number, volume: Uint8Array[]): string {
+function reconstruirPlanoCoronal(yPos: number, width: number, _height: number, depth: number, volume: Uint8Array[]): string {
   const canvas = document.createElement('canvas');
-  const outW = Math.max(1024, width);
-  const outH = Math.max(1024, height > 0 ? height : width);
+  const outW = 1024;
+  const outH = 1024;
   canvas.width = outW;
   canvas.height = outH;
   const ctx = canvas.getContext('2d');
@@ -513,15 +513,41 @@ function reconstruirPlanoCoronal(yPos: number, width: number, height: number, de
   const imageData = ctx.createImageData(outW, outH);
   const data = imageData.data;
 
-  for (let cy = 0; cy < outH; cy++) {
-    const srcZ = ((outH - 1 - cy) / (outH - 1)) * (depth - 1);
+  // Preenche o fundo com tom escuro radiológico #020617 (R:2, G:6, B:23, A:255)
+  for (let i = 0; i < outW * outH; i++) {
+    const pxIdx = i * 4;
+    data[pxIdx] = 2;
+    data[pxIdx + 1] = 6;
+    data[pxIdx + 2] = 23;
+    data[pxIdx + 3] = 255;
+  }
+
+  // Cálculo de proporção física do Z (espaçamento físico de fatias vs largura X)
+  // Voxel spacing em X/Y ~ 0.3mm, slice spacing em Z ~ 0.5mm
+  const spacingXY = 0.3;
+  const spacingZ = 0.5;
+  const physicalWidthX = width * spacingXY;
+  const physicalHeightZ = depth * spacingZ;
+
+  // Proporção física Z/X (evita esticar a imagem verticalmente)
+  const aspectRatioZ = physicalHeightZ / (physicalWidthX || 1);
+
+  // Altura renderizada no canvas para manter proporção física 1:1 sem esticar
+  const renderH = Math.min(outH, Math.max(60, Math.round(outW * aspectRatioZ)));
+  const offsetY = Math.floor((outH - renderH) / 2);
+
+  for (let ry = 0; ry < renderH; ry++) {
+    const cy = offsetY + ry;
+    if (cy < 0 || cy >= outH) continue;
+
+    const normY = ry / (renderH - 1 || 1);
+    const srcZ = (1.0 - normY) * (depth - 1);
     const z0 = Math.floor(srcZ);
     const z1 = Math.min(depth - 1, z0 + 1);
     const zWeight = srcZ - z0;
 
     const slice0 = volume[z0];
     const slice1 = volume[z1];
-
     if (!slice0) continue;
 
     for (let cx = 0; cx < outW; cx++) {
@@ -559,13 +585,12 @@ function reconstruirPlanoCoronal(yPos: number, width: number, height: number, de
 }
 
 /**
- * Reconstrói 1 fatia no Plano Sagital (Lateral Y-Z) com Interpolação Bilinear HD e Supersampling
+ * Reconstrói 1 fatia no Plano Sagital (Lateral Y-Z) mantendo proporções anatômicas físicas 1:1 sem esticar
  */
 function reconstruirPlanoSagital(xPos: number, width: number, height: number, depth: number, volume: Uint8Array[]): string {
   const canvas = document.createElement('canvas');
-  const srcH = height > 0 ? height : width;
-  const outW = Math.max(1024, srcH);
-  const outH = Math.max(1024, width);
+  const outW = 1024;
+  const outH = 1024;
   canvas.width = outW;
   canvas.height = outH;
   const ctx = canvas.getContext('2d');
@@ -574,15 +599,38 @@ function reconstruirPlanoSagital(xPos: number, width: number, height: number, de
   const imageData = ctx.createImageData(outW, outH);
   const data = imageData.data;
 
-  for (let cy = 0; cy < outH; cy++) {
-    const srcZ = ((outH - 1 - cy) / (outH - 1)) * (depth - 1);
+  // Preenche o fundo com tom escuro radiológico #020617 (R:2, G:6, B:23, A:255)
+  for (let i = 0; i < outW * outH; i++) {
+    const pxIdx = i * 4;
+    data[pxIdx] = 2;
+    data[pxIdx + 1] = 6;
+    data[pxIdx + 2] = 23;
+    data[pxIdx + 3] = 255;
+  }
+
+  const srcH = height > 0 ? height : width;
+  const spacingXY = 0.3;
+  const spacingZ = 0.5;
+  const physicalWidthY = srcH * spacingXY;
+  const physicalHeightZ = depth * spacingZ;
+
+  const aspectRatioZ = physicalHeightZ / (physicalWidthY || 1);
+
+  const renderH = Math.min(outH, Math.max(60, Math.round(outW * aspectRatioZ)));
+  const offsetY = Math.floor((outH - renderH) / 2);
+
+  for (let ry = 0; ry < renderH; ry++) {
+    const cy = offsetY + ry;
+    if (cy < 0 || cy >= outH) continue;
+
+    const normY = ry / (renderH - 1 || 1);
+    const srcZ = (1.0 - normY) * (depth - 1);
     const z0 = Math.floor(srcZ);
     const z1 = Math.min(depth - 1, z0 + 1);
     const zWeight = srcZ - z0;
 
     const slice0 = volume[z0];
     const slice1 = volume[z1];
-
     if (!slice0) continue;
 
     for (let cx = 0; cx < outW; cx++) {
