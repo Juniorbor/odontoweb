@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Upload,
   Shield,
   RefreshCw,
-  FileCheck
+  FileCheck,
+  FolderOpen
 } from 'lucide-react';
-import { carregarArquivoDicomOuImagem, type ParsedDicomResult } from '../../utils/dicomLoader';
+import {
+  carregarArquivoDicomOuImagem,
+  carregarSerieDicomOuArquivos,
+  type ParsedDicomResult,
+  type DicomSliceData
+} from '../../utils/dicomLoader';
 
 interface VisualizadorDicomCBCTProps {
   darkMode?: boolean;
@@ -18,9 +23,11 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
   pacienteNome = 'Paciente Exemplo'
 }) => {
   // Estado dos Cortes Multiplanares MPR (Axial, Coronal, Sagital)
-  const [fatiaAxial, setFatiaAxial] = useState<number>(45); // 0 a 100
-  const [fatiaCoronal, setFatiaCoronal] = useState<number>(50); // 0 a 100
-  const [fatiaSagital, setFatiaSagital] = useState<number>(55); // 0 a 100
+  const [fatiaAxial, setFatiaAxial] = useState<number>(1);
+  const [fatiaCoronal, setFatiaCoronal] = useState<number>(1);
+  const [fatiaSagital, setFatiaSagital] = useState<number>(1);
+  const [totalCortes, setTotalCortes] = useState<number>(100);
+  const [espacamentoMm, setEspacamentoMm] = useState<number>(0.5);
 
   // Presets de Janelamento DICOM (Window Width / Window Level)
   const [janelaPreset, setJanelaPreset] = useState<'osseo' | 'dente' | 'moles'>('osseo');
@@ -29,28 +36,67 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
   const [simuladorImplante, setSimuladorImplante] = useState<boolean>(true);
   const [tamanhoImplante, setTamanhoImplante] = useState<string>('Ø 4.0mm x 11.5mm');
 
-  // Amostra de Exame DICOM CBCT
+  // Serie de Fatias Tomograficas DICOM (.dcm)
+  const [dicomSlices, setDicomSlices] = useState<DicomSliceData[]>([]);
   const [nomeArquivoDicom, setNomeArquivoDicom] = useState<string>('Tomografia_ConeBeam_Mandibula.dcm');
   const [imagemDicomLoadedUrl, setImagemDicomLoadedUrl] = useState<string | null>(null);
   const [carregandoDicom, setCarregandoDicom] = useState<boolean>(false);
   const [dicomMeta, setDicomMeta] = useState<ParsedDicomResult['meta'] | null>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
 
     setCarregandoDicom(true);
-    setNomeArquivoDicom(file.name);
+    const qtdArquivos = fileList.length;
 
     try {
-      const result = await carregarArquivoDicomOuImagem(file);
-      setImagemDicomLoadedUrl(result.url);
-      setDicomMeta(result.meta);
+      if (qtdArquivos === 1) {
+        const file = fileList[0];
+        setNomeArquivoDicom(file.name);
+        const result = await carregarArquivoDicomOuImagem(file);
+        setImagemDicomLoadedUrl(result.url);
+        setDicomMeta(result.meta);
+        setDicomSlices([{
+          index: 1,
+          fileName: file.name,
+          url: result.url,
+          zPosMm: 0.0
+        }]);
+        setTotalCortes(100);
+      } else {
+        setNomeArquivoDicom(`Série Tomográfica (${qtdArquivos} cortes DICOM)`);
+        const serie = await carregarSerieDicomOuArquivos(fileList);
+        setDicomSlices(serie.slices);
+        setTotalCortes(serie.totalSlices);
+        setEspacamentoMm(serie.sliceSpacingMm);
+        setDicomMeta(serie.meta);
+        setImagemDicomLoadedUrl(serie.slices[0]?.url || null);
+        setFatiaAxial(1);
+        setFatiaCoronal(Math.min(25, serie.totalSlices));
+        setFatiaSagital(Math.min(50, serie.totalSlices));
+      }
     } catch (err) {
-      console.error('Erro ao processar arquivo DICOM:', err);
+      console.error('Erro ao processar cortes DICOM:', err);
     } finally {
       setCarregandoDicom(false);
     }
+  };
+
+  const getSliceUrl = (fatiaNum: number) => {
+    if (dicomSlices.length > 0) {
+      const idx = Math.min(dicomSlices.length - 1, Math.max(0, fatiaNum - 1));
+      return dicomSlices[idx]?.url || imagemDicomLoadedUrl;
+    }
+    return imagemDicomLoadedUrl;
+  };
+
+  const getSliceMm = (fatiaNum: number) => {
+    if (dicomSlices.length > 0) {
+      const idx = Math.min(dicomSlices.length - 1, Math.max(0, fatiaNum - 1));
+      return dicomSlices[idx]?.zPosMm.toFixed(1) || ((fatiaNum - 1) * espacamentoMm).toFixed(1);
+    }
+    return ((fatiaNum - 1) * espacamentoMm).toFixed(1);
   };
 
   return (
@@ -66,8 +112,8 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
           </div>
 
           <label className="px-3.5 py-2 rounded-2xl bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white text-xs font-extrabold cursor-pointer shadow-lg shadow-teal-500/20 flex items-center gap-1.5 transition-all">
-            <Upload className="w-4 h-4" /> Carregar Volume DICOM (.dcm ou .zip)
-            <input type="file" accept=".dcm,.zip,image/*" onChange={handleFileUpload} className="hidden" />
+            <FolderOpen className="w-4 h-4" /> Selecionar Todos os Cortes DICOM da Pasta (.dcm)
+            <input type="file" multiple accept=".dcm,.dicom,.zip,image/*" onChange={handleFileUpload} className="hidden" />
           </label>
 
           <button
@@ -101,18 +147,20 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
         </div>
       </div>
 
-      {/* BANNER DE METADADOS DICOM QUANDO CARREGADO */}
+      {/* BANNER DE METADADOS DICOM DA SÉRIE DE CORTES */}
       {dicomMeta && (
         <div className="p-3.5 rounded-2xl bg-slate-900 border border-teal-500/40 flex flex-wrap items-center justify-between text-xs text-slate-300 gap-3">
           <div className="flex items-center gap-2">
             <FileCheck className="w-4 h-4 text-teal-400" />
-            <span className="font-extrabold text-white">DICOM Carregado:</span>
-            <span className="font-mono text-teal-300">{dicomMeta.fileName} ({dicomMeta.fileSizeKb} KB)</span>
+            <span className="font-extrabold text-white">Série Tomográfica DICOM:</span>
+            <span className="font-mono text-teal-300">
+              {dicomSlices.length > 0 ? `${dicomSlices.length} cortes milimetrados carregados` : 'Volume Carregado'} | {dicomMeta.fileName}
+            </span>
           </div>
           <div className="flex flex-wrap items-center gap-4 text-[11px] font-mono">
+            <span>Espaçamento: <strong className="text-teal-400">{espacamentoMm} mm/corte</strong></span>
             <span>Modalidade: <strong className="text-teal-400">{dicomMeta.modality}</strong></span>
             <span>Resolução: <strong className="text-teal-400">{dicomMeta.columns}x{dicomMeta.rows}</strong></span>
-            <span>Profundidade: <strong className="text-teal-400">{dicomMeta.bitsAllocated}-bit</strong></span>
             <span>Paciente: <strong className="text-white">{dicomMeta.patientName}</strong></span>
           </div>
         </div>
@@ -120,7 +168,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
 
       {carregandoDicom && (
         <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center gap-2 text-indigo-300 text-xs font-extrabold animate-pulse">
-          <RefreshCw className="w-4 h-4 animate-spin" /> Processando tags DICOM e matriz de pixels...
+          <RefreshCw className="w-4 h-4 animate-spin" /> Carregando e ordenando todos os cortes milimetrados da pasta DICOM...
         </div>
       )}
 
@@ -135,27 +183,28 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
             <span className="text-xs font-extrabold text-teal-400 flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-teal-400"></span> Corte Axial (Top-Down)
             </span>
-            <span className="text-[10px] font-mono font-bold text-slate-400">Fat. {fatiaAxial}/100</span>
+            <span className="text-[10px] font-mono font-bold text-slate-400">
+              Fat. {fatiaAxial}/{totalCortes} (Z: {getSliceMm(fatiaAxial)} mm)
+            </span>
           </div>
 
           <div className="relative rounded-2xl overflow-hidden bg-black flex items-center justify-center min-h-[300px] border border-slate-800 group">
-            {/* Simulação Visual ou Renderização do DICOM Importado */}
+            {/* Renderização da Fatia DICOM Atual */}
             <div className="relative w-full h-[300px] bg-slate-950 flex items-center justify-center overflow-hidden">
-              {imagemDicomLoadedUrl ? (
+              {getSliceUrl(fatiaAxial) ? (
                 <img
-                  src={imagemDicomLoadedUrl}
-                  alt="Corte DICOM Axial"
-                  className="absolute inset-0 w-full h-full object-contain transition-opacity duration-300"
+                  src={getSliceUrl(fatiaAxial)!}
+                  alt={`Corte DICOM Axial ${fatiaAxial}`}
+                  className="absolute inset-0 w-full h-full object-contain transition-all duration-150"
                   style={{
-                    filter: janelaPreset === 'dente' ? 'brightness(130%) contrast(170%)' : janelaPreset === 'moles' ? 'brightness(90%) contrast(85%)' : 'brightness(100%) contrast(120%)',
-                    transform: `scale(${1 + (fatiaAxial - 50) * 0.004})`
+                    filter: janelaPreset === 'dente' ? 'brightness(130%) contrast(170%)' : janelaPreset === 'moles' ? 'brightness(90%) contrast(85%)' : 'brightness(100%) contrast(120%)'
                   }}
                 />
               ) : null}
 
-              {/* Arco Mandibular Renderizado & Sobreposição de Matriz */}
+              {/* Vetores do Corte & Crosshair */}
               <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full p-4 pointer-events-none">
-                {!imagemDicomLoadedUrl && (
+                {!imagemDicomLoadedUrl && dicomSlices.length === 0 && (
                   <path
                     d="M 40 160 C 40 60, 160 60, 160 160 C 130 150, 70 150, 40 160 Z"
                     fill="none"
@@ -166,7 +215,6 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
                   />
                 )}
 
-                {/* Traçado Vermelho do Nervo Alveolar Inferior no Corte Axial */}
                 {destacarNervoAlveolar && (
                   <path
                     d="M 50 145 C 50 80, 150 80, 150 145"
@@ -177,11 +225,10 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
                   />
                 )}
 
-                {/* Crosshair Sincronizado */}
                 {crosshairAtivo && (
                   <g>
-                    <line x1="0" y1={fatiaAxial * 2} x2="200" y2={fatiaAxial * 2} stroke="#38BDF8" strokeWidth="1" strokeDasharray="3 3" />
-                    <line x1={fatiaSagital * 2} y1="0" x2={fatiaSagital * 2} y2="200" stroke="#F43F5E" strokeWidth="1" strokeDasharray="3 3" />
+                    <line x1="0" y1={(fatiaAxial / totalCortes) * 200} x2="200" y2={(fatiaAxial / totalCortes) * 200} stroke="#38BDF8" strokeWidth="1" strokeDasharray="3 3" />
+                    <line x1={(fatiaSagital / totalCortes) * 200} y1="0" x2={(fatiaSagital / totalCortes) * 200} y2="200" stroke="#F43F5E" strokeWidth="1" strokeDasharray="3 3" />
                   </g>
                 )}
               </svg>
@@ -192,8 +239,8 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               <span className="text-[10px] font-mono text-slate-400">Slice:</span>
               <input
                 type="range"
-                min="0"
-                max="100"
+                min="1"
+                max={totalCortes}
                 value={fatiaAxial}
                 onChange={(e) => setFatiaAxial(Number(e.target.value))}
                 className="w-full accent-teal-400 cursor-pointer"
@@ -210,25 +257,27 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
             <span className="text-xs font-extrabold text-sky-400 flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-sky-400"></span> Corte Coronal (Frontal)
             </span>
-            <span className="text-[10px] font-mono font-bold text-slate-400">Fat. {fatiaCoronal}/100</span>
+            <span className="text-[10px] font-mono font-bold text-slate-400">
+              Fat. {fatiaCoronal}/{totalCortes} (Z: {getSliceMm(fatiaCoronal)} mm)
+            </span>
           </div>
 
           <div className="relative rounded-2xl overflow-hidden bg-black flex items-center justify-center min-h-[300px] border border-slate-800">
             <div className="relative w-full h-[300px] bg-slate-950 flex items-center justify-center overflow-hidden">
-              {imagemDicomLoadedUrl ? (
+              {getSliceUrl(fatiaCoronal) ? (
                 <img
-                  src={imagemDicomLoadedUrl}
-                  alt="Corte DICOM Coronal"
-                  className="absolute inset-0 w-full h-full object-contain transition-opacity duration-300"
+                  src={getSliceUrl(fatiaCoronal)!}
+                  alt={`Corte DICOM Coronal ${fatiaCoronal}`}
+                  className="absolute inset-0 w-full h-full object-contain transition-all duration-150"
                   style={{
                     filter: janelaPreset === 'dente' ? 'brightness(130%) contrast(170%)' : janelaPreset === 'moles' ? 'brightness(90%) contrast(85%)' : 'brightness(100%) contrast(120%)',
-                    transform: `scale(${1 + (fatiaCoronal - 50) * 0.004}) rotate(90deg)`
+                    transform: 'rotate(90deg)'
                   }}
                 />
               ) : null}
 
               <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full p-4 pointer-events-none">
-                {!imagemDicomLoadedUrl && (
+                {!imagemDicomLoadedUrl && dicomSlices.length === 0 && (
                   <>
                     <ellipse cx="100" cy="70" rx="60" ry="30" fill="none" stroke="#64748B" strokeWidth="12" />
                     <ellipse cx="100" cy="140" rx="55" ry="25" fill="none" stroke="#94A3B8" strokeWidth="12" />
@@ -237,7 +286,6 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
                   </>
                 )}
 
-                {/* Canal Mandibular / Nervo Alveolar em Vermelho */}
                 {destacarNervoAlveolar && (
                   <g>
                     <circle cx="70" cy="142" r="5" fill="#EF4444" opacity="0.9" />
@@ -245,7 +293,6 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
                   </g>
                 )}
 
-                {/* Implante Simulado 3D */}
                 {simuladorImplante && (
                   <g>
                     <rect x="64" y="115" width="12" height="24" rx="2" fill="#10B981" opacity="0.85" stroke="#FFFFFF" strokeWidth="1" />
@@ -254,7 +301,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
                 )}
 
                 {crosshairAtivo && (
-                  <line x1="0" y1={fatiaCoronal * 2} x2="200" y2={fatiaCoronal * 2} stroke="#38BDF8" strokeWidth="1" strokeDasharray="3 3" />
+                  <line x1="0" y1={(fatiaCoronal / totalCortes) * 200} x2="200" y2={(fatiaCoronal / totalCortes) * 200} stroke="#38BDF8" strokeWidth="1" strokeDasharray="3 3" />
                 )}
               </svg>
             </div>
@@ -263,8 +310,8 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               <span className="text-[10px] font-mono text-slate-400">Slice:</span>
               <input
                 type="range"
-                min="0"
-                max="100"
+                min="1"
+                max={totalCortes}
                 value={fatiaCoronal}
                 onChange={(e) => setFatiaCoronal(Number(e.target.value))}
                 className="w-full accent-sky-400 cursor-pointer"
@@ -281,25 +328,27 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
             <span className="text-xs font-extrabold text-rose-400 flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-rose-400"></span> Corte Sagital (Seccional Implante)
             </span>
-            <span className="text-[10px] font-mono font-bold text-slate-400">Fat. {fatiaSagital}/100</span>
+            <span className="text-[10px] font-mono font-bold text-slate-400">
+              Fat. {fatiaSagital}/{totalCortes} (Z: {getSliceMm(fatiaSagital)} mm)
+            </span>
           </div>
 
           <div className="relative rounded-2xl overflow-hidden bg-black flex items-center justify-center min-h-[300px] border border-slate-800">
             <div className="relative w-full h-[300px] bg-slate-950 flex items-center justify-center overflow-hidden">
-              {imagemDicomLoadedUrl ? (
+              {getSliceUrl(fatiaSagital) ? (
                 <img
-                  src={imagemDicomLoadedUrl}
-                  alt="Corte DICOM Sagital"
-                  className="absolute inset-0 w-full h-full object-contain transition-opacity duration-300"
+                  src={getSliceUrl(fatiaSagital)!}
+                  alt={`Corte DICOM Sagital ${fatiaSagital}`}
+                  className="absolute inset-0 w-full h-full object-contain transition-all duration-150"
                   style={{
                     filter: janelaPreset === 'dente' ? 'brightness(130%) contrast(170%)' : janelaPreset === 'moles' ? 'brightness(90%) contrast(85%)' : 'brightness(100%) contrast(120%)',
-                    transform: `scale(${1 + (fatiaSagital - 50) * 0.004}) scaleX(-1)`
+                    transform: 'scaleX(-1)'
                   }}
                 />
               ) : null}
 
               <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full p-4 pointer-events-none">
-                {!imagemDicomLoadedUrl && (
+                {!imagemDicomLoadedUrl && dicomSlices.length === 0 && (
                   <path
                     d="M 60 40 Q 140 40, 140 160 Q 80 180, 60 140 Z"
                     fill="none"
@@ -308,22 +357,19 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
                   />
                 )}
 
-                {/* Canal Mandibular / Nervo Alveolar em Vermelho */}
                 {destacarNervoAlveolar && (
                   <circle cx="105" cy="140" r="6" fill="#EF4444" stroke="#FCA5A5" strokeWidth="1.5" />
                 )}
 
-                {/* Implante Simulado no Corte Sagital */}
                 {simuladorImplante && (
                   <g>
                     <rect x="98" y="70" width="14" height="40" rx="3" fill="#10B981" stroke="#FFFFFF" strokeWidth="1.5" />
-                    {/* Margem de Segurança 2mm */}
                     <rect x="96" y="68" width="18" height="44" rx="4" fill="none" stroke="#F59E0B" strokeWidth="1" strokeDasharray="3 2" />
                   </g>
                 )}
 
                 {crosshairAtivo && (
-                  <line x1={fatiaSagital * 2} y1="0" x2={fatiaSagital * 2} y2="200" stroke="#F43F5E" strokeWidth="1" strokeDasharray="3 3" />
+                  <line x1={(fatiaSagital / totalCortes) * 200} y1="0" x2={(fatiaSagital / totalCortes) * 200} y2="200" stroke="#F43F5E" strokeWidth="1" strokeDasharray="3 3" />
                 )}
               </svg>
             </div>
@@ -332,8 +378,8 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               <span className="text-[10px] font-mono text-slate-400">Slice:</span>
               <input
                 type="range"
-                min="0"
-                max="100"
+                min="1"
+                max={totalCortes}
                 value={fatiaSagital}
                 onChange={(e) => setFatiaSagital(Number(e.target.value))}
                 className="w-full accent-rose-400 cursor-pointer"

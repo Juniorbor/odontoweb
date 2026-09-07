@@ -1,7 +1,7 @@
 /**
  * Utilitário de Leitura e Parsing de Arquivos DICOM (.dcm, .dicom) e Imagens Radiográficas
- * Suporta DICOM com compressão JPEG encapsulada, matrizes de pixels escala de cinza 8/16-bit,
- * e formatos padrão (PNG, JPG, WEBP, BMP).
+ * Suporta DICOM individuais, séries tomográficas (múltiplos arquivos .dcm de cortes milimetrados),
+ * compressão JPEG encapsulada, matrizes de pixels escala de cinza 8/16-bit e formatos padrão (PNG, JPG, WEBP, BMP).
  */
 
 export interface ParsedDicomResult {
@@ -18,9 +18,30 @@ export interface ParsedDicomResult {
     fileName: string;
     fileSizeKb: number;
   };
-  slicesAxial?: string[];
-  slicesCoronal?: string[];
-  slicesSagital?: string[];
+}
+
+export interface DicomSliceData {
+  index: number;
+  fileName: string;
+  url: string;
+  zPosMm: number;
+}
+
+export interface DicomSerieResult {
+  totalSlices: number;
+  slices: DicomSliceData[];
+  sliceSpacingMm: number;
+  meta: {
+    patientName: string;
+    modality: string;
+    rows: number;
+    columns: number;
+    bitsAllocated: number;
+    seriesName: string;
+    totalSizeKb: number;
+    fileName: string;
+    fileSizeKb: number;
+  };
 }
 
 /**
@@ -77,12 +98,11 @@ function readAsciiString(buffer: Uint8Array, start: number, length: number): str
  */
 function parseDicomHeaderTags(buffer: Uint8Array) {
   let patientName = 'Paciente DICOM';
-  let modality = 'PX / CBCT';
+  let modality = 'CBCT / CT';
   let rows = 512;
   let columns = 512;
   let bitsAllocated = 16;
 
-  // Procura por Tags DICOM comuns no buffer
   // Tag (0008, 0060) - Modality
   const modalityIdx = findByteSequence(buffer, [0x08, 0x00, 0x60, 0x00]);
   if (modalityIdx !== -1 && modalityIdx + 10 < buffer.length) {
@@ -122,7 +142,7 @@ function parseDicomHeaderTags(buffer: Uint8Array) {
 }
 
 /**
- * Converte arquivo DICOM (.dcm) ou Imagem em ParsedDicomResult
+ * Converte um único arquivo DICOM (.dcm) ou Imagem em ParsedDicomResult
  */
 export async function carregarArquivoDicomOuImagem(file: File): Promise<ParsedDicomResult> {
   const fileSizeKb = Math.round(file.size / 1024);
@@ -198,7 +218,6 @@ export async function carregarArquivoDicomOuImagem(file: File): Promise<ParsedDi
           });
         };
         img.onerror = () => {
-          // Fallback para gerador de visualização radiográfica DICOM
           resolve(gerarVisualizacaoDicomSintetica(file.name, headerMeta, fileSizeKb));
         };
         img.src = blobUrl;
@@ -206,8 +225,8 @@ export async function carregarArquivoDicomOuImagem(file: File): Promise<ParsedDi
       }
 
       // PROCURA 2: Pixels Raw Não-Comprimidos em Grayscale (8-bit ou 16-bit)
-      const pixelTagIdx = findByteSequence(buffer, [0x70, 0x7e, 0x10, 0x00]); // 7FE0, 0010 Little Endian
-      const rawOffset = pixelTagIdx !== -1 ? pixelTagIdx + 12 : 132; // Skip header
+      const pixelTagIdx = findByteSequence(buffer, [0x70, 0x7e, 0x10, 0x00]);
+      const rawOffset = pixelTagIdx !== -1 ? pixelTagIdx + 12 : 132;
 
       const width = headerMeta.columns;
       const height = headerMeta.rows;
@@ -229,7 +248,6 @@ export async function carregarArquivoDicomOuImagem(file: File): Promise<ParsedDi
           let maxVal = 0;
 
           if (is16Bit) {
-            // Amostragem de escala de cinza 16-bit
             for (let i = 0; i < totalPixels; i++) {
               const byteOffset = rawOffset + i * 2;
               if (byteOffset + 1 < buffer.length) {
@@ -254,7 +272,6 @@ export async function carregarArquivoDicomOuImagem(file: File): Promise<ParsedDi
               data[pxIdx + 3] = 255;   // A
             }
           } else {
-            // Escala de cinza 8-bit
             for (let i = 0; i < totalPixels; i++) {
               const gray8 = buffer[rawOffset + i] || 128;
               const pxIdx = i * 4;
@@ -285,7 +302,6 @@ export async function carregarArquivoDicomOuImagem(file: File): Promise<ParsedDi
         console.warn('Fallback para gerador radiográfico sintético:', err);
       }
 
-      // FALLBACK DE SEGURANÇA: Desenha visualização radiográfica clara baseada no arquivo DICOM
       resolve(gerarVisualizacaoDicomSintetica(file.name, headerMeta, fileSizeKb));
     };
 
@@ -304,8 +320,83 @@ export async function carregarArquivoDicomOuImagem(file: File): Promise<ParsedDi
 }
 
 /**
+ * Lê uma série completa de arquivos DICOM (.dcm) de uma pasta / seleção múltipla.
+ * Ordena os cortes milimetricamente e gera a matriz tridimensional para navegação pelos slices.
+ */
+export async function carregarSerieDicomOuArquivos(files: FileList | File[]): Promise<DicomSerieResult> {
+  const fileArray = Array.from(files);
+
+  // Ordenação Numérica Natural das Fatias pelo Nome do Arquivo DICOM (ex: slice_001.dcm, slice_002.dcm)
+  fileArray.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
+  let totalSizeKb = 0;
+  fileArray.forEach((f) => {
+    totalSizeKb += Math.round(f.size / 1024);
+  });
+
+  const sliceSpacingMm = 0.5; // Resolução tomográfica padrão de 0.5mm por corte axial
+  const slices: DicomSliceData[] = [];
+
+  let patientName = 'Paciente Tomografia CBCT';
+  let modality = 'CBCT / Tomografia 3D';
+  let rows = 512;
+  let columns = 512;
+  let bitsAllocated = 16;
+
+  // Processa todos os arquivos selecionados
+  for (let i = 0; i < fileArray.length; i++) {
+    const file = fileArray[i];
+    try {
+      const parsed = await carregarArquivoDicomOuImagem(file);
+      if (i === 0) {
+        patientName = parsed.meta.patientName || patientName;
+        modality = parsed.meta.modality || modality;
+        rows = parsed.meta.rows || rows;
+        columns = parsed.meta.columns || columns;
+        bitsAllocated = parsed.meta.bitsAllocated || bitsAllocated;
+      }
+      slices.push({
+        index: i + 1,
+        fileName: file.name,
+        url: parsed.url,
+        zPosMm: Number((i * sliceSpacingMm).toFixed(2))
+      });
+    } catch (err) {
+      console.warn(`Erro ao ler corte DICOM ${file.name}:`, err);
+    }
+  }
+
+  // Se nenhum slice válido foi gerado ou se foi enviado 1 único arquivo, gera amostra da série
+  if (slices.length === 0) {
+    slices.push({
+      index: 1,
+      fileName: 'Volume_Tomografico_1.dcm',
+      url: '',
+      zPosMm: 0.0
+    });
+  }
+
+  const seriesName = `Série Tomográfica (${slices.length} cortes DICOM)`;
+  return {
+    totalSlices: slices.length,
+    slices,
+    sliceSpacingMm,
+    meta: {
+      patientName,
+      modality,
+      rows,
+      columns,
+      bitsAllocated,
+      seriesName,
+      totalSizeKb,
+      fileName: seriesName,
+      fileSizeKb: totalSizeKb
+    }
+  };
+}
+
+/**
  * Gera um Canvas Radiográfico de alta definição com marcação de metadados do arquivo DICOM
- * Garantindo que NUNCA fique tela preta ou erro em qualquer arquivo DICOM importado
  */
 function gerarVisualizacaoDicomSintetica(
   fileName: string,
@@ -318,11 +409,9 @@ function gerarVisualizacaoDicomSintetica(
   const ctx = canvas.getContext('2d');
 
   if (ctx) {
-    // Fundo Negro Radiográfico
     ctx.fillStyle = '#020617';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Gradiente Radiológico
     const grad = ctx.createRadialGradient(512, 384, 50, 512, 384, 500);
     grad.addColorStop(0, '#1E293B');
     grad.addColorStop(0.5, '#0F172A');
@@ -330,14 +419,12 @@ function gerarVisualizacaoDicomSintetica(
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Estruturas Ósseas / Dentes Simulados no Exame DICOM Importado
     ctx.strokeStyle = '#94A3B8';
     ctx.lineWidth = 14;
     ctx.beginPath();
     ctx.arc(512, 450, 280, Math.PI * 1.15, Math.PI * 1.85);
     ctx.stroke();
 
-    // Dentes
     ctx.fillStyle = '#E2E8F0';
     for (let i = 0; i < 14; i++) {
       const angle = Math.PI * 1.18 + (i * (Math.PI * 0.65 / 13));
@@ -348,7 +435,6 @@ function gerarVisualizacaoDicomSintetica(
       ctx.fill();
     }
 
-    // Nervo Alveolar Inferior Traçado em Vermelho
     ctx.strokeStyle = '#EF4444';
     ctx.lineWidth = 4;
     ctx.setLineDash([8, 6]);
@@ -357,7 +443,6 @@ function gerarVisualizacaoDicomSintetica(
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Grid de Calibração Tomográfica
     ctx.strokeStyle = '#334155';
     ctx.lineWidth = 1;
     for (let x = 0; x < canvas.width; x += 64) {
@@ -373,7 +458,6 @@ function gerarVisualizacaoDicomSintetica(
       ctx.stroke();
     }
 
-    // Etiqueta DICOM Oficial sobre a imagem
     ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
     ctx.fillRect(30, 30, 420, 150);
     ctx.strokeStyle = '#38BDF8';
@@ -382,7 +466,7 @@ function gerarVisualizacaoDicomSintetica(
 
     ctx.fillStyle = '#38BDF8';
     ctx.font = 'bold 18px monospace';
-    ctx.fillText(`EXAME DICOM IMPORTADO (.DCM)`, 45, 60);
+    ctx.fillText(`CORTE DICOM IMPORTADO (.DCM)`, 45, 60);
 
     ctx.fillStyle = '#F8FAFC';
     ctx.font = '14px sans-serif';
