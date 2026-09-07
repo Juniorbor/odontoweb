@@ -29,12 +29,14 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
   const [fatiaAxial, setFatiaAxial] = useState<number>(1);
   const [fatiaCoronal, setFatiaCoronal] = useState<number>(1);
   const [fatiaSagital, setFatiaSagital] = useState<number>(1);
-  const [totalCortes, setTotalCortes] = useState<number>(100);
+  const [totalAxial, setTotalAxial] = useState<number>(100);
+  const [totalCoronal, setTotalCoronal] = useState<number>(100);
+  const [totalSagital, setTotalSagital] = useState<number>(100);
   const [espacamentoMm, setEspacamentoMm] = useState<number>(0.5);
 
   // Estados de Rotação e Espelhamento dos Cortes
   const [rotacaoAxial, setRotacaoAxial] = useState<number>(0);
-  const [rotacaoCoronal, setRotacaoCoronal] = useState<number>(90);
+  const [rotacaoCoronal, setRotacaoCoronal] = useState<number>(0);
   const [rotacaoSagital, setRotacaoSagital] = useState<number>(0);
   const [espelharAxial, setEspelharAxial] = useState<boolean>(false);
   const [espelharCoronal, setEspelharCoronal] = useState<boolean>(false);
@@ -48,8 +50,10 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
   const [simuladorImplante, setSimuladorImplante] = useState<boolean>(true);
   const [tamanhoImplante, setTamanhoImplante] = useState<string>('Ø 4.0mm x 11.5mm');
 
-  // Serie de Fatias Tomograficas DICOM (.dcm)
-  const [dicomSlices, setDicomSlices] = useState<DicomSliceData[]>([]);
+  // Serie de Fatias Tomograficas DICOM por Plano Ortogonal (.dcm)
+  const [dicomSlicesAxial, setDicomSlicesAxial] = useState<DicomSliceData[]>([]);
+  const [dicomSlicesCoronal, setDicomSlicesCoronal] = useState<DicomSliceData[]>([]);
+  const [dicomSlicesSagital, setDicomSlicesSagital] = useState<DicomSliceData[]>([]);
   const [nomeArquivoDicom, setNomeArquivoDicom] = useState<string>('Tomografia_ConeBeam_Mandibula.dcm');
   const [imagemDicomLoadedUrl, setImagemDicomLoadedUrl] = useState<string | null>(null);
   const [carregandoDicom, setCarregandoDicom] = useState<boolean>(false);
@@ -69,24 +73,32 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
         const result = await carregarArquivoDicomOuImagem(file);
         setImagemDicomLoadedUrl(result.url);
         setDicomMeta(result.meta);
-        setDicomSlices([{
-          index: 1,
-          fileName: file.name,
-          url: result.url,
-          zPosMm: 0.0
-        }]);
-        setTotalCortes(100);
+        const serie = await carregarSerieDicomOuArquivos([file]);
+        setDicomSlicesAxial(serie.slicesAxial);
+        setDicomSlicesCoronal(serie.slicesCoronal);
+        setDicomSlicesSagital(serie.slicesSagital);
+        setTotalAxial(serie.totalSlicesAxial);
+        setTotalCoronal(serie.totalSlicesCoronal);
+        setTotalSagital(serie.totalSlicesSagital);
+        setEspacamentoMm(serie.sliceSpacingMm);
+        setFatiaAxial(1);
+        setFatiaCoronal(Math.max(1, Math.floor(serie.totalSlicesCoronal / 2)));
+        setFatiaSagital(Math.max(1, Math.floor(serie.totalSlicesSagital / 2)));
       } else {
         setNomeArquivoDicom(`Série Tomográfica (${qtdArquivos} cortes DICOM)`);
         const serie = await carregarSerieDicomOuArquivos(fileList);
-        setDicomSlices(serie.slices);
-        setTotalCortes(serie.totalSlices);
+        setDicomSlicesAxial(serie.slicesAxial);
+        setDicomSlicesCoronal(serie.slicesCoronal);
+        setDicomSlicesSagital(serie.slicesSagital);
+        setTotalAxial(serie.totalSlicesAxial);
+        setTotalCoronal(serie.totalSlicesCoronal);
+        setTotalSagital(serie.totalSlicesSagital);
         setEspacamentoMm(serie.sliceSpacingMm);
         setDicomMeta(serie.meta);
-        setImagemDicomLoadedUrl(serie.slices[0]?.url || null);
+        setImagemDicomLoadedUrl(serie.slicesAxial[0]?.url || null);
         setFatiaAxial(1);
-        setFatiaCoronal(Math.min(25, serie.totalSlices));
-        setFatiaSagital(Math.min(50, serie.totalSlices));
+        setFatiaCoronal(Math.max(1, Math.floor(serie.totalSlicesCoronal / 2)));
+        setFatiaSagital(Math.max(1, Math.floor(serie.totalSlicesSagital / 2)));
       }
     } catch (err) {
       console.error('Erro ao processar cortes DICOM:', err);
@@ -95,18 +107,50 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
     }
   };
 
-  const getSliceUrl = (fatiaNum: number) => {
-    if (dicomSlices.length > 0) {
-      const idx = Math.min(dicomSlices.length - 1, Math.max(0, fatiaNum - 1));
-      return dicomSlices[idx]?.url || imagemDicomLoadedUrl;
+  const getSliceAxialUrl = (fatiaNum: number) => {
+    if (dicomSlicesAxial.length > 0) {
+      const idx = Math.min(dicomSlicesAxial.length - 1, Math.max(0, fatiaNum - 1));
+      return dicomSlicesAxial[idx]?.url || imagemDicomLoadedUrl;
     }
     return imagemDicomLoadedUrl;
   };
 
-  const getSliceMm = (fatiaNum: number) => {
-    if (dicomSlices.length > 0) {
-      const idx = Math.min(dicomSlices.length - 1, Math.max(0, fatiaNum - 1));
-      return dicomSlices[idx]?.zPosMm.toFixed(1) || ((fatiaNum - 1) * espacamentoMm).toFixed(1);
+  const getSliceCoronalUrl = (fatiaNum: number) => {
+    if (dicomSlicesCoronal.length > 0) {
+      const idx = Math.min(dicomSlicesCoronal.length - 1, Math.max(0, fatiaNum - 1));
+      return dicomSlicesCoronal[idx]?.url || imagemDicomLoadedUrl;
+    }
+    return imagemDicomLoadedUrl;
+  };
+
+  const getSliceSagitalUrl = (fatiaNum: number) => {
+    if (dicomSlicesSagital.length > 0) {
+      const idx = Math.min(dicomSlicesSagital.length - 1, Math.max(0, fatiaNum - 1));
+      return dicomSlicesSagital[idx]?.url || imagemDicomLoadedUrl;
+    }
+    return imagemDicomLoadedUrl;
+  };
+
+  const getSliceAxialMm = (fatiaNum: number) => {
+    if (dicomSlicesAxial.length > 0) {
+      const idx = Math.min(dicomSlicesAxial.length - 1, Math.max(0, fatiaNum - 1));
+      return dicomSlicesAxial[idx]?.zPosMm.toFixed(1) || ((fatiaNum - 1) * espacamentoMm).toFixed(1);
+    }
+    return ((fatiaNum - 1) * espacamentoMm).toFixed(1);
+  };
+
+  const getSliceCoronalMm = (fatiaNum: number) => {
+    if (dicomSlicesCoronal.length > 0) {
+      const idx = Math.min(dicomSlicesCoronal.length - 1, Math.max(0, fatiaNum - 1));
+      return dicomSlicesCoronal[idx]?.zPosMm.toFixed(1) || ((fatiaNum - 1) * espacamentoMm).toFixed(1);
+    }
+    return ((fatiaNum - 1) * espacamentoMm).toFixed(1);
+  };
+
+  const getSliceSagitalMm = (fatiaNum: number) => {
+    if (dicomSlicesSagital.length > 0) {
+      const idx = Math.min(dicomSlicesSagital.length - 1, Math.max(0, fatiaNum - 1));
+      return dicomSlicesSagital[idx]?.zPosMm.toFixed(1) || ((fatiaNum - 1) * espacamentoMm).toFixed(1);
     }
     return ((fatiaNum - 1) * espacamentoMm).toFixed(1);
   };
@@ -175,9 +219,9 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
         <div className="p-3.5 rounded-2xl bg-slate-900 border border-teal-500/40 flex flex-wrap items-center justify-between text-xs text-slate-300 gap-3">
           <div className="flex items-center gap-2">
             <FileCheck className="w-4 h-4 text-teal-400" />
-            <span className="font-extrabold text-white">Série Tomográfica DICOM HD:</span>
+            <span className="font-extrabold text-white">Série Tomográfica DICOM HD (MPR 3D):</span>
             <span className="font-mono text-teal-300">
-              {dicomSlices.length > 0 ? `${dicomSlices.length} cortes milimetrados carregados` : 'Volume Carregado'} | {dicomMeta.fileName}
+              {dicomSlicesAxial.length > 0 ? `${dicomSlicesAxial.length} Axiais | ${dicomSlicesCoronal.length} Coronais | ${dicomSlicesSagital.length} Sagitais` : 'Volume Carregado'} | {dicomMeta.fileName}
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-4 text-[11px] font-mono">
@@ -191,7 +235,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
 
       {carregandoDicom && (
         <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center gap-2 text-indigo-300 text-xs font-extrabold animate-pulse">
-          <RefreshCw className="w-4 h-4 animate-spin" /> Processando nitidez HD e alinhando cortes DICOM...
+          <RefreshCw className="w-4 h-4 animate-spin" /> Processando reconstrução 3D MPR (Axial, Coronal e Sagital)...
         </div>
       )}
 
@@ -222,16 +266,16 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
                 <FlipHorizontal className="w-3.5 h-3.5" />
               </button>
               <span className="text-[10px] font-mono font-bold text-slate-400">
-                Fat. {fatiaAxial}/{totalCortes} ({getSliceMm(fatiaAxial)} mm)
+                Fat. {fatiaAxial}/{totalAxial} ({getSliceAxialMm(fatiaAxial)} mm)
               </span>
             </div>
           </div>
 
           <div className="relative rounded-2xl overflow-hidden bg-black flex items-center justify-center min-h-[300px] border border-slate-800 group">
             <div className="relative w-full h-[300px] bg-slate-950 flex items-center justify-center overflow-hidden">
-              {getSliceUrl(fatiaAxial) ? (
+              {getSliceAxialUrl(fatiaAxial) ? (
                 <img
-                  src={getSliceUrl(fatiaAxial)!}
+                  src={getSliceAxialUrl(fatiaAxial)!}
                   alt={`Corte DICOM Axial ${fatiaAxial}`}
                   className="absolute inset-0 w-full h-full object-contain transition-all duration-200"
                   style={{
@@ -249,7 +293,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               ) : null}
 
               <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full p-4 pointer-events-none">
-                {!imagemDicomLoadedUrl && dicomSlices.length === 0 && (
+                {!imagemDicomLoadedUrl && dicomSlicesAxial.length === 0 && (
                   <path
                     d="M 40 160 C 40 60, 160 60, 160 160 C 130 150, 70 150, 40 160 Z"
                     fill="none"
@@ -272,8 +316,8 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
 
                 {crosshairAtivo && (
                   <g>
-                    <line x1="0" y1={(fatiaAxial / totalCortes) * 200} x2="200" y2={(fatiaAxial / totalCortes) * 200} stroke="#38BDF8" strokeWidth="1" strokeDasharray="3 3" />
-                    <line x1={(fatiaSagital / totalCortes) * 200} y1="0" x2={(fatiaSagital / totalCortes) * 200} y2="200" stroke="#F43F5E" strokeWidth="1" strokeDasharray="3 3" />
+                    <line x1="0" y1={(fatiaAxial / (totalAxial || 1)) * 200} x2="200" y2={(fatiaAxial / (totalAxial || 1)) * 200} stroke="#38BDF8" strokeWidth="1" strokeDasharray="3 3" />
+                    <line x1={(fatiaSagital / (totalSagital || 1)) * 200} y1="0" x2={(fatiaSagital / (totalSagital || 1)) * 200} y2="200" stroke="#F43F5E" strokeWidth="1" strokeDasharray="3 3" />
                   </g>
                 )}
               </svg>
@@ -284,7 +328,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               <input
                 type="range"
                 min="1"
-                max={totalCortes}
+                max={totalAxial}
                 value={fatiaAxial}
                 onChange={(e) => setFatiaAxial(Number(e.target.value))}
                 className="w-full accent-teal-400 cursor-pointer"
@@ -299,7 +343,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
         }`}>
           <div className="flex justify-between items-center border-b border-slate-800 pb-2">
             <span className="text-xs font-extrabold text-sky-400 flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-sky-400"></span> Corte Coronal (Frontal)
+              <span className="w-2.5 h-2.5 rounded-full bg-sky-400"></span> Corte Coronal (Frontal Ortogonal)
             </span>
             <div className="flex items-center gap-2">
               <button
@@ -317,16 +361,16 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
                 <FlipHorizontal className="w-3.5 h-3.5" />
               </button>
               <span className="text-[10px] font-mono font-bold text-slate-400">
-                Fat. {fatiaCoronal}/{totalCortes} ({getSliceMm(fatiaCoronal)} mm)
+                Fat. {fatiaCoronal}/{totalCoronal} ({getSliceCoronalMm(fatiaCoronal)} mm)
               </span>
             </div>
           </div>
 
           <div className="relative rounded-2xl overflow-hidden bg-black flex items-center justify-center min-h-[300px] border border-slate-800">
             <div className="relative w-full h-[300px] bg-slate-950 flex items-center justify-center overflow-hidden">
-              {getSliceUrl(fatiaCoronal) ? (
+              {getSliceCoronalUrl(fatiaCoronal) ? (
                 <img
-                  src={getSliceUrl(fatiaCoronal)!}
+                  src={getSliceCoronalUrl(fatiaCoronal)!}
                   alt={`Corte DICOM Coronal ${fatiaCoronal}`}
                   className="absolute inset-0 w-full h-full object-contain transition-all duration-200"
                   style={{
@@ -344,7 +388,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               ) : null}
 
               <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full p-4 pointer-events-none">
-                {!imagemDicomLoadedUrl && dicomSlices.length === 0 && (
+                {!imagemDicomLoadedUrl && dicomSlicesCoronal.length === 0 && (
                   <>
                     <ellipse cx="100" cy="70" rx="60" ry="30" fill="none" stroke="#64748B" strokeWidth="12" />
                     <ellipse cx="100" cy="140" rx="55" ry="25" fill="none" stroke="#94A3B8" strokeWidth="12" />
@@ -368,7 +412,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
                 )}
 
                 {crosshairAtivo && (
-                  <line x1="0" y1={(fatiaCoronal / totalCortes) * 200} x2="200" y2={(fatiaCoronal / totalCortes) * 200} stroke="#38BDF8" strokeWidth="1" strokeDasharray="3 3" />
+                  <line x1="0" y1={(fatiaCoronal / (totalCoronal || 1)) * 200} x2="200" y2={(fatiaCoronal / (totalCoronal || 1)) * 200} stroke="#38BDF8" strokeWidth="1" strokeDasharray="3 3" />
                 )}
               </svg>
             </div>
@@ -378,7 +422,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               <input
                 type="range"
                 min="1"
-                max={totalCortes}
+                max={totalCoronal}
                 value={fatiaCoronal}
                 onChange={(e) => setFatiaCoronal(Number(e.target.value))}
                 className="w-full accent-sky-400 cursor-pointer"
@@ -393,7 +437,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
         }`}>
           <div className="flex justify-between items-center border-b border-slate-800 pb-2">
             <span className="text-xs font-extrabold text-rose-400 flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-400"></span> Corte Sagital (Seccional Implante)
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-400"></span> Corte Sagital (Lateral Ortogonal)
             </span>
             <div className="flex items-center gap-2">
               <button
@@ -411,16 +455,16 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
                 <FlipHorizontal className="w-3.5 h-3.5" />
               </button>
               <span className="text-[10px] font-mono font-bold text-slate-400">
-                Fat. {fatiaSagital}/{totalCortes} ({getSliceMm(fatiaSagital)} mm)
+                Fat. {fatiaSagital}/{totalSagital} ({getSliceSagitalMm(fatiaSagital)} mm)
               </span>
             </div>
           </div>
 
           <div className="relative rounded-2xl overflow-hidden bg-black flex items-center justify-center min-h-[300px] border border-slate-800">
             <div className="relative w-full h-[300px] bg-slate-950 flex items-center justify-center overflow-hidden">
-              {getSliceUrl(fatiaSagital) ? (
+              {getSliceSagitalUrl(fatiaSagital) ? (
                 <img
-                  src={getSliceUrl(fatiaSagital)!}
+                  src={getSliceSagitalUrl(fatiaSagital)!}
                   alt={`Corte DICOM Sagital ${fatiaSagital}`}
                   className="absolute inset-0 w-full h-full object-contain transition-all duration-200"
                   style={{
@@ -438,7 +482,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               ) : null}
 
               <svg viewBox="0 0 200 200" className="absolute inset-0 w-full h-full p-4 pointer-events-none">
-                {!imagemDicomLoadedUrl && dicomSlices.length === 0 && (
+                {!imagemDicomLoadedUrl && dicomSlicesSagital.length === 0 && (
                   <path
                     d="M 60 40 Q 140 40, 140 160 Q 80 180, 60 140 Z"
                     fill="none"
@@ -459,7 +503,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
                 )}
 
                 {crosshairAtivo && (
-                  <line x1={(fatiaSagital / totalCortes) * 200} y1="0" x2={(fatiaSagital / totalCortes) * 200} y2="200" stroke="#F43F5E" strokeWidth="1" strokeDasharray="3 3" />
+                  <line x1={(fatiaSagital / (totalSagital || 1)) * 200} y1="0" x2={(fatiaSagital / (totalSagital || 1)) * 200} y2="200" stroke="#F43F5E" strokeWidth="1" strokeDasharray="3 3" />
                 )}
               </svg>
             </div>
@@ -469,7 +513,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               <input
                 type="range"
                 min="1"
-                max={totalCortes}
+                max={totalSagital}
                 value={fatiaSagital}
                 onChange={(e) => setFatiaSagital(Number(e.target.value))}
                 className="w-full accent-rose-400 cursor-pointer"
