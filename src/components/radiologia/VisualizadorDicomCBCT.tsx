@@ -592,7 +592,13 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               </svg>
             </div>
 
-            <div className="absolute bottom-2 left-2 right-2 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded-lg border border-slate-800 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            {/* BARRA DO SLIDER DE FATIA — INTERCEPTA EVENTOS PARA NÃO ATIVAR ROTAÇÃO OU AMPLIAR */}
+            <div
+              className="absolute bottom-2 left-2 right-2 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded-lg border border-slate-800 flex items-center gap-2"
+              onMouseDown={(e) => e.stopPropagation()}
+              onMouseUp={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+            >
               <span className="text-[9px] font-mono text-slate-400">Slice:</span>
               <input
                 type="range"
@@ -686,7 +692,13 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               </svg>
             </div>
 
-            <div className="absolute bottom-2 left-2 right-2 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded-lg border border-slate-800 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            {/* BARRA DO SLIDER DE FATIA — INTERCEPTA EVENTOS PARA NÃO ATIVAR ROTAÇÃO OU AMPLIAR */}
+            <div
+              className="absolute bottom-2 left-2 right-2 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded-lg border border-slate-800 flex items-center gap-2"
+              onMouseDown={(e) => e.stopPropagation()}
+              onMouseUp={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+            >
               <span className="text-[9px] font-mono text-slate-400">Slice:</span>
               <input
                 type="range"
@@ -777,7 +789,13 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
               </svg>
             </div>
 
-            <div className="absolute bottom-2 left-2 right-2 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded-lg border border-slate-800 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            {/* BARRA DO SLIDER DE FATIA — INTERCEPTA EVENTOS PARA NÃO ATIVAR ROTAÇÃO OU AMPLIAR */}
+            <div
+              className="absolute bottom-2 left-2 right-2 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded-lg border border-slate-800 flex items-center gap-2"
+              onMouseDown={(e) => e.stopPropagation()}
+              onMouseUp={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+            >
               <span className="text-[9px] font-mono text-slate-400">Slice:</span>
               <input
                 type="range"
@@ -1150,7 +1168,12 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
           </div>
 
           {/* SLIDER DE FATIA EM TAMANHO REAL */}
-          <div className="bg-slate-900 border border-slate-800 p-3 rounded-2xl flex items-center gap-3">
+          <div
+            className="bg-slate-900 border border-slate-800 p-3 rounded-2xl flex items-center gap-3"
+            onMouseDown={(e) => e.stopPropagation()}
+            onMouseUp={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+          >
             <span className="text-[11px] font-mono font-bold text-slate-300 min-w-[120px]">
               Slice {
                 corteExpandido === 'axial' ? fatiaAxial : corteExpandido === 'coronal' ? fatiaCoronal : fatiaSagital
