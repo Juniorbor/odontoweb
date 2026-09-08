@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Compass,
   Download,
@@ -274,11 +274,29 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
   const [pontoArrastandoId, setPontoArrastandoId] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const imageWrapperRef = useRef<HTMLDivElement>(null);
 
-  // Notas de Validação Anatômica
+  // NOTAS DE VALIDAÇÃO ANATÔMICA
   const [validationNotes, setValidationNotes] = useState<string[]>([
     'Aguardando marcação manual dos 104 pontos pelo ortodontista ou sugestão por IA.'
   ]);
+
+  // ZOOM PELA RODA DO MOUSE (SCROLL WHEEL)
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const zoomDelta = e.deltaY < 0 ? 10 : -10;
+      setZoomLevel((prev) => Math.min(300, Math.max(40, prev + zoomDelta)));
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
 
   // Upload de Imagem de Telerradiografia do Usuário (Suporta .dcm, .dicom e imagens)
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -334,14 +352,18 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
   };
 
   const handleCanvasMouseMove = (e: React.MouseEvent) => {
-    if (!pontoArrastandoId || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const scale = zoomLevel / 100;
-    const clickX = (e.clientX - rect.left) / scale;
-    const clickY = (e.clientY - rect.top) / scale;
+    if (!pontoArrastandoId || !imageWrapperRef.current) return;
+    const rect = imageWrapperRef.current.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
 
-    const newX = Math.round(Math.max(10, Math.min(rect.width / scale - 10, clickX)));
-    const newY = Math.round(Math.max(10, Math.min(rect.height / scale - 10, clickY)));
+    const relX = (e.clientX - rect.left) / rect.width;
+    const relY = (e.clientY - rect.top) / rect.height;
+
+    const unscaledW = imageWrapperRef.current.offsetWidth || rect.width;
+    const unscaledH = imageWrapperRef.current.offsetHeight || rect.height;
+
+    const newX = Math.round(Math.max(0, Math.min(unscaledW, relX * unscaledW)));
+    const newY = Math.round(Math.max(0, Math.min(unscaledH, relY * unscaledH)));
 
     setPontos((prev) =>
       prev.map((p) =>
@@ -356,13 +378,20 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
     setPontoArrastandoId(null);
   };
 
-  // Marcação Manual por Clique Direto na Telerradiografia
+  // MARCAÇÃO MANUAL RIGOROSA POR CLIQUE DIRETO NA TELERRADIOGRAFIA
   const handleCanvasClick = (e: React.MouseEvent) => {
-    if (pontoArrastandoId || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const scale = zoomLevel / 100;
-    const clickX = Math.round((e.clientX - rect.left) / scale);
-    const clickY = Math.round((e.clientY - rect.top) / scale);
+    if (pontoArrastandoId || !imageWrapperRef.current) return;
+    const rect = imageWrapperRef.current.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+
+    const relX = (e.clientX - rect.left) / rect.width;
+    const relY = (e.clientY - rect.top) / rect.height;
+
+    const unscaledW = imageWrapperRef.current.offsetWidth || rect.width;
+    const unscaledH = imageWrapperRef.current.offsetHeight || rect.height;
+
+    const clickX = Math.round(Math.max(0, Math.min(unscaledW, relX * unscaledW)));
+    const clickY = Math.round(Math.max(0, Math.min(unscaledH, relY * unscaledH)));
 
     const pontosAtualizados = [...pontos];
     pontosAtualizados[pontoAtivoIdx] = {
@@ -522,10 +551,10 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* CONTROLES DE ZOOM NATIVO DO CANVAS */}
+          {/* CONTROLES DE ZOOM NATIVO DO CANVAS E SCROLL DO MOUSE */}
           <div className="flex items-center gap-1 bg-slate-800 p-1 rounded-xl border border-slate-700">
             <button
-              onClick={() => setZoomLevel(z => Math.max(50, z - 25))}
+              onClick={() => setZoomLevel(z => Math.max(40, z - 15))}
               className="p-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition-all cursor-pointer"
               title="Diminuir Zoom"
             >
@@ -533,7 +562,7 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
             </button>
             <span className="text-[11px] font-mono font-extrabold px-1.5 text-teal-400">{zoomLevel}%</span>
             <button
-              onClick={() => setZoomLevel(z => Math.min(250, z + 25))}
+              onClick={() => setZoomLevel(z => Math.min(300, z + 15))}
               className="p-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition-all cursor-pointer"
               title="Aumentar Zoom"
             >
@@ -557,7 +586,7 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
         </div>
       </div>
 
-      {/* BANNER DE INSTRUÇÕES DE MARCAÇÃO MANUAL OU ALERTA */}
+      {/* BANNER DE INSTRUÇÕES DE MARCAÇÃO MANUAL E SCROLL ZOOM */}
       {qtdMarcados < pontos.length ? (
         <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex flex-wrap items-center justify-between text-[11px] text-indigo-300 gap-2">
           <div className="flex items-center gap-2">
@@ -567,7 +596,9 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
               Clique na radiografia para marcar o ponto <strong className="text-emerald-400 font-mono">[{pontos[pontoAtivoIdx].id} - {pontos[pontoAtivoIdx].nome}]</strong>. ({qtdMarcados} de {pontos.length} marcados).
             </span>
           </div>
-          <span className="text-[10px] text-slate-400 font-mono">Você pode arrastar qualquer ponto fixado para ajustar sua posição.</span>
+          <span className="text-[10px] text-teal-300 font-mono bg-slate-900/80 px-2 py-0.5 rounded border border-teal-500/30">
+            💡 Roda do mouse (scroll): Use para aproximar/afastar a imagem com fluidez
+          </span>
         </div>
       ) : qtdPontosAtencao > 0 ? (
         <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex flex-wrap items-center justify-between text-[11px] text-amber-300 gap-2">
@@ -591,31 +622,32 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
         </div>
       ) : null}
 
-      {/* INTERFACE PRINCIPAL: CANVAS AMPLIAÇÃO GRANDE (650PX) + TABELA RESULTADOS */}
+      {/* INTERFACE PRINCIPAL: CANVAS DE TELERRADIOGRAFIA AMPLIADA (800PX+) + RESULTADOS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-        {/* COLUNA ESQUERDA: CANVAS DE TELERRADIOGRAFIA AMPLIADA (650PX DE ALTURA) */}
+        {/* COLUNA ESQUERDA: CANVAS DE TELERRADIOGRAFIA SUPER AMPLIAÇÃO (H-[780PX] A H-[820PX]) */}
         <div className="lg:col-span-2 space-y-3">
           <div
             ref={containerRef}
-            onClick={handleCanvasClick}
-            onMouseMove={handleCanvasMouseMove}
-            onMouseUp={handleCanvasMouseUp}
-            className={`rounded-2xl border shadow-2xl relative overflow-auto flex items-center justify-center min-h-[600px] h-[650px] lg:h-[680px] select-none cursor-crosshair ${
+            className={`rounded-2xl border shadow-2xl relative overflow-auto flex items-center justify-center min-h-[720px] h-[780px] lg:h-[820px] select-none cursor-crosshair ${
               darkMode ? 'bg-slate-950 border-slate-800' : 'bg-slate-100 border-slate-300'
             }`}
           >
             <div
-              className="relative transition-transform duration-100 flex items-center justify-center max-w-full max-h-full"
+              ref={imageWrapperRef}
+              onClick={handleCanvasClick}
+              onMouseMove={handleCanvasMouseMove}
+              onMouseUp={handleCanvasMouseUp}
+              className="relative transition-transform duration-100 inline-block shadow-2xl overflow-hidden rounded-xl"
               style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'center center' }}
             >
               <img
                 src={imagemUrl}
                 alt="Telerradiografia Lateral Ampliada"
-                className="rounded-xl opacity-90 max-h-[640px] object-contain pointer-events-none shadow-2xl"
+                className="block opacity-90 max-h-[760px] lg:max-h-[800px] w-auto h-auto object-contain pointer-events-none select-none"
               />
 
-              {/* SOBREPOSIÇÃO SVG DOS TRAÇADOS CEFAMÉTRICOS (STEINER, TWEED, RICKETTS) */}
+              {/* SOBREPOSIÇÃO SVG DOS TRAÇADOS CEFAMÉTRICOS E PONTOS COM MARCAÇÃO MILIMÉTRICA */}
               <svg className="absolute inset-0 w-full h-full pointer-events-none">
                 {/* Linha S-N (Azul Sky) */}
                 {getPonto('S') && getPonto('N') && (
@@ -646,7 +678,7 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
                   <line x1={getPonto('Prn')!.x!} y1={getPonto('Prn')!.y!} x2={getPonto('Pog\'')!.x!} y2={getPonto('Pog\'')!.y!} stroke="#EC4899" strokeWidth="2" />
                 )}
 
-                {/* RENDERIZAÇÃO APENAS DOS PONTOS EFETIVAMENTE MARCADOS PELO USUÁRIO OU IA */}
+                {/* RENDERIZAÇÃO DOS PONTOS CEFAMÉTRICOS MARCADOS */}
                 {pontos.map((p, idx) => {
                   if (p.x === null || p.y === null) return null;
 
@@ -782,7 +814,7 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
               </div>
             </div>
 
-            <div className="max-h-[250px] overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+            <div className="max-h-[300px] overflow-y-auto space-y-1 pr-1 custom-scrollbar">
               {pontosFiltrados.map((p) => {
                 const idxReal = pontos.findIndex((pt) => pt.id === p.id);
                 const isSel = idxReal === pontoAtivoIdx;
