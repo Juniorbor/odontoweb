@@ -1,4 +1,5 @@
 // Serviço de Sincronização em Nuvem em Tempo Real com Presença de Usuários Online
+import { DADOS_PRODUCAO_EXCEL } from '../data/dadosProducaoExcel';
 
 const getCloudEndpoint = () => {
   if (typeof window !== 'undefined') {
@@ -61,12 +62,14 @@ export function getUserKeys(usuarioId?: string) {
  */
 export function getProducaoComoTransacoes(usuarioId?: string): any[] {
   const keys = getUserKeys(usuarioId);
-  const itensProducao = getItemJSON(keys.PRODUCAO, []);
-  if (!Array.isArray(itensProducao)) return [];
+  let itensProducao: any[] = getItemJSON<any[]>(keys.PRODUCAO, []);
+  if (!Array.isArray(itensProducao) || itensProducao.length === 0) {
+    itensProducao = DADOS_PRODUCAO_EXCEL;
+  }
 
   return itensProducao.map((item: any, idx: number) => ({
     id: `prod-entrada-${item.id || idx}`,
-    descricao: `Faturamento Produção: ${item.paciente || 'Paciente'} - ${item.procedimento || 'Procedimento'} (${item.clinica || 'Unidade'})`,
+    descricao: `Faturamento Produção: ${item.pacienteNome || item.paciente || 'Paciente'} - ${item.regiao || item.procedimento || 'Procedimento'} (${item.unidade || item.clinica || 'Unidade'})`,
     valor: Number(item.valor || 0),
     data: item.data || new Date().toISOString().split('T')[0],
     categoria: 'Faturamento de Produção',

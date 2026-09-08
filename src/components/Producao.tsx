@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { ItemProducaoTomo } from '../types';
 import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, getUserKeys, getItemJSON } from '../services/cloudSync';
 import { WhatsappNotificacoes } from './WhatsappNotificacoes';
+import { DADOS_PRODUCAO_EXCEL } from '../data/dadosProducaoExcel';
 import {
   BarChart3,
   Plus,
@@ -34,9 +35,13 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   const userKeys = getUserKeys(usuarioId);
   const STORAGE_KEY = userKeys.PRODUCAO;
 
-  // Inicializa a lista de registros. Se houver dados salvos no localStorage, utiliza-os.
+  // Inicializa a lista de registros. Se houver dados salvos no localStorage, utiliza-os. Caso contrário, carrega os dados da planilha Excel.
   const [itens, setItens] = useState<ItemProducaoTomo[]>(() => {
-    return getItemJSON<ItemProducaoTomo[]>(STORAGE_KEY, []);
+    const salvo = getItemJSON<ItemProducaoTomo[]>(STORAGE_KEY, []);
+    if (Array.isArray(salvo) && salvo.length > 0) {
+      return salvo;
+    }
+    return DADOS_PRODUCAO_EXCEL;
   });
 
   const [sincronizando, setSincronizando] = useState<boolean>(false);
@@ -69,21 +74,21 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   useEffect(() => {
     setSincronizando(true);
     pullFromCloud((payload) => {
-      if (Array.isArray(payload.producao)) {
+      if (Array.isArray(payload.producao) && payload.producao.length > 0) {
         setItens(payload.producao);
       }
       setSincronizando(false);
     }, true, usuarioId);
 
     const unsubscribeBroadcast = subscribeLocalBroadcast((payload) => {
-      if (Array.isArray(payload.producao)) {
+      if (Array.isArray(payload.producao) && payload.producao.length > 0) {
         setItens(payload.producao);
       }
     }, usuarioId);
 
     const interval = setInterval(() => {
       pullFromCloud((payload) => {
-        if (Array.isArray(payload.producao)) {
+        if (Array.isArray(payload.producao) && payload.producao.length > 0) {
           setItens(payload.producao);
         }
       }, false, usuarioId);
@@ -91,7 +96,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
 
     const handleFocus = () => {
       pullFromCloud((payload) => {
-        if (Array.isArray(payload.producao)) {
+        if (Array.isArray(payload.producao) && payload.producao.length > 0) {
           setItens(payload.producao);
         }
       }, true, usuarioId);
