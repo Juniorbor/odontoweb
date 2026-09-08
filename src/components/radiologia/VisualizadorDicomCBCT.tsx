@@ -83,11 +83,12 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
   const [anotacoes, setAnotacoes] = useState<AnotacaoDicom[]>([]);
   const [anotacaoDesenhando, setAnotacaoDesenhando] = useState<AnotacaoDicom | null>(null);
 
-  // Estado de Arraste do Mouse para Rotação Fluida
+  // Estado de Rotação Polar de Alta Precisão (Botão Esquerdo do Mouse)
   const [dragState, setDragState] = useState<{
     plano: 'axial' | 'coronal' | 'sagital' | 'modal';
-    startX: number;
-    startY: number;
+    cx: number;
+    cy: number;
+    startPolarAngle: number;
     startAngle: number;
     hasMoved: boolean;
   } | null>(null);
@@ -206,14 +207,20 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
     return ((fatiaNum - 1) * espacamentoMm).toFixed(1);
   };
 
-  // --- CONTROLE DE ROTAÇÃO E CLIQUE POR MOUSE (BOTÃO ESQUERDO) ---
+  // --- ROTAÇÃO POLAR DE ALTA PRECISÃO (BOTÃO ESQUERDO DO MOUSE) ---
   const handleMouseDownViewport = (e: React.MouseEvent, plano: 'axial' | 'coronal' | 'sagital') => {
     if (e.button !== 0) return; // Apenas botão esquerdo do mouse
+    const rect = e.currentTarget.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const startPolarAngle = Math.atan2(e.clientY - cy, e.clientX - cx) * (180 / Math.PI);
     const currentAngle = plano === 'axial' ? rotacaoAxial : plano === 'coronal' ? rotacaoCoronal : rotacaoSagital;
+
     setDragState({
       plano,
-      startX: e.clientX,
-      startY: e.clientY,
+      cx,
+      cy,
+      startPolarAngle,
       startAngle: currentAngle,
       hasMoved: false
     });
@@ -221,15 +228,17 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
 
   const handleMouseMoveGlobal = (e: React.MouseEvent) => {
     if (!dragState) return;
-    const dx = e.clientX - dragState.startX;
-    const dy = e.clientY - dragState.startY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
 
-    if (distance > 4) {
-      setDragState((prev) => (prev ? { ...prev, hasMoved: true } : null));
-      const deltaAngle = Math.round(dx * 0.8); // Sensibilidade de rotação
-      let newAngle = (dragState.startAngle + deltaAngle) % 360;
-      if (newAngle < 0) newAngle += 360;
+    const currentPolarAngle = Math.atan2(e.clientY - dragState.cy, e.clientX - dragState.cx) * (180 / Math.PI);
+    let deltaAngle = currentPolarAngle - dragState.startPolarAngle;
+
+    if (Math.abs(deltaAngle) > 0.5) {
+      if (!dragState.hasMoved) {
+        setDragState((prev) => (prev ? { ...prev, hasMoved: true } : null));
+      }
+
+      let newAngle = Math.round(dragState.startAngle + deltaAngle);
+      newAngle = ((newAngle % 360) + 360) % 360;
 
       if (dragState.plano === 'axial') setRotacaoAxial(newAngle);
       else if (dragState.plano === 'coronal') setRotacaoCoronal(newAngle);
@@ -244,7 +253,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
 
   const handleMouseUpViewport = (plano: 'axial' | 'coronal' | 'sagital') => {
     if (dragState && dragState.plano === plano && !dragState.hasMoved) {
-      // Clique simples na imagem -> Expandir para tela cheia HD!
+      // Clique simples sem arrastar -> Expandir para tela cheia HD!
       setZoomLevel(100);
       setCorteExpandido(plano);
     }
@@ -254,12 +263,18 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
   // --- DESENHO DE ANOTAÇÕES NA TELA AMPLIADA (SVG OVERLAY) ---
   const handleModalMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if (ferramentaModal === 'rotacionar') {
-      if (e.button !== 0 || !corteExpandido) return;
+      if (e.button !== 0 || !corteExpandido || !modalCanvasRef.current) return;
+      const rect = modalCanvasRef.current.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const startPolarAngle = Math.atan2(e.clientY - cy, e.clientX - cx) * (180 / Math.PI);
       const currentAngle = corteExpandido === 'axial' ? rotacaoAxial : corteExpandido === 'coronal' ? rotacaoCoronal : rotacaoSagital;
+
       setDragState({
         plano: 'modal',
-        startX: e.clientX,
-        startY: e.clientY,
+        cx,
+        cy,
+        startPolarAngle,
         startAngle: currentAngle,
         hasMoved: false
       });
@@ -541,14 +556,14 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
             onMouseDown={(e) => handleMouseDownViewport(e, 'axial')}
             onMouseUp={() => handleMouseUpViewport('axial')}
             className="relative rounded-xl overflow-hidden bg-black flex items-center justify-center min-h-[350px] h-[350px] border border-slate-800 cursor-grab active:cursor-grabbing group"
-            title="Clique e arraste com o botão esquerdo para GIRAR a imagem | Clique simples para AMPLIAR"
+            title="Arraste ao redor do centro com o BOTÃO ESQUERDO para GIRAR com precisão | Clique simples para AMPLIAR"
           >
             <div className="relative w-full h-[350px] bg-slate-950 flex items-center justify-center overflow-hidden">
               {getSliceAxialUrl(fatiaAxial) ? (
                 <img
                   src={getSliceAxialUrl(fatiaAxial)!}
                   alt={`Corte DICOM Axial ${fatiaAxial}`}
-                  className="absolute inset-0 w-full h-full object-contain transition-transform duration-75"
+                  className="absolute inset-0 w-full h-full object-contain transition-transform duration-75 pointer-events-none"
                   style={{
                     filter: getFilterCSS(),
                     transform: `rotate(${rotacaoAxial}deg) scaleX(${espelharAxial ? -1 : 1})`,
@@ -634,14 +649,14 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
             onMouseDown={(e) => handleMouseDownViewport(e, 'coronal')}
             onMouseUp={() => handleMouseUpViewport('coronal')}
             className="relative rounded-xl overflow-hidden bg-black flex items-center justify-center min-h-[350px] h-[350px] border border-slate-800 cursor-grab active:cursor-grabbing group"
-            title="Clique e arraste com o botão esquerdo para GIRAR a imagem | Clique simples para AMPLIAR"
+            title="Arraste ao redor do centro com o BOTÃO ESQUERDO para GIRAR com precisão | Clique simples para AMPLIAR"
           >
             <div className="relative w-full h-[350px] bg-slate-950 flex items-center justify-center overflow-hidden">
               {getSliceCoronalUrl(fatiaCoronal) ? (
                 <img
                   src={getSliceCoronalUrl(fatiaCoronal)!}
                   alt={`Corte DICOM Coronal ${fatiaCoronal}`}
-                  className="absolute inset-0 w-full h-full object-contain transition-transform duration-75"
+                  className="absolute inset-0 w-full h-full object-contain transition-transform duration-75 pointer-events-none"
                   style={{
                     filter: getFilterCSS(),
                     transform: `rotate(${rotacaoCoronal}deg) scaleX(${espelharCoronal ? -1 : 1})`,
@@ -728,14 +743,14 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
             onMouseDown={(e) => handleMouseDownViewport(e, 'sagital')}
             onMouseUp={() => handleMouseUpViewport('sagital')}
             className="relative rounded-xl overflow-hidden bg-black flex items-center justify-center min-h-[350px] h-[350px] border border-slate-800 cursor-grab active:cursor-grabbing group"
-            title="Clique e arraste com o botão esquerdo para GIRAR a imagem | Clique simples para AMPLIAR"
+            title="Arraste ao redor do centro com o BOTÃO ESQUERDO para GIRAR com precisão | Clique simples para AMPLIAR"
           >
             <div className="relative w-full h-[350px] bg-slate-950 flex items-center justify-center overflow-hidden">
               {getSliceSagitalUrl(fatiaSagital) ? (
                 <img
                   src={getSliceSagitalUrl(fatiaSagital)!}
                   alt={`Corte DICOM Sagital ${fatiaSagital}`}
-                  className="absolute inset-0 w-full h-full object-contain transition-transform duration-75"
+                  className="absolute inset-0 w-full h-full object-contain transition-transform duration-75 pointer-events-none"
                   style={{
                     filter: getFilterCSS(),
                     transform: `rotate(${rotacaoSagital}deg) scaleX(${espelharSagital ? -1 : 1})`,
@@ -824,7 +839,7 @@ export const VisualizadorDicomCBCT: React.FC<VisualizadorDicomCBCTProps> = ({
                 className={`p-1.5 px-2 rounded-lg text-[11px] font-extrabold flex items-center gap-1 transition-all cursor-pointer ${
                   ferramentaModal === 'rotacionar' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
                 }`}
-                title="Girar Imagem por Arraste"
+                title="Girar Imagem por Arraste de Alta Precisão (Botão Esquerdo)"
               >
                 <RotateCw className="w-3.5 h-3.5" /> Girar
               </button>
