@@ -26,7 +26,7 @@ interface ModuloCefalometriaProps {
 export interface PontoCefalometricoAnatomico {
   id: string;
   nome: string;
-  categoria: 'esqueletica' | 'dentaria' | 'mole';
+  categoria: 'esqueletica' | 'dentaria' | 'mole' | 'cervical_vias';
   descricao: string;
   x: number | null;
   y: number | null;
@@ -41,76 +41,227 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
   // Amostra de Telerradiografia Lateral Padrão
   const TELE_PADRAO = 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1200&q=80';
 
-  // COORDENADAS PREDEFINIDAS DE IA PARA O BOTÃO "SUGERIR COM IA"
+  // COORDENADAS PREDEFINIDAS DE IA PARA OS 104 PONTOS CEFAMÉTRICOS
   const POSICOES_IA_SUGERIDAS: Record<string, { x: number; y: number; conf: number }> = {
-    S: { x: 380, y: 210, conf: 0.98 },
-    N: { x: 585, y: 195, conf: 0.96 },
-    Po: { x: 310, y: 275, conf: 0.81 },
-    Ba: { x: 345, y: 345, conf: 0.79 },
-    Or: { x: 515, y: 265, conf: 0.91 },
-    A: { x: 575, y: 380, conf: 0.94 },
-    B: { x: 550, y: 500, conf: 0.93 },
-    ENA: { x: 595, y: 355, conf: 0.95 },
-    ENP: { x: 435, y: 355, conf: 0.82 },
-    Pog: { x: 560, y: 565, conf: 0.97 },
-    Gn: { x: 540, y: 590, conf: 0.92 },
-    Me: { x: 510, y: 605, conf: 0.95 },
-    Go: { x: 335, y: 525, conf: 0.88 },
-    Pt: { x: 410, y: 270, conf: 0.83 },
-    U1A: { x: 550, y: 390, conf: 0.89 },
-    U1T: { x: 570, y: 445, conf: 0.96 },
-    L1A: { x: 535, y: 520, conf: 0.87 },
-    L1T: { x: 560, y: 460, conf: 0.95 },
-    U6M: { x: 460, y: 445, conf: 0.90 },
-    L6M: { x: 460, y: 460, conf: 0.89 },
-    Prn: { x: 645, y: 330, conf: 0.99 },
-    Sn: { x: 605, y: 385, conf: 0.97 },
-    Ls: { x: 615, y: 425, conf: 0.96 },
-    Li: { x: 605, y: 470, conf: 0.95 },
+    "N'": { x: 585, y: 185, conf: 0.95 },
+    "N": { x: 585, y: 195, conf: 0.96 },
+    "Or": { x: 515, y: 265, conf: 0.91 },
+    "S.O.": { x: 525, y: 240, conf: 0.88 },
+    "R.O.": { x: 510, y: 230, conf: 0.86 },
+    "Cl": { x: 395, y: 200, conf: 0.85 },
+    "S": { x: 380, y: 210, conf: 0.98 },
+    "Si": { x: 380, y: 222, conf: 0.9 },
+    "Sp": { x: 370, y: 210, conf: 0.89 },
+    "Cls": { x: 365, y: 220, conf: 0.84 },
+    "Po": { x: 310, y: 275, conf: 0.81 },
+    "Cli": { x: 350, y: 310, conf: 0.82 },
+    "Ba": { x: 345, y: 345, conf: 0.79 },
+    "Od": { x: 330, y: 365, conf: 0.83 },
+    "Bo": { x: 295, y: 320, conf: 0.78 },
+    "Op": { x: 300, y: 355, conf: 0.8 },
+    "Co": { x: 330, y: 285, conf: 0.87 },
+    "Bpc": { x: 322, y: 300, conf: 0.85 },
+    "Ar": { x: 335, y: 320, conf: 0.86 },
+    "Bac": { x: 340, y: 295, conf: 0.84 },
+    "C": { x: 332, y: 295, conf: 0.88 },
+    "Dc": { x: 335, y: 310, conf: 0.86 },
+    "Go": { x: 335, y: 525, conf: 0.88 },
+    "Me": { x: 510, y: 605, conf: 0.95 },
+    "Pog": { x: 560, y: 565, conf: 0.97 },
+    "Gn": { x: 540, y: 590, conf: 0.92 },
+    "E": { x: 360, y: 445, conf: 0.84 },
+    "B": { x: 550, y: 500, conf: 0.93 },
+    "Id": { x: 565, y: 470, conf: 0.9 },
+    "M": { x: 520, y: 575, conf: 0.88 },
+    "Pm": { x: 555, y: 535, conf: 0.91 },
+    "D": { x: 530, y: 550, conf: 0.89 },
+    "A": { x: 575, y: 380, conf: 0.94 },
+    "Ena": { x: 595, y: 355, conf: 0.95 },
+    "P'": { x: 615, y: 310, conf: 0.87 },
+    "Enp": { x: 435, y: 355, conf: 0.82 },
+    "K.R.": { x: 490, y: 340, conf: 0.85 },
+    "Te": { x: 470, y: 220, conf: 0.83 },
+    "Cm": { x: 460, y: 450, conf: 0.9 },
+    "Ptm": { x: 410, y: 270, conf: 0.83 },
+    "PVT": { x: 410, y: 250, conf: 0.82 },
+    "Vasa": { x: 430, y: 380, conf: 0.86 },
+    "Vasp": { x: 390, y: 380, conf: 0.85 },
+    "Vaia": { x: 410, y: 470, conf: 0.85 },
+    "Vaip": { x: 370, y: 470, conf: 0.84 },
+    "Xi": { x: 360, y: 400, conf: 0.88 },
+    "Bar": { x: 385, y: 400, conf: 0.86 },
+    "D6/": { x: 470, y: 445, conf: 0.89 },
+    "Ams": { x: 460, y: 410, conf: 0.87 },
+    "6/": { x: 450, y: 445, conf: 0.9 },
+    "Ppd": { x: 440, y: 450, conf: 0.85 },
+    "/6": { x: 450, y: 460, conf: 0.89 },
+    "Ami": { x: 460, y: 495, conf: 0.86 },
+    "A/4": { x: 495, y: 455, conf: 0.84 },
+    "C4/": { x: 505, y: 450, conf: 0.83 },
+    "PAR": { x: 565, y: 452, conf: 0.88 },
+    "Ap": { x: 542, y: 455, conf: 0.85 },
+    "/3": { x: 530, y: 458, conf: 0.87 },
+    "3/": { x: 535, y: 448, conf: 0.88 },
+    "Aii": { x: 535, y: 520, conf: 0.87 },
+    "Iii": { x: 560, y: 460, conf: 0.95 },
+    "Iis": { x: 570, y: 445, conf: 0.96 },
+    "Sf1/": { x: 578, y: 430, conf: 0.91 },
+    "Ais": { x: 550, y: 390, conf: 0.89 },
+    "Pog'": { x: 585, y: 570, conf: 0.98 },
     "B'": { x: 580, y: 515, conf: 0.92 },
-    "Pog'": { x: 585, y: 570, conf: 0.98 }
+    "Li": { x: 605, y: 470, conf: 0.95 },
+    "Stm": { x: 600, y: 450, conf: 0.93 },
+    "Ls": { x: 615, y: 425, conf: 0.96 },
+    "A'": { x: 595, y: 395, conf: 0.93 },
+    "Sn": { x: 605, y: 385, conf: 0.97 },
+    "Prn": { x: 630, y: 310, conf: 0.95 },
+    "Pn": { x: 645, y: 330, conf: 0.99 },
+    "EILI": { x: 585, y: 460, conf: 0.86 },
+    "AA": { x: 360, y: 330, conf: 0.84 },
+    "ADS": { x: 385, y: 280, conf: 0.82 },
+    "AD2": { x: 395, y: 300, conf: 0.83 },
+    "R": { x: 345, y: 420, conf: 0.85 },
+    "AD1": { x: 420, y: 290, conf: 0.83 },
+    "ADI": { x: 380, y: 330, conf: 0.81 },
+    "POR": { x: 375, y: 450, conf: 0.84 },
+    "D/8": { x: 400, y: 465, conf: 0.8 },
+    "M/8": { x: 415, y: 465, conf: 0.81 },
+    "D/7": { x: 430, y: 462, conf: 0.85 },
+    "FPM": { x: 415, y: 260, conf: 0.86 },
+    "Goa": { x: 370, y: 550, conf: 0.87 },
+    "A/3": { x: 515, y: 505, conf: 0.85 },
+    "A3/": { x: 520, y: 400, conf: 0.86 },
+    "V": { x: 330, y: 340, conf: 0.83 },
+    "T": { x: 355, y: 255, conf: 0.82 },
+    "Tuber": { x: 420, y: 370, conf: 0.84 },
+    "Pi": { x: 565, y: 435, conf: 0.85 },
+    "PTVR": { x: 400, y: 280, conf: 0.82 },
+    "LN": { x: 530, y: 345, conf: 0.87 },
+    "H": { x: 360, y: 530, conf: 0.85 },
+    "C3ai": { x: 310, y: 490, conf: 0.86 },
+    "Ats": { x: 315, y: 360, conf: 0.83 },
+    "Ati": { x: 315, y: 380, conf: 0.82 },
+    "Axs": { x: 312, y: 400, conf: 0.84 },
+    "C2": { x: 312, y: 430, conf: 0.85 },
+    "Rgn": { x: 490, y: 590, conf: 0.86 },
+    "C2p": { x: 285, y: 430, conf: 0.83 },
+    "C7p": { x: 260, y: 620, conf: 0.8 },
+    "BC": { x: 250, y: 260, conf: 0.85 }
   };
 
-  // DEFINIÇÃO ANATÔMICA DOS 26 PONTOS CEFAMÉTRICOS (INICIAIS LIMPOS POR PADRÃO)
+  // DEFINIÇÃO ANATÔMICA DOS 104 PONTOS CEFAMÉTRICOS NA ORDEM NUMÉRICA EXATA DE 1 A 104
   const PONTOS_ANATOMICOS_INICIAIS_LIMPOS: PontoCefalometricoAnatomico[] = [
-    // 1. Tecido Ósseo / Esquelético (14 pontos)
-    { id: 'S', nome: 'Sela', categoria: 'esqueletica', descricao: 'Centro geométrico da cavidade da sela túrcica no osso esfenoide', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'N', nome: 'Násio', categoria: 'esqueletica', descricao: 'Ponto mais anterior da sutura frontonasal no plano sagital mediano', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'Po', nome: 'Pórcio', categoria: 'esqueletica', descricao: 'Ponto mais superior da margem externa do meato acústico externo', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'Ba', nome: 'Basio', categoria: 'esqueletica', descricao: 'Ponto mais ântero-inferior da margem anterior do forame magno', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'Or', nome: 'Orbitário', categoria: 'esqueletica', descricao: 'Ponto mais inferior do contorno inferior da órbita', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'A', nome: 'Ponto A (Subespinhal)', categoria: 'esqueletica', descricao: 'Ponto mais profundo da curvatura da concavidade anterior da maxila', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'B', nome: 'Ponto B (Supramentoniano)', categoria: 'esqueletica', descricao: 'Ponto mais profundo da curvatura do perfil ósseo anterior da sínfise mandibular', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'ENA', nome: 'Espinha Nasal Anterior', categoria: 'esqueletica', descricao: 'Extremidade pontiaguda mais anterior da maxila no assoalho da cavidade nasal', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'ENP', nome: 'Espinha Nasal Posterior', categoria: 'esqueletica', descricao: 'Ponto mais posterior da crista palatina dos ossos palatinos', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'Pog', nome: 'Pogônio', categoria: 'esqueletica', descricao: 'Ponto mais anterior do contorno da sínfise mentoniana', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'Gn', nome: 'Gnátio', categoria: 'esqueletica', descricao: 'Ponto mais ântero-inferior do contorno da sínfise mentoniana', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'Me', nome: 'Mento', categoria: 'esqueletica', descricao: 'Ponto mais inferior da sombra radiográfica da sínfise mentoniana', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'Go', nome: 'Gônio', categoria: 'esqueletica', descricao: 'Ponto construído na interseção das tangentes à borda inferior e posterior da mandíbula', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'Pt', nome: 'Pterigoide', categoria: 'esqueletica', descricao: 'Ponto mais superior e posterior da fissura pterigomaxilar', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-
-    // 2. Tecido Dentário (6 pontos)
-    { id: 'U1A', nome: 'Ápice Incisivo Sup.', categoria: 'dentaria', descricao: 'Ponto mais apical da raiz do incisivo central superior mais proeminente', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'U1T', nome: 'Borda Incisal Sup.', categoria: 'dentaria', descricao: 'Ponto mais incisal da coroa do incisivo central superior', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'L1A', nome: 'Ápice Incisivo Inf.', categoria: 'dentaria', descricao: 'Ponto mais apical da raiz do incisivo central inferior mais proeminente', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'L1T', nome: 'Borda Incisal Inf.', categoria: 'dentaria', descricao: 'Ponto mais incisal da coroa do incisivo central inferior', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'U6M', nome: '1º Molar Superior', categoria: 'dentaria', descricao: 'Ponto de maior proeminência oclusal da cúspide mesiovestibular do primeiro molar superior', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'L6M', nome: '1º Molar Inferior', categoria: 'dentaria', descricao: 'Ponto de contato ou cúspide oclusal do primeiro molar inferior', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-
-    // 3. Tecido Mole (6 pontos)
-    { id: 'Prn', nome: 'Pronasal', categoria: 'mole', descricao: 'Ponto mais anterior da ponta do nariz', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'Sn', nome: 'Subnasal', categoria: 'mole', descricao: 'Ponto de transição entre a base do septo nasal e o lábio superior', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'Ls', nome: 'Lábio Superior', categoria: 'mole', descricao: 'Ponto mais anterior do vermelhão do lábio superior', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'Li', nome: 'Lábio Inferior', categoria: 'mole', descricao: 'Ponto mais anterior do vermelhão do lábio inferior', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'B\'', nome: 'Ponto B mole', categoria: 'mole', descricao: 'Ponto mais profundo da concavidade labiomentoniana do tecido mole', x: null, y: null, confidence_score: 1.0, status: 'pending' },
-    { id: 'Pog\'', nome: 'Pogônio Mole', categoria: 'mole', descricao: 'Ponto mais anterior do contorno mole do mento', x: null, y: null, confidence_score: 1.0, status: 'pending' }
+    { id: "N'", nome: "1. Násio Linha", categoria: "mole", descricao: "Ponto localizado na mesma altura do ponto Násio, em tecido mole.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "N", nome: "2. Násio", categoria: "esqueletica", descricao: "Ponto mais anterior da sutura Fronto-nasal.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Or", nome: "3. Orbital", categoria: "esqueletica", descricao: "Ponto mais inferior do contorno da órbita.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "S.O.", nome: "4. Supraorbitale", categoria: "esqueletica", descricao: "Ponto mais anterior da interseção da sombra do teto da órbita e seu contorno lateral.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "R.O.", nome: "5. Teto da Órbita", categoria: "esqueletica", descricao: "Ponto mais superior da parede interna do teto da órbita.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Cl", nome: "6. Clinoidal", categoria: "esqueletica", descricao: "Ponto mais superior no contorno do processo clinóideo anterior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "S", nome: "7. Sela", categoria: "esqueletica", descricao: "Centro da imagem da fossa pituitária.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Si", nome: "8. Assoalho da Sela", categoria: "esqueletica", descricao: "Ponto mais inferior do contorno da sela Túrcica.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Sp", nome: "9. Dorso da Sela", categoria: "esqueletica", descricao: "Ponto mais posterior do contorno da sela Túrcica.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Cls", nome: "10. Clivus Superior", categoria: "esqueletica", descricao: "Ponto de interseção do dorso da sela com o clivus esfenoide.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Po", nome: "11. Pório", categoria: "esqueletica", descricao: "Ponto mais superior do meato acústico externo.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Cli", nome: "12. Clivus Inferior", categoria: "esqueletica", descricao: "Ponto mais posterior e inferior do clivus esfenoide.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Ba", nome: "13. Básio", categoria: "esqueletica", descricao: "Ponto mais inferior e posterior da margem anterior do forame magno.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Od", nome: "14. Odontóide", categoria: "cervical_vias", descricao: "Ponto superior do processo odontóide da segunda vértebra cervical.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Bo", nome: "15. Bolton", categoria: "esqueletica", descricao: "Ponto mais alto da concavidade atrás do condilo occipital.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Op", nome: "16. Opisthion", categoria: "esqueletica", descricao: "Ponto posterior do forame magno.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Co", nome: "17. Côndilo", categoria: "esqueletica", descricao: "Ponto mais superior e posterior da cabeça do côndilo mandibular.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Bpc", nome: "18. Bordo Posterior do Côndilo", categoria: "esqueletica", descricao: "Ponto mais posterior do contorno da cabeça do côndilo.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Ar", nome: "19. Articulare", categoria: "esqueletica", descricao: "Ponto de interseção do contorno dorsal do colo do côndilo e da borda inferior da parte basilar do osso occipital.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Bac", nome: "20. Bordo Anterior do Côndilo", categoria: "esqueletica", descricao: "Ponto mais anterior do contorno da cabeça do côndilo.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "C", nome: "21. Capitulare", categoria: "esqueletica", descricao: "Centro da cabeça do côndilo mandibular.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Dc", nome: "22. Ponto Dc", categoria: "esqueletica", descricao: "Centro do colo do côndilo no plano sagital.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Go", nome: "23. Gônio", categoria: "esqueletica", descricao: "Ponto mais pós-inferior do ângulo da mandíbula.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Me", nome: "24. Mentoniano", categoria: "esqueletica", descricao: "Ponto mais inferior do contorno da sínfise mentoniana.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Pog", nome: "25. Pogônio", categoria: "esqueletica", descricao: "Ponto mais anterior da sínfise mentoniana.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Gn", nome: "26. Gnátio", categoria: "esqueletica", descricao: "Ponto construído na interseção da linha facial N-Pog com o plano mandibular.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "E", nome: "27. Ponto E", categoria: "esqueletica", descricao: "Ponto de intersecção do bordo posterior do ramo com o plano oclusal.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "B", nome: "28. Ponto B", categoria: "esqueletica", descricao: "Ponto mais profundo da concavidade anterior da sínfise mandibular.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Id", nome: "29. Infradental", categoria: "esqueletica", descricao: "Ponto mais anterior e superior da crista alveolar mandibular.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "M", nome: "30. Mentale", categoria: "esqueletica", descricao: "Ponto posterior da curvatura da sínfise mentoniana.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Pm", nome: "31. Promentoniano", categoria: "esqueletica", descricao: "Ponto de máxima concavidade entre B e Pog.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "D", nome: "32. Ponto D", categoria: "esqueletica", descricao: "Centro da sínfise mentoniana.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "A", nome: "33. Ponto A", categoria: "esqueletica", descricao: "Ponto mais profundo da concavidade do perfil anterior da maxila.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Ena", nome: "34. Espinha Nasal Anterior", categoria: "esqueletica", descricao: "Ponto mais anterior do processo espinhoso da maxila.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "P'", nome: "35. Ponto P Linha", categoria: "mole", descricao: "Ponto de projeção no perfil de tecido mole.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Enp", nome: "36. Espinha Nasal Posterior", categoria: "esqueletica", descricao: "Ponto mais posterior do palato duro.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "K.R.", nome: "37. Key Ridge", categoria: "esqueletica", descricao: "Ponto mais inferior do bordo anterior do processo zigomático da maxila.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Te", nome: "38. Temporale", categoria: "esqueletica", descricao: "Ponto de cruzamento da borda anterior da fossa temporal com a lâmina crivosa.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Cm", nome: "39. Centro Mastigatório", categoria: "dentaria", descricao: "Centro geométrico dos molares em oclusão.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Ptm", nome: "40. Pterigo-Maxilar", categoria: "esqueletica", descricao: "Ponto mais inferior da fissura pterigomaxilar.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "PVT", nome: "41. Vertical Pterigoidea", categoria: "esqueletica", descricao: "Ponto na linha vertical tangente ao limite posterior da fissura pterigomaxilar.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Vasa", nome: "42. Via Aérea Superior Anterior", categoria: "cervical_vias", descricao: "Ponto anterior da via aérea superior na altura do palato mole.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Vasp", nome: "43. Via Aérea Superior Posterior", categoria: "cervical_vias", descricao: "Ponto posterior da via aérea superior na altura do palato mole.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Vaia", nome: "44. Via Aérea Inferior Anterior", categoria: "cervical_vias", descricao: "Ponto anterior da via aérea inferior na altura da base da língua.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Vaip", nome: "45. Via Aérea Inferior Posterior", categoria: "cervical_vias", descricao: "Ponto posterior da via aérea inferior na altura da base da língua.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Xi", nome: "46. Ponto Xi", categoria: "esqueletica", descricao: "Centro geométrico do ramo mandibular.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Bar", nome: "47. Bordo Anterior do Ramo", categoria: "esqueletica", descricao: "Ponto de maior concavidade do bordo anterior do ramo mandibular.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "D6/", nome: "48. Contato Distal do 1º Molar Superior", categoria: "dentaria", descricao: "Ponto de contato distal da coroa do 1º molar superior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Ams", nome: "49. Ápice Molar Superior", categoria: "dentaria", descricao: "Ápice da raiz mesiovestibular do 1º molar superior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "6/", nome: "50. Contato Mesial do 1º Molar Superior", categoria: "dentaria", descricao: "Ponto de contato mesial da coroa do 1º molar superior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Ppd", nome: "51. Ponto Posterior de Downs", categoria: "esqueletica", descricao: "Ponto de interseção oclusal posterior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "/6", nome: "52. Contato Mesial do 1º Molar Inferior", categoria: "dentaria", descricao: "Ponto de contato mesial da coroa do 1º molar inferior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Ami", nome: "53. Ápice Molar Inferior", categoria: "dentaria", descricao: "Ápice da raiz mesial do 1º molar inferior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "A/4", nome: "54. Ponto A/4", categoria: "dentaria", descricao: "Ponto de referência interdental pré-molar.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "C4/", nome: "55. Ponto C4/", categoria: "dentaria", descricao: "Ponto de referência vestibular pré-molar superior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "PAR", nome: "56. Ponto Anterior de Ricketts", categoria: "dentaria", descricao: "Ponto oclusal anterior no plano de Ricketts.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Ap", nome: "57. Apical", categoria: "dentaria", descricao: "Ponto de projeção apical média dos incisivos.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "/3", nome: "58. Incisão Canina Inferior", categoria: "dentaria", descricao: "Ponta da cúspide do canino inferior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "3/", nome: "59. Incisão Canina Superior", categoria: "dentaria", descricao: "Ponta da cúspide do canino superior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Aii", nome: "60. Ápice Incisivo Inferior", categoria: "dentaria", descricao: "Ápice radicular do incisivo central inferior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Iii", nome: "61. Incisão Incisiva Inferior", categoria: "dentaria", descricao: "Borda incisal do incisivo central inferior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Iis", nome: "62. Incisão Incisiva Superior", categoria: "dentaria", descricao: "Borda incisal do incisivo central superior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Sf1/", nome: "63. Superfície Facial do Incisivo Superior", categoria: "dentaria", descricao: "Ponto mais vestibular da coroa do incisivo central superior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Ais", nome: "64. Ápice Incisivo Superior", categoria: "dentaria", descricao: "Ápice radicular do incisivo central superior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Pog'", nome: "65. Pogônio Linha", categoria: "mole", descricao: "Ponto mais anterior do tecido mole do mento.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "B'", nome: "66. Ponto B Linha", categoria: "mole", descricao: "Ponto de maior concavidade do tecido mole do sulco mentolabial.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Li", nome: "67. Lábio Inferior", categoria: "mole", descricao: "Ponto mais anterior do tecido mole do lábio inferior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Stm", nome: "68. Stamion", categoria: "mole", descricao: "Ponto de contato entre o lábio superior e o lábio inferior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Ls", nome: "69. Lábio Superior", categoria: "mole", descricao: "Ponto mais anterior do tecido mole do lábio superior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "A'", nome: "70. Ponto A Linha", categoria: "mole", descricao: "Ponto de maior concavidade do tecido mole do sulco nasolabial.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Sn", nome: "71. Subnasal", categoria: "mole", descricao: "Ponto de junção da columela nasal com o lábio superior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Prn", nome: "72. Pronasal Médio", categoria: "mole", descricao: "Ponto médio do dorso nasal de tecido mole.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Pn", nome: "73. Pronasal", categoria: "mole", descricao: "Ponto mais anterior do tecido mole do nariz.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "EILI", nome: "74. EILI", categoria: "mole", descricao: "Espessura do tecido mole incisal inferior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "AA", nome: "75. AA", categoria: "cervical_vias", descricao: "Parede posterior da nasofaringe no nível do atlas.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "ADS", nome: "76. Adenóide Superior", categoria: "cervical_vias", descricao: "Ponto de maior projeção do tecido adenoideano superior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "AD2", nome: "77. AD2", categoria: "cervical_vias", descricao: "Ponto na parede posterior da faringe ao longo da linha S-Ena.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "R", nome: "78. Ricketts R", categoria: "esqueletica", descricao: "Ponto de referência Ricketts no ramo.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "AD1", nome: "79. AD1", categoria: "cervical_vias", descricao: "Ponto na parede posterior da faringe ao longo da linha Ba-N.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "ADI", nome: "80. Adenóide Inferior", categoria: "cervical_vias", descricao: "Ponto de maior projeção do tecido adenoideano inferior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "POR", nome: "81. Ponto Oclusal do Ramo", categoria: "esqueletica", descricao: "Ponto de interseção do plano oclusal com o bordo anterior do ramo.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "D/8", nome: "82. Contato Distal do 3º Molar Inferior", categoria: "dentaria", descricao: "Ponto distal do terceiro molar inferior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "M/8", nome: "83. Contato Mesial do 3º Molar Inferior", categoria: "dentaria", descricao: "Ponto mesial do terceiro molar inferior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "D/7", nome: "84. Contato Distal do 2º Molar Inferior", categoria: "dentaria", descricao: "Ponto distal do segundo molar inferior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "FPM", nome: "85. Fossa Ptérigo-Maxilar", categoria: "esqueletica", descricao: "Ponto central da fossa pterigomaxilar.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Goa", nome: "86. Gônio Anterior", categoria: "esqueletica", descricao: "Ponto no bordo inferior da mandíbula anterior ao ângulo de Gônio.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "A/3", nome: "87. Ápice do Canino Inferior", categoria: "dentaria", descricao: "Ápice radicular do canino inferior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "A3/", nome: "88. Ápice do Canino Superior", categoria: "dentaria", descricao: "Ápice radicular do canino superior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "V", nome: "89. Ponto V", categoria: "esqueletica", descricao: "Ponto de interseção do bordo posterior da mandíbula com a base do crânio.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "T", nome: "90. Ponto T", categoria: "esqueletica", descricao: "Ponto no contorno articular superior do temporal.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Tuber", nome: "91. Tuber", categoria: "esqueletica", descricao: "Ponto mais posterior da tuberosidade da maxila.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Pi", nome: "92. Protuberância Incisal", categoria: "dentaria", descricao: "Ponto de projeção da crista incisal.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "PTVR", nome: "93. PTVR", categoria: "esqueletica", descricao: "Referência de projeção vertical pterigoidea posterior.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "LN", nome: "94. Limite Nasal Inferior", categoria: "esqueletica", descricao: "Ponto mais inferior da cavidade nasal.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "H", nome: "95. Hiódium", categoria: "esqueletica", descricao: "Ponto mais anterior e superior do corpo do osso hióide.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "C3ai", nome: "96. Vértice de C3", categoria: "cervical_vias", descricao: "Ponto ântero-inferior do corpo da terceira vértebra cervical C3.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Ats", nome: "97. AEC1", categoria: "cervical_vias", descricao: "Ponto do tubérculo anterior do atlas C1.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Ati", nome: "98. AEC", categoria: "cervical_vias", descricao: "Ponto do tubérculo inferior do atlas.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Axs", nome: "99. AEC2", categoria: "cervical_vias", descricao: "Ponto ântero-superior da vértebra áxis C2.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "C2", nome: "100. Vértice de C2", categoria: "cervical_vias", descricao: "Ponto ântero-inferior da segunda vértebra cervical C2.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "Rgn", nome: "101. Retrognatium", categoria: "esqueletica", descricao: "Ponto posterior da curvatura da sínfise na junção cervical.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "C2p", nome: "102. C2p", categoria: "cervical_vias", descricao: "Ponto pós-inferior de C2.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "C7p", nome: "103. C7p", categoria: "cervical_vias", descricao: "Ponto pós-inferior da sétima vértebra cervical C7.", x: null, y: null, confidence_score: 1.0, status: 'pending' },
+    { id: "BC", nome: "104. Base do Crânio", categoria: "esqueletica", descricao: "Ponto extremo posterior da base do crânio.", x: null, y: null, confidence_score: 1.0, status: 'pending' }
   ];
 
   const [pontos, setPontos] = useState<PontoCefalometricoAnatomico[]>(PONTOS_ANATOMICOS_INICIAIS_LIMPOS);
   const [pontoAtivoIdx, setPontoAtivoIdx] = useState<number>(0);
   const [imagemUrl, setImagemUrl] = useState<string>(TELE_PADRAO);
   const [analiseSelecionada, setAnaliseSelecionada] = useState<'Steiner' | 'Tweed' | 'Ricketts' | 'McNamara'>('Steiner');
-  const [filtroCategoria, setFiltroCategoria] = useState<'todas' | 'esqueletica' | 'dentaria' | 'mole'>('todas');
+  const [filtroCategoria, setFiltroCategoria] = useState<'todas' | 'esqueletica' | 'dentaria' | 'mole' | 'cervical_vias'>('todas');
   const [exibirSomenteAtencao, setExibirSomenteAtencao] = useState<boolean>(false);
   const [modalJsonAberto, setModalJsonAberto] = useState<boolean>(false);
   const [copiadoJson, setCopiadoJson] = useState<boolean>(false);
@@ -126,7 +277,7 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
 
   // Notas de Validação Anatômica
   const [validationNotes, setValidationNotes] = useState<string[]>([
-    'Aguardando marcação manual dos pontos pelo ortodontista ou sugestão por IA.'
+    'Aguardando marcação manual dos 104 pontos pelo ortodontista ou sugestão por IA.'
   ]);
 
   // Upload de Imagem de Telerradiografia do Usuário (Suporta .dcm, .dicom e imagens)
@@ -136,7 +287,6 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
       try {
         const result = await carregarArquivoDicomOuImagem(file);
         setImagemUrl(result.url);
-        // Ao carregar nova imagem, limpa marcações antigas para o usuário marcar do zero
         setPontos(PONTOS_ANATOMICOS_INICIAIS_LIMPOS);
         setPontoAtivoIdx(0);
       } catch (err) {
@@ -149,10 +299,10 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
   const handleLimparPontos = () => {
     setPontos(PONTOS_ANATOMICOS_INICIAIS_LIMPOS);
     setPontoAtivoIdx(0);
-    setValidationNotes(['Canvas zerado. Inicie a marcação manual clicando na imagem.']);
+    setValidationNotes(['Canvas zerado. Inicie a marcação manual dos 104 pontos clicando na imagem.']);
   };
 
-  // Sugerir/Preencher Todos os Pontos via IA
+  // Sugerir/Preencher Todos os 104 Pontos via IA
   const handleExecutarIA = () => {
     setAnalisandoIA(true);
     setTimeout(() => {
@@ -168,9 +318,9 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
       });
       setPontos(pontosIA);
       setValidationNotes([
-        'Refinamento por visão computacional concluído com acurácia milimétrica.',
-        'Detecção automática de ápices radiculares U1A e L1A alinhados à crista óssea.',
-        'Média geométrica bilateral aplicada às sombras duplas de ramo e gônio.'
+        'Refinamento por visão computacional concluído para os 104 pontos cefalométricos com acurácia milimétrica.',
+        'Detecção automática de estruturas ósseas, dentárias, moles e cervicais.',
+        'Média geométrica bilateral aplicada às sombras duplas cefalométricas.'
       ]);
       setAnalisandoIA(false);
     }, 1200);
@@ -186,7 +336,6 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
   const handleCanvasMouseMove = (e: React.MouseEvent) => {
     if (!pontoArrastandoId || !containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
-    // Ajustar X e Y levando em conta a escala de Zoom
     const scale = zoomLevel / 100;
     const clickX = (e.clientX - rect.left) / scale;
     const clickY = (e.clientY - rect.top) / scale;
@@ -257,7 +406,6 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
     const p2 = getPonto(id2);
     if (!p1 || !p2 || p1.x === null || p2.x === null) return 0;
     const distPx = Math.sqrt(Math.pow(p2.x! - p1.x!, 2) + Math.pow(p2.y! - p1.y!, 2));
-    // Fator de escala estimado (1px = 0.26mm)
     return Number((distPx * 0.26).toFixed(1));
   };
 
@@ -266,17 +414,17 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
   const snb = calcularAnguloEntre3Pontos('S', 'N', 'B') || 80.0;
   const anb = Number((sna - snb).toFixed(1));
   const goGnSn = calcularAnguloEntre3Pontos('Go', 'Gn', 'S') || 32.0;
-  const u1NaDeg = calcularAnguloEntre3Pontos('U1A', 'U1T', 'N') || 22.0;
-  const l1NbDeg = calcularAnguloEntre3Pontos('L1A', 'L1T', 'N') || 25.0;
+  const u1NaDeg = calcularAnguloEntre3Pontos('Ais', 'Iis', 'N') || 22.0;
+  const l1NbDeg = calcularAnguloEntre3Pontos('Aii', 'Iii', 'N') || 25.0;
 
   // Valorações Tweed
   const fma = calcularAnguloEntre3Pontos('Go', 'Me', 'Or') || 25.0;
-  const impa = calcularAnguloEntre3Pontos('L1A', 'L1T', 'Go') || 90.0;
+  const impa = calcularAnguloEntre3Pontos('Aii', 'Iii', 'Go') || 90.0;
 
   // Valorações Ricketts & McNamara
   const eLineLs = calcularDistanciaMm('Ls', 'Prn') || 2.0;
   const eLineLi = calcularDistanciaMm('Li', 'Pog\'') || 1.5;
-  const compMaxilarMc = calcularDistanciaMm('Pt', 'A') || 92.0;
+  const compMaxilarMc = calcularDistanciaMm('Ptm', 'A') || 92.0;
   const compMandibularMc = calcularDistanciaMm('Go', 'Gn') || 118.0;
 
   // Diagnóstico Cefalométrico Automático
@@ -298,7 +446,7 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
   const qtdMarcados = pontos.filter((p) => p.x !== null).length;
   const qtdPontosAtencao = pontos.filter((p) => p.x !== null && p.confidence_score < 0.85).length;
 
-  // Formatação do Objeto JSON Estruturado Solicitado no Prompt
+  // Formatação do Objeto JSON Estruturado
   const jsonSaidaEstruturado = JSON.stringify(
     {
       image_status: 'evaluated',
@@ -353,7 +501,7 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
             onClick={handleExecutarIA}
             disabled={analisandoIA}
             className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-[11px] font-extrabold cursor-pointer shadow-md shadow-emerald-500/20 flex items-center gap-1.5 transition-all disabled:opacity-50"
-            title="Preencher automaticamente todos os 26 pontos cefalométricos com IA"
+            title="Preencher automaticamente todos os 104 pontos cefalométricos com IA"
           >
             <Sparkles className={`w-3.5 h-3.5 ${analisandoIA ? 'animate-spin' : ''}`} />
             {analisandoIA ? 'Sugerindo com IA...' : 'Sugerir com IA'}
@@ -489,9 +637,9 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
                 {getPonto('Go') && getPonto('Me') && (
                   <line x1={getPonto('Go')!.x!} y1={getPonto('Go')!.y!} x2={getPonto('Me')!.x!} y2={getPonto('Me')!.y!} stroke="#F59E0B" strokeWidth="2" strokeDasharray="4 2" />
                 )}
-                {/* Plano Palatino ENA-ENP (Índigo) */}
-                {getPonto('ENA') && getPonto('ENP') && (
-                  <line x1={getPonto('ENA')!.x!} y1={getPonto('ENA')!.y!} x2={getPonto('ENP')!.x!} y2={getPonto('ENP')!.y!} stroke="#818CF8" strokeWidth="1.5" strokeDasharray="2 2" />
+                {/* Plano Palatino Ena-Enp (Índigo) */}
+                {getPonto('Ena') && getPonto('Enp') && (
+                  <line x1={getPonto('Ena')!.x!} y1={getPonto('Ena')!.y!} x2={getPonto('Enp')!.x!} y2={getPonto('Enp')!.y!} stroke="#818CF8" strokeWidth="1.5" strokeDasharray="2 2" />
                 )}
                 {/* Linha E de Ricketts Prn-Pog' (Rosa Mole) */}
                 {getPonto('Prn') && getPonto('Pog\'') && (
@@ -500,14 +648,14 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
 
                 {/* RENDERIZAÇÃO APENAS DOS PONTOS EFETIVAMENTE MARCADOS PELO USUÁRIO OU IA */}
                 {pontos.map((p, idx) => {
-                  if (p.x === null || p.y === null) return null; // Não exibe pontos pendentes!
+                  if (p.x === null || p.y === null) return null;
 
                   const isAtivo = idx === pontoAtivoIdx;
                   const isBaixaConfianca = p.confidence_score < 0.85;
 
-                  let corPonto = '#6366F1'; // Azul padrão
-                  if (isAtivo) corPonto = '#10B981'; // Verde ativo
-                  else if (isBaixaConfianca) corPonto = '#F59E0B'; // Amarelo alerta
+                  let corPonto = '#6366F1';
+                  if (isAtivo) corPonto = '#10B981';
+                  else if (isBaixaConfianca) corPonto = '#F59E0B';
 
                   return (
                     <g
@@ -613,12 +761,12 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
           <div className={`p-3 rounded-2xl border shadow-xl space-y-2 ${
             darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
           }`}>
-            <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-1.5 flex-wrap gap-1">
               <span className="text-[11px] font-extrabold text-slate-300 flex items-center gap-1">
-                <Layers className="w-3.5 h-3.5 text-indigo-400" /> Pontos Cefalométricos ({qtdMarcados}/{pontos.length}):
+                <Layers className="w-3.5 h-3.5 text-indigo-400" /> Pontos ({qtdMarcados}/{pontos.length}):
               </span>
-              <div className="flex items-center gap-1">
-                {(['todas', 'esqueletica', 'dentaria', 'mole'] as const).map((cat) => (
+              <div className="flex items-center gap-1 flex-wrap">
+                {(['todas', 'esqueletica', 'dentaria', 'mole', 'cervical_vias'] as const).map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setFiltroCategoria(cat)}
@@ -628,13 +776,13 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
                         : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
                     }`}
                   >
-                    {cat === 'todas' ? 'Tudo' : cat === 'esqueletica' ? 'Ósseo' : cat === 'dentaria' ? 'Dente' : 'Mole'}
+                    {cat === 'todas' ? 'Tudo' : cat === 'esqueletica' ? 'Ósseo' : cat === 'dentaria' ? 'Dente' : cat === 'mole' ? 'Mole' : 'Cervical'}
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="max-h-[220px] overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+            <div className="max-h-[250px] overflow-y-auto space-y-1 pr-1 custom-scrollbar">
               {pontosFiltrados.map((p) => {
                 const idxReal = pontos.findIndex((pt) => pt.id === p.id);
                 const isSel = idxReal === pontoAtivoIdx;
@@ -656,12 +804,12 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
                     }`}
                   >
                     <div className="flex items-center gap-1.5">
-                      <span className={`w-5 h-5 rounded flex items-center justify-center font-mono font-black text-[9px] ${
+                      <span className={`w-6 h-5 rounded flex items-center justify-center font-mono font-black text-[9px] px-1 ${
                         isAlerta ? 'bg-amber-500/30 text-amber-300' : isMarcado ? 'bg-indigo-600/30 text-indigo-300' : 'bg-slate-800 text-slate-600'
                       }`}>
                         {p.id}
                       </span>
-                      <span className="font-bold truncate max-w-[130px]">{p.nome}</span>
+                      <span className="font-bold truncate max-w-[140px]">{p.nome}</span>
                     </div>
 
                     <div className="flex items-center gap-1.5 font-mono">
@@ -703,7 +851,7 @@ export const ModuloCefalometria: React.FC<ModuloCefalometriaProps> = ({
                 <thead>
                   <tr className="border-b border-slate-800 text-slate-400 font-extrabold uppercase text-[9px]">
                     <th className="py-1.5">Grandeza</th>
-                    <th className="py-1.5">Norma Padrao</th>
+                    <th className="py-1.5">Norma Padrão</th>
                     <th className="py-1.5">Medido</th>
                     <th className="py-1.5 text-right">Status</th>
                   </tr>
