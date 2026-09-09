@@ -53,6 +53,9 @@ import type {
 
 import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, KEYS, getItemJSON, getUserKeys, type UsuarioOnlineInfo } from './services/cloudSync';
 import { type UsuarioSistema, getNotificacoesNovosClientesAdmin, type NotificacaoNovoClienteAdmin, registrarHeartbeatLocal, getUsuariosOnlineCombinados } from './services/authService';
+import { getConfigNotificacaoProducao, gerarTextoRelatorioProducaoDiaria, gerarLinkWhatsAppDirectApi } from './services/whatsappService';
+import { DADOS_PRODUCAO_EXCEL } from './data/dadosProducaoExcel';
+import { MessageSquare, Send, X } from 'lucide-react';
 
 const SESSION_KEY = 'odonto_usuario_sessao_v1';
 
@@ -186,6 +189,82 @@ export function App() {
       clearInterval(interval);
       window.removeEventListener('focus', handleFocus);
     };
+  }, [usuarioLogado]);
+
+  // MONITOR GLOBAL DE NOTIFICAÇÃO DE WHATSAPP (18:30H)
+  const [whatsappToastBanner, setWhatsappToastBanner] = useState<{
+    visivel: boolean;
+    mensagem: string;
+    linkDirect: string;
+    telefone: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!usuarioLogado) return;
+
+    const checkWhatsappSchedule = () => {
+      const config = getConfigNotificacaoProducao();
+      if (!config.automacaoAtiva) return;
+
+      const agora = new Date();
+      const hora = agora.getHours();
+      const minuto = agora.getMinutes();
+      const hoje = agora.toISOString().split('T')[0];
+
+      const [hAlvo, mAlvo] = (config.horario || '18:30').split(':').map(Number);
+      const jaDisparou = localStorage.getItem('odonto_whatsapp_ultimo_disparo_data') === hoje;
+
+      if (!jaDisparou && (hora > hAlvo || (hora === hAlvo && minuto >= mAlvo))) {
+        localStorage.setItem('odonto_whatsapp_ultimo_disparo_data', hoje);
+
+        const keys = getUserKeys(usuarioLogado?.id);
+        let itensProd: any[] = getItemJSON<any[]>(keys.PRODUCAO, []);
+        if (!Array.isArray(itensProd) || itensProd.length === 0) {
+          itensProd = DADOS_PRODUCAO_EXCEL;
+        }
+
+        const textoMensagem = gerarTextoRelatorioProducaoDiaria(itensProd, config);
+        const linkDirect = gerarLinkWhatsAppDirectApi(config.telefone, textoMensagem);
+
+        if ('Notification' in window && Notification.permission === 'granted') {
+          try {
+            new Notification("📲 Resumo Diário de Produção (18:30h)", {
+              body: `Balanço das 7 clínicas pronto para envio para (${config.telefone})! Clique para abrir o WhatsApp.`,
+              icon: LOGO_BASE64
+            });
+          } catch (e) {}
+        }
+
+        if (config.webhookUrl) {
+          fetch(config.webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phone: config.telefone,
+              message: textoMensagem
+            })
+          }).catch((err) => console.error('Erro ao enviar Webhook WhatsApp:', err));
+        }
+
+        if (config.callmebotApiKey) {
+          const numLimpo = config.telefone.replace(/\D/g, '');
+          const numCom55 = numLimpo.startsWith('55') ? numLimpo : `55${numLimpo}`;
+          const urlCallmebot = `https://api.callmebot.com/whatsapp.php?phone=${numCom55}&text=${encodeURIComponent(textoMensagem)}&apikey=${config.callmebotApiKey}`;
+          fetch(urlCallmebot, { mode: 'no-cors' }).catch(() => {});
+        }
+
+        setWhatsappToastBanner({
+          visivel: true,
+          mensagem: textoMensagem,
+          linkDirect,
+          telefone: config.telefone
+        });
+      }
+    };
+
+    checkWhatsappSchedule();
+    const interval = setInterval(checkWhatsappSchedule, 10000);
+    return () => clearInterval(interval);
   }, [usuarioLogado]);
 
   // Aplicar classe dark no HTML root
@@ -478,6 +557,49 @@ export function App() {
           onAbrirNotificacoes={() => setCentralNotificacoesAberto(true)}
           onlineUsers={onlineUsers}
         />
+
+        {/* BANNER FLUTUANTE GLOBAL DE NOTIFICAÇÃO DO WHATSAPP (18:30H) */}
+        {whatsappToastBanner?.visivel && (
+          <div className="mx-3 sm:mx-6 mt-3 bg-gradient-to-r from-emerald-950 via-teal-900 to-slate-950 text-white p-4 rounded-3xl shadow-2xl border-2 border-emerald-400 animate-fadeIn">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-emerald-500/20 rounded-2xl border border-emerald-400/40 text-emerald-300 shrink-0">
+                  <MessageSquare className="w-6 h-6 animate-pulse" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest bg-emerald-500/30 text-emerald-200 px-2 py-0.5 rounded-full border border-emerald-400/40">
+                    ALERTA DAS 18:30H • RESUMO DAS CLÍNICAS PRONTO
+                  </span>
+                  <h4 className="text-sm font-extrabold text-white mt-0.5">
+                    Resumo do Desempenho Financeiro por Clínica Gerado!
+                  </h4>
+                  <p className="text-[11px] text-emerald-100">
+                    Destinatário configurado: <strong>{whatsappToastBanner.telefone}</strong>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <a
+                  href={whatsappToastBanner.linkDirect}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setWhatsappToastBanner(null)}
+                  className="px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/30 cursor-pointer transition-all hover:scale-105"
+                >
+                  <Send className="w-4 h-4" /> Disparar no WhatsApp Agora
+                </a>
+                <button
+                  onClick={() => setWhatsappToastBanner(null)}
+                  className="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800/80 hover:bg-slate-800 cursor-pointer"
+                  title="Fechar Alerta"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Dynamic Views */}
         <main className="p-3 sm:p-6 flex-1 box-border w-full max-w-full transition-all">

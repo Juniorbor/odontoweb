@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import type { ItemProducaoTomo } from '../types';
 import {
+  getConfigNotificacaoProducao,
+  salvarConfigNotificacaoProducao,
+  gerarTextoRelatorioProducaoDiaria,
+  gerarLinkWhatsAppDirectApi,
+  type ConfigNotificacaoProducaoWhatsApp
+} from '../services/whatsappService';
+import {
   MessageSquare,
   Clock,
   Building2,
@@ -48,8 +55,6 @@ const TODAS_UNIDADES_PRODUCAO = [
   { id: 'cli-7', nome: 'Clínica Ji-Paraná', unidade: 'Ji-Paraná', proprietario: 'Bernardo' }
 ];
 
-const STORAGE_KEY_WHATSAPP = 'odonto_whatsapp_config_v1';
-
 export const WhatsappNotificacoes: React.FC<WhatsappNotificacoesProps> = ({
   darkMode,
   itensProducao = []
@@ -59,6 +64,7 @@ export const WhatsappNotificacoes: React.FC<WhatsappNotificacoesProps> = ({
   const [automacaoAtiva, setAutomacaoAtiva] = useState<boolean>(true);
   const [notificarDiaUm, setNotificarDiaUm] = useState<boolean>(true);
   const [webhookUrl, setWebhookUrl] = useState<string>('');
+  const [callmebotApiKey, setCallmebotApiKey] = useState<string>('');
 
   const [sucessoMsg, setSucessoMsg] = useState<string>('');
   const [modalEditAberto, setModalEditAberto] = useState<boolean>(false);
@@ -70,17 +76,13 @@ export const WhatsappNotificacoes: React.FC<WhatsappNotificacoesProps> = ({
 
   // Carregar preferências salvas
   useEffect(() => {
-    const salvo = localStorage.getItem(STORAGE_KEY_WHATSAPP);
-    if (salvo) {
-      try {
-        const parsed = JSON.parse(salvo);
-        if (parsed.telefone) setTelefoneWhatsApp(parsed.telefone);
-        if (parsed.horario) setHorarioDiario(parsed.horario);
-        if (parsed.automacaoAtiva !== undefined) setAutomacaoAtiva(parsed.automacaoAtiva);
-        if (parsed.notificarDiaUm !== undefined) setNotificarDiaUm(parsed.notificarDiaUm);
-        if (parsed.webhookUrl) setWebhookUrl(parsed.webhookUrl);
-      } catch (e) {}
-    }
+    const config = getConfigNotificacaoProducao();
+    if (config.telefone) setTelefoneWhatsApp(config.telefone);
+    if (config.horario) setHorarioDiario(config.horario);
+    if (config.automacaoAtiva !== undefined) setAutomacaoAtiva(config.automacaoAtiva);
+    if (config.notificarDiaUm !== undefined) setNotificarDiaUm(config.notificarDiaUm);
+    if (config.webhookUrl) setWebhookUrl(config.webhookUrl);
+    if (config.callmebotApiKey) setCallmebotApiKey(config.callmebotApiKey);
 
     const ultimoDisparo = localStorage.getItem('odonto_whatsapp_ultimo_disparo_data');
     const hojeIso = new Date().toISOString().split('T')[0];
@@ -118,14 +120,22 @@ export const WhatsappNotificacoes: React.FC<WhatsappNotificacoesProps> = ({
           });
         }
 
-        const savedWebhook = localStorage.getItem('odonto_whatsapp_webhook_url');
-        if (savedWebhook) {
-          fetch(savedWebhook, {
+        const currentConfig = {
+          telefone: telefoneWhatsApp,
+          horario: horarioDiario,
+          automacaoAtiva,
+          notificarDiaUm,
+          webhookUrl,
+          callmebotApiKey
+        };
+
+        if (webhookUrl) {
+          fetch(webhookUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               phone: telefoneWhatsApp,
-              message: gerarMensagemWhatsAppDiaria()
+              message: gerarTextoRelatorioProducaoDiaria(itensProducao, currentConfig)
             })
           }).catch((err) => console.error('Erro ao enviar via Webhook WhatsApp:', err));
         }
@@ -133,20 +143,19 @@ export const WhatsappNotificacoes: React.FC<WhatsappNotificacoesProps> = ({
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [horarioDiario, automacaoAtiva, telefoneWhatsApp, itensProducao]);
+  }, [horarioDiario, automacaoAtiva, telefoneWhatsApp, webhookUrl, callmebotApiKey, itensProducao]);
 
   const handleSalvarConfiguracoes = (e: React.FormEvent) => {
     e.preventDefault();
-    const config = {
+    const config: ConfigNotificacaoProducaoWhatsApp = {
       telefone: telefoneWhatsApp,
       horario: horarioDiario,
       automacaoAtiva,
       notificarDiaUm,
-      webhookUrl
+      webhookUrl,
+      callmebotApiKey
     };
-    localStorage.setItem(STORAGE_KEY_WHATSAPP, JSON.stringify(config));
-    if (webhookUrl) localStorage.setItem('odonto_whatsapp_webhook_url', webhookUrl);
-    else localStorage.removeItem('odonto_whatsapp_webhook_url');
+    salvarConfigNotificacaoProducao(config);
 
     setSucessoMsg('Configurações de automação WhatsApp salvas com sucesso!');
     setModalEditAberto(false);
@@ -201,43 +210,22 @@ export const WhatsappNotificacoes: React.FC<WhatsappNotificacoesProps> = ({
   const totalPacientesHoje = clinicas.reduce((acc, c) => acc + c.pacientesHoje, 0);
   const totalFaturamentoHoje = clinicas.reduce((acc, c) => acc + c.faturamentoHoje, 0);
 
-  const gerarMensagemWhatsAppDiaria = () => {
-    const dataHoje = new Date().toLocaleDateString('pt-BR');
-    let texto = `*📊 FINANÇAS PESSOAL - RESUMO DIÁRIO DE PRODUÇÃO DAS CLÍNICAS*\n`;
-    texto += `📅 *Data:* ${dataHoje} | ⏰ *Horário:* ${horarioDiario}h\n`;
-    texto += `📱 *Destinatário:* ${telefoneWhatsApp}\n\n`;
-    texto += `*📈 BALANÇO CONSOLIDADO DO DIA (TABELA DE PRODUÇÃO):*\n`;
-    texto += `• Total de Pacientes Atendidos: *${totalPacientesHoje} pacientes*\n`;
-    texto += `• Faturamento Total do Dia: *R$ ${totalFaturamentoHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}*\n\n`;
-    texto += `*🏥 DESEMPENHO INDIVIDUAL POR CLÍNICA:*\n`;
-
-    clinicas.forEach((c, idx) => {
-      texto += `\n*${idx + 1}. ${c.nome.toUpperCase()} (${c.unidade})*\n`;
-      texto += `  👥 Pacientes Atendidos Hoje: *${c.pacientesHoje}*\n`;
-      texto += `  💰 Faturamento do Dia: *R$ ${c.faturamentoHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}*\n`;
-      texto += `  🎯 Ticket Médio: *R$ ${c.ticketMedioHoje.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}/paciente*\n`;
-      if (c.pacientesHoje > 0) {
-        texto += `  ✨ Região Principal: _${c.procedimentosDestaque}_\n`;
-      } else {
-        texto += `  ⚪ Status: _Zerado (Sem lançamentos hoje na tabela)_\n`;
-      }
-    });
-
-    texto += `\n-----------------------------------\n`;
-    texto += `✅ _Relatório automatizado gerado por Finanças Pessoal Platform._`;
-    return texto;
-  };
 
   const handleTestarEnvioWhatsApp = () => {
-    const numLimpo = telefoneWhatsApp.replace(/\D/g, '');
-    const numComPais = numLimpo.startsWith('55') ? numLimpo : `55${numLimpo}`;
-    const mensagemEncoded = encodeURIComponent(gerarMensagemWhatsAppDiaria());
-    const urlWhatsapp = `https://wa.me/${numComPais}?text=${mensagemEncoded}`;
+    const textMsg = gerarTextoRelatorioProducaoDiaria(itensProducao, {
+      telefone: telefoneWhatsApp,
+      horario: horarioDiario,
+      automacaoAtiva,
+      notificarDiaUm,
+      webhookUrl,
+      callmebotApiKey
+    });
+    const urlWhatsapp = gerarLinkWhatsAppDirectApi(telefoneWhatsApp, textMsg);
 
     window.open(urlWhatsapp, '_blank');
     localStorage.setItem('odonto_whatsapp_ultimo_disparo_data', dataHojeIso);
     setDisparadoHoje(true);
-    setSucessoMsg(`Notificação do resumo de produção enviada para (${telefoneWhatsApp})!`);
+    setSucessoMsg(`Resumo de produção gerado e enviado para WhatsApp (${telefoneWhatsApp})!`);
     setTimeout(() => setSucessoMsg(''), 4000);
   };
 
@@ -620,6 +608,22 @@ export const WhatsappNotificacoes: React.FC<WhatsappNotificacoesProps> = ({
                   className="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono text-[11px] focus:ring-2 focus:ring-teal-500 focus:outline-none"
                 />
                 <span className="text-[10px] text-slate-400 mt-1 block">Permite envio automático em segundo plano via Z-API, Evolution API ou Twilio sem abrir a tela.</span>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-300 mb-1 flex items-center gap-1 text-emerald-400">
+                  <Sparkles className="w-3.5 h-3.5" /> CallmeBot API Key Grátis (Disparo no Celular sem abrir o navegador)
+                </label>
+                <input
+                  type="text"
+                  value={callmebotApiKey}
+                  onChange={(e) => setCallmebotApiKey(e.target.value)}
+                  placeholder="Ex: 123456 (Chave CallmeBot Grátis)"
+                  className="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 text-white font-mono text-[11px] focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                />
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  Envie "I allow callmebot to send me messages" para +34 644 63 32 30 no WhatsApp para obter sua chave gratuita.
+                </span>
               </div>
 
               <div className="space-y-2 pt-2 border-t border-slate-800">
