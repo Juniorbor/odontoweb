@@ -818,6 +818,53 @@ export function App() {
           onFechar={() => setCentralNotificacoesAberto(false)}
         />
       )}
+
+      {/* BANNER FLUTUANTE DE DISPARO WHATSAPP (18:30H) */}
+      {whatsappToastBanner?.visivel && (
+        <div className="fixed bottom-5 right-5 z-50 max-w-md w-full bg-slate-900 text-white p-5 rounded-2xl border border-emerald-500/40 shadow-2xl animate-fadeIn">
+          <div className="flex justify-between items-start gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/30">
+                <MessageSquare className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block">
+                  HORÁRIO DE ENVIO AGENDADO (18:30H)
+                </span>
+                <h4 className="font-extrabold text-sm text-white">
+                  Resumo Diário de Produção Pronto!
+                </h4>
+              </div>
+            </div>
+            <button
+              onClick={() => setWhatsappToastBanner(null)}
+              className="text-slate-400 hover:text-white p-1 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <p className="text-xs text-slate-300 mt-2">
+            Balanço pronto para envio para <strong className="text-emerald-300">{whatsappToastBanner.telefone}</strong>.
+          </p>
+          <div className="mt-4 flex gap-2">
+            <a
+              href={whatsappToastBanner.linkDirect}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setWhatsappToastBanner(null)}
+              className="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition-all"
+            >
+              <Send className="w-4 h-4" /> Disparar no WhatsApp Agora
+            </a>
+            <button
+              onClick={() => setWhatsappToastBanner(null)}
+              className="py-2.5 px-3 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-xl text-xs font-bold cursor-pointer"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
