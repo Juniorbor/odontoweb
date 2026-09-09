@@ -93,15 +93,19 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         {/* Logo Oficial OdontoWeb no Header (Visível em Celulares e PC) */}
         <div
           onClick={() => onNavigate('dashboard')}
-          className="flex items-center gap-2 cursor-pointer shrink-0"
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all cursor-pointer shrink-0 ${
+            darkMode
+              ? 'bg-slate-800/60 border-slate-700/60 hover:bg-slate-800 text-white shadow-sm'
+              : 'bg-slate-100 border-slate-200 hover:bg-slate-200/80 text-slate-800 shadow-sm'
+          }`}
         >
           <img
             src={LOGO_BASE64}
             alt="OdontoWeb - Finanças Logo"
-            className="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-full border-2 border-teal-500/60 shadow-md shrink-0 bg-white p-0.5"
+            className="w-6 h-6 sm:w-7 sm:h-7 object-contain rounded-full border border-teal-500/60 bg-white p-0.5 shrink-0"
           />
-          <span className="font-bold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
-            OdontoWeb <span className="text-teal-400">- Finanças</span>
+          <span className="font-bold text-xs tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
+            OdontoWeb <span className="text-teal-400 font-extrabold">- Finanças</span>
           </span>
         </div>
 

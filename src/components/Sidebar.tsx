@@ -82,27 +82,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }`}
       >
         {/* Header do Logo e Fechar no Mobile */}
-        <div className="p-4 flex items-center justify-between border-b border-slate-800/20 dark:border-slate-800/60">
+        <div className="p-3 flex items-center justify-between border-b border-slate-800/20 dark:border-slate-800/60">
           <div
             onClick={() => handleItemClick('dashboard')}
-            className="flex items-center gap-3 cursor-pointer overflow-hidden group"
+            className={`flex items-center gap-2.5 px-3 py-1.5 rounded-full border transition-all cursor-pointer overflow-hidden shrink-0 ${
+              darkMode
+                ? 'bg-slate-800/60 border-slate-700/60 hover:bg-slate-800 text-white shadow-sm'
+                : 'bg-slate-100 border-slate-200 hover:bg-slate-200/80 text-slate-800 shadow-sm'
+            }`}
           >
-            <div className="relative">
+            <div className="relative shrink-0 flex items-center justify-center">
               <img
                 src={LOGO_BASE64}
                 alt="OdontoWeb - Finanças Logo"
-                className="w-11 h-11 object-contain rounded-full border-2 border-teal-500/60 shadow-md shadow-teal-500/30 shrink-0 bg-white p-0.5 group-hover:scale-105 transition-transform"
+                className="w-7 h-7 object-contain rounded-full border border-teal-500/60 bg-white p-0.5 shrink-0"
               />
-              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-slate-900 rounded-full animate-pulse"></span>
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 border border-slate-900 rounded-full"></span>
             </div>
 
             {(!isCollapsed || isMobileOpen) && (
-              <div className="transition-opacity duration-300">
-                <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
-                  OdontoWeb <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-emerald-400">- Finanças</span>
+              <div className="transition-opacity duration-300 flex flex-col justify-center leading-tight">
+                <span className="font-bold text-xs tracking-tight text-slate-900 dark:text-white flex items-center gap-1 whitespace-nowrap">
+                  OdontoWeb <span className="text-teal-400 font-extrabold">- Finanças</span>
                 </span>
-                <span className="text-[9px] font-bold text-emerald-400 block -mt-0.5 uppercase tracking-wider">
-                  Organize • Planeje • Realize
+                <span className="text-[9px] font-semibold text-emerald-400 uppercase tracking-wider block -mt-0.5">
+                  Gestão & Produção
                 </span>
               </div>
             )}
