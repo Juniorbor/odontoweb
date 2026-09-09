@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowRight, UserPlus, LogIn, User } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, ShieldCheck, ArrowRight, UserPlus, LogIn, User, KeyRound, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import LOGO_BASE64 from '../assets/logoData';
-import { autenticarUsuario, registrarNovoUsuario, ADMIN_PADRAO, type UsuarioSistema } from '../services/authService';
+import { autenticarUsuario, registrarNovoUsuario, solicitarRecuperacaoSenha, redefinirSenhaUsuario, ADMIN_PADRAO, type UsuarioSistema } from '../services/authService';
 import { resetarTentativasLoginFalhas } from '../services/securityService';
 
 interface LoginProps {
@@ -9,7 +9,7 @@ interface LoginProps {
 }
 
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
-  const [modo, setModo] = useState<'login' | 'cadastro'>('login');
+  const [modo, setModo] = useState<'login' | 'cadastro' | 'recuperar'>('login');
   
   // Option to remember credentials
   const [lembrarMe, setLembrarMe] = useState<boolean>(() => {
@@ -44,6 +44,12 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [emailCadastro, setEmailCadastro] = useState<string>('');
   const [senhaCadastro, setSenhaCadastro] = useState<string>('');
   const [confirmarSenha, setConfirmarSenha] = useState<string>('');
+
+  // States de Recuperacao de Senha
+  const [emailRecuperacao, setEmailRecuperacao] = useState<string>('');
+  const [etapaRecuperacao, setEtapaRecuperacao] = useState<'email' | 'redefinir'>('email');
+  const [novaSenhaRecuperacao, setNovaSenhaRecuperacao] = useState<string>('');
+  const [confirmarNovaSenhaRecuperacao, setConfirmarNovaSenhaRecuperacao] = useState<string>('');
 
   const [mostrarSenha, setMostrarSenha] = useState<boolean>(false);
   const [erro, setErro] = useState<string>('');
@@ -134,6 +140,60 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
     }
   };
 
+  const handleSolicitarRecuperacao = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErro('');
+    setSucesso('');
+
+    const emailR = emailRecuperacao.trim();
+    if (!emailR) {
+      setErro('Por favor, informe o seu e-mail cadastrado.');
+      return;
+    }
+
+    const resultado = solicitarRecuperacaoSenha(emailR);
+    if (resultado.sucesso) {
+      setSucesso(resultado.mensagem);
+      setEtapaRecuperacao('redefinir');
+    } else {
+      setErro(resultado.mensagem);
+    }
+  };
+
+  const handleRedefinirSenha = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErro('');
+    setSucesso('');
+
+    if (!novaSenhaRecuperacao || novaSenhaRecuperacao.length < 6) {
+      setErro('A nova senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+
+    if (novaSenhaRecuperacao !== confirmarNovaSenhaRecuperacao) {
+      setErro('As senhas digitadas não coincidem. Por favor, verifique.');
+      return;
+    }
+
+    const resultado = redefinirSenhaUsuario(emailRecuperacao, novaSenhaRecuperacao);
+    if (resultado.sucesso) {
+      setSucesso(resultado.mensagem);
+      if (emailLogin.toLowerCase() === emailRecuperacao.toLowerCase()) {
+        setSenhaLogin(novaSenhaRecuperacao);
+      }
+      setTimeout(() => {
+        if (resultado.usuario) {
+          resetarTentativasLoginFalhas(emailRecuperacao);
+          onLoginSuccess(resultado.usuario);
+        } else {
+          setModo('login');
+        }
+      }, 1500);
+    } else {
+      setErro(resultado.mensagem);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0b0f19] flex items-center justify-center p-4 select-none">
       
@@ -165,8 +225,8 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
         {/* Card do Formulário */}
         <div className="bg-slate-900 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 border border-slate-800 text-white">
           
-          {/* Seletor de Modo: Entrar vs Criar Conta */}
-          <div className="flex bg-slate-950 p-1.5 rounded-2xl border border-slate-800">
+          {/* Seletor de Modo: Entrar vs Criar Conta vs Recuperar Senha */}
+          <div className="flex bg-slate-950 p-1.5 rounded-2xl border border-slate-800 gap-1">
             <button
               type="button"
               onClick={() => {
@@ -174,13 +234,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 setErro('');
                 setSucesso('');
               }}
-              className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 modo === 'login'
                   ? 'bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              <LogIn className="w-4 h-4" /> Entrar no Sistema
+              <LogIn className="w-4 h-4" /> Entrar
             </button>
 
             <button
@@ -190,13 +250,31 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 setErro('');
                 setSucesso('');
               }}
-              className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 modo === 'cadastro'
                   ? 'bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              <UserPlus className="w-4 h-4" /> Criar Nova Conta
+              <UserPlus className="w-4 h-4" /> Criar Conta
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setModo('recuperar');
+                setErro('');
+                setSucesso('');
+                setEtapaRecuperacao('email');
+                setEmailRecuperacao(emailLogin);
+              }}
+              className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                modo === 'recuperar'
+                  ? 'bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <KeyRound className="w-4 h-4" /> Recuperar
             </button>
           </div>
 
@@ -213,8 +291,112 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             </div>
           )}
 
-          {/* FORMS: LOGIN */}
-          {modo === 'login' ? (
+          {/* FORMS: RECUPERAÇÃO DE SENHA */}
+          {modo === 'recuperar' ? (
+            <div className="space-y-4 animate-fadeIn">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <KeyRound className="w-4 h-4 text-teal-400" />
+                  <h2 className="text-xs font-bold text-white uppercase tracking-wider">Recuperar Senha de Acesso</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModo('login');
+                    setErro('');
+                    setSucesso('');
+                  }}
+                  className="text-[11px] text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> Voltar ao Login
+                </button>
+              </div>
+
+              {etapaRecuperacao === 'email' ? (
+                <form onSubmit={handleSolicitarRecuperacao} className="space-y-4 text-xs font-normal">
+                  <p className="text-slate-300 text-xs leading-relaxed">
+                    Informe o e-mail cadastrado em sua conta para redefinir sua senha com segurança.
+                  </p>
+
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">E-mail Cadastrado</label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                      <input
+                        type="email"
+                        value={emailRecuperacao}
+                        onChange={(e) => setEmailRecuperacao(e.target.value)}
+                        placeholder="seuemail@exemplo.com"
+                        required
+                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-9 pr-4 py-2.5 text-white focus:ring-2 focus:ring-teal-500 focus:outline-none font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-2xl shadow-xl shadow-teal-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer hover:scale-[1.01]"
+                  >
+                    <Mail className="w-4 h-4" />
+                    <span>Verificar E-mail Cadastrado</span>
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleRedefinirSenha} className="space-y-4 text-xs font-normal">
+                  <div className="bg-teal-500/10 border border-teal-500/30 p-3 rounded-2xl text-slate-200 flex items-center gap-2 text-xs">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>E-mail localizado: <strong className="text-white">{emailRecuperacao}</strong></span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Nova Senha (mínimo 6 caracteres)</label>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                      <input
+                        type={mostrarSenha ? 'text' : 'password'}
+                        value={novaSenhaRecuperacao}
+                        onChange={(e) => setNovaSenhaRecuperacao(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-9 pr-10 py-2.5 text-white focus:ring-2 focus:ring-teal-500 focus:outline-none font-medium"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setMostrarSenha(!mostrarSenha)}
+                        className="absolute right-3 top-3 text-slate-400 hover:text-white cursor-pointer"
+                      >
+                        {mostrarSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Confirmar Nova Senha</label>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                      <input
+                        type={mostrarSenha ? 'text' : 'password'}
+                        value={confirmarNovaSenhaRecuperacao}
+                        onChange={(e) => setConfirmarNovaSenhaRecuperacao(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-9 pr-10 py-2.5 text-white focus:ring-2 focus:ring-teal-500 focus:outline-none font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold py-3 px-4 rounded-2xl shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer hover:scale-[1.01]"
+                  >
+                    <KeyRound className="w-4 h-4" />
+                    <span>Salvar Nova Senha e Entrar</span>
+                  </button>
+                </form>
+              )}
+            </div>
+          ) : modo === 'login' ? (
+            /* FORMS: LOGIN */
             <form onSubmit={handleLogin} className="space-y-4 text-xs font-normal">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">E-mail de Acesso</label>
@@ -253,9 +435,9 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                 </div>
               </div>
 
-              {/* Checkbox opcional de salvar credenciais */}
-              <div className="flex items-center justify-between py-1">
-                <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+              {/* Checkbox opcional de salvar credenciais & Link de Recuperar Senha */}
+              <div className="flex items-center justify-between text-xs py-1">
+                <label className="flex items-center gap-2 text-slate-300 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={lembrarMe}
@@ -267,8 +449,23 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
                     }}
                     className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-teal-500 focus:ring-teal-500 cursor-pointer"
                   />
-                  <span>Lembrar e-mail e senha neste navegador</span>
+                  <span>Lembrar credenciais</span>
                 </label>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModo('recuperar');
+                    setErro('');
+                    setSucesso('');
+                    setEtapaRecuperacao('email');
+                    setEmailRecuperacao(emailLogin);
+                  }}
+                  className="text-teal-400 hover:text-teal-300 font-semibold cursor-pointer transition-colors flex items-center gap-1 hover:underline text-[11px]"
+                >
+                  <KeyRound className="w-3.5 h-3.5" />
+                  <span>Esqueceu a senha?</span>
+                </button>
               </div>
 
               <button
@@ -298,7 +495,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Seu Melho E-mail</label>
+                <label className="block text-[11px] font-bold uppercase text-slate-400 mb-1">Seu Melhor E-mail</label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                   <input

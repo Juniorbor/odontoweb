@@ -452,3 +452,81 @@ export const prorrogarTesteCliente = (usuarioId: string, diasAdicionais: number 
 
   return atualizados;
 };
+
+export const solicitarRecuperacaoSenha = (email: string): {
+  sucesso: boolean;
+  mensagem: string;
+  usuario?: UsuarioSistema;
+} => {
+  const usuarios = getUsuariosCadastrados();
+  const emailFormatado = (email || '').trim().toLowerCase();
+
+  const usuario = usuarios.find((u) => u && u.email && u.email.toLowerCase() === emailFormatado);
+
+  if (!usuario) {
+    registrarLogAuditoria({
+      usuarioId: 'desconhecido',
+      nomeUsuario: 'Desconhecido',
+      emailUsuario: emailFormatado,
+      dataHora: new Date().toLocaleString('pt-BR'),
+      tipoEvento: 'LOGIN_FALHA',
+      dispositivoInfo: `${navigator.platform || 'Desktop'} / Browser`,
+      mensagemDetalhe: 'Tentativa de recuperação de senha para e-mail não cadastrado.',
+      status: 'Alerta'
+    });
+    return { sucesso: false, mensagem: 'E-mail não localizado em nosso cadastro. Verifique a digitação ou crie uma nova conta.' };
+  }
+
+  return {
+    sucesso: true,
+    mensagem: `E-mail de recuperação localizado com sucesso! Informe sua nova senha abaixo para redefinir.`,
+    usuario
+  };
+};
+
+export const redefinirSenhaUsuario = (
+  email: string,
+  novaSenha: string
+): {
+  sucesso: boolean;
+  mensagem: string;
+  usuario?: UsuarioSistema;
+} => {
+  const usuarios = getUsuariosCadastrados();
+  const emailFormatado = (email || '').trim().toLowerCase();
+
+  let usuarioAlvo: UsuarioSistema | undefined;
+  const listaAtualizada = usuarios.map((u) => {
+    if (u && u.email && u.email.toLowerCase() === emailFormatado) {
+      usuarioAlvo = {
+        ...u,
+        senhaHash: novaSenha
+      };
+      return usuarioAlvo;
+    }
+    return u;
+  });
+
+  if (!usuarioAlvo) {
+    return { sucesso: false, mensagem: 'Usuário não localizado para redefinição de senha.' };
+  }
+
+  localStorage.setItem(STORAGE_USUARIOS, JSON.stringify(listaAtualizada));
+
+  registrarLogAuditoria({
+    usuarioId: usuarioAlvo.id,
+    nomeUsuario: usuarioAlvo.nome,
+    emailUsuario: usuarioAlvo.email,
+    dataHora: new Date().toLocaleString('pt-BR'),
+    tipoEvento: 'ALTERACAO_SENHA',
+    dispositivoInfo: `${navigator.platform || 'Desktop'} / Browser`,
+    mensagemDetalhe: 'Senha de acesso redefinida com sucesso através da funcionalidade de recuperação por e-mail.',
+    status: 'Sucesso'
+  });
+
+  return {
+    sucesso: true,
+    mensagem: 'Sua senha foi redefinida com sucesso! Você já pode entrar com a nova senha.',
+    usuario: usuarioAlvo
+  };
+};
