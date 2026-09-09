@@ -229,11 +229,15 @@ export function App() {
         if ('Notification' in window && Notification.permission === 'granted') {
           try {
             new Notification("📲 Resumo Diário de Produção (18:30h)", {
-              body: `Balanço das 7 clínicas pronto para envio para (${config.telefone})! Clique para abrir o WhatsApp.`,
+              body: `Balanço das 7 clínicas pronto para envio para (${config.telefone})!`,
               icon: LOGO_BASE64
             });
           } catch (e) {}
         }
+
+        try {
+          window.open(linkDirect, '_blank');
+        } catch (e) {}
 
         if (config.webhookUrl) {
           fetch(config.webhookUrl, {
