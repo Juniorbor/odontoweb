@@ -113,6 +113,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   const [proprietarioFiltro, setProprietarioFiltro] = useState<'Todos' | 'Fernando' | 'Bernardo'>('Todos');
   const [unidadeFiltro, setUnidadeFiltro] = useState<string>('Todas');
   const [regiaoFiltro, setRegiaoFiltro] = useState<string>('Todas');
+  const [apenasUrgentes, setApenasUrgentes] = useState<boolean>(false);
   const [busca, setBusca] = useState<string>('');
 
   // Paginação (10 Pacientes Visíveis por Página)
@@ -121,7 +122,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
 
   useEffect(() => {
     setPaginaAtual(1);
-  }, [proprietarioFiltro, unidadeFiltro, regiaoFiltro, busca]);
+  }, [proprietarioFiltro, unidadeFiltro, regiaoFiltro, apenasUrgentes, busca]);
 
   // Modal Novo / Editar Registro
   const [modalAberto, setModalAberto] = useState<boolean>(false);
@@ -135,6 +136,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   const [novaRegiao, setNovaRegiao] = useState<'TRAÇADO' | 'UM DENTE' | 'MAX OU MAND' | 'MAX E MAND'>('MAX OU MAND');
   const [novoValor, setNovoValor] = useState<number>(15);
   const [novaUnidade, setNovaUnidade] = useState<typeof CLINICAS_FERNANDO[number] | typeof CLINICAS_BERNARDO[number]>('Ariquemes');
+  const [novaUrgencia, setNovaUrgencia] = useState<boolean>(false);
 
   // Abrir Modal para Novo Registro
   const handleAbrirNovoModal = () => {
@@ -146,6 +148,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
     setNovoValor(15);
     setNovoProprietario('Fernando');
     setNovaUnidade(CLINICAS_FERNANDO[0]);
+    setNovaUrgencia(false);
     setModalAberto(true);
   };
 
@@ -159,6 +162,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
     setNovaRegiao(item.regiao);
     setNovoValor(item.valor);
     setNovaUnidade(item.unidade);
+    setNovaUrgencia(!!item.urgencia);
     setModalAberto(true);
   };
 
@@ -202,7 +206,8 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
       regiao: novaRegiao,
       valor: novoValor,
       unidade: novaUnidade as any,
-      proprietario: novoProprietario
+      proprietario: novoProprietario,
+      urgencia: novaUrgencia
     };
 
     let listaAtualizada: ItemProducaoTomo[];
@@ -216,6 +221,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
     setModalAberto(false);
     setItemEditando(null);
     setNovoNome('');
+    setNovaUrgencia(false);
     setNovoId(`${Math.floor(10000 + Math.random() * 90000)}`);
   };
 
@@ -236,8 +242,9 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
     const atendeProprietario = proprietarioFiltro === 'Todos' || i.proprietario === proprietarioFiltro;
     const atendeUnidade = unidadeFiltro === 'Todas' || i.unidade === unidadeFiltro;
     const atendeRegiao = regiaoFiltro === 'Todas' || i.regiao === regiaoFiltro;
+    const atendeUrgencia = !apenasUrgentes || !!i.urgencia;
     const atendeBusca = i.pacienteNome.toLowerCase().includes(busca.toLowerCase()) || i.id.includes(busca);
-    return atendeProprietario && atendeUnidade && atendeRegiao && atendeBusca;
+    return atendeProprietario && atendeUnidade && atendeRegiao && atendeUrgencia && atendeBusca;
   });
 
   // Paginação dos Itens Filtrados
@@ -841,6 +848,22 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          {/* Botão Filtro Urgência */}
+          <button
+            type="button"
+            onClick={() => setApenasUrgentes(!apenasUrgentes)}
+            className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              apenasUrgentes
+                ? 'bg-rose-600 text-white border-rose-500 shadow-md shadow-rose-600/30 font-black'
+                : darkMode
+                ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+                : 'bg-slate-50 border-slate-200 text-slate-600'
+            }`}
+          >
+            <AlertTriangle className={`w-3.5 h-3.5 ${apenasUrgentes ? 'text-white animate-pulse' : 'text-rose-400'}`} />
+            <span>Apenas Urgências</span>
+          </button>
+
           <select
             value={regiaoFiltro}
             onChange={(e) => setRegiaoFiltro(e.target.value)}
@@ -879,9 +902,16 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
             <FileSpreadsheet className="w-5 h-5 text-teal-500" /> Registros de Tomografias & Traçados ({itensFiltrados.length})
           </h3>
 
-          <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-            Total Exibido: R$ {itensFiltrados.reduce((acc, i) => acc + i.valor, 0).toLocaleString('pt-BR')}
-          </span>
+          <div className="flex items-center gap-2">
+            {itens.some((i) => i.urgencia) && (
+              <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1">
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-400 animate-pulse" /> {itens.filter((i) => i.urgencia).length} Urgências
+              </span>
+            )}
+            <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              Total Exibido: R$ {itensFiltrados.reduce((acc, i) => acc + i.valor, 0).toLocaleString('pt-BR')}
+            </span>
+          </div>
         </div>
 
         {itensFiltrados.length > 0 ? (
@@ -895,13 +925,21 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
                   <th className="p-3">Paciente</th>
                   <th className="p-3">Clínica / Unidade</th>
                   <th className="p-3">Região Tomográfica</th>
+                  <th className="p-3">Prioridade</th>
                   <th className="p-3">Valor (R$)</th>
                   <th className="p-3 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/40 font-medium">
                 {itensPaginados.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-800/50 transition-colors">
+                  <tr
+                    key={item.id}
+                    className={`transition-colors ${
+                      item.urgencia
+                        ? 'bg-rose-950/30 hover:bg-rose-900/40 border-l-4 border-l-rose-500'
+                        : 'hover:bg-slate-800/50'
+                    }`}
+                  >
                     <td className="p-3">
                       <span className={`px-2.5 py-0.5 rounded-md text-[10px] font-extrabold border ${
                         item.proprietario === 'Fernando'
@@ -917,7 +955,14 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
                       </span>
                     </td>
                     <td className="p-3 text-slate-400 font-bold">{item.data}</td>
-                    <td className="p-3 font-bold text-white uppercase">{item.pacienteNome}</td>
+                    <td className="p-3 font-bold text-white uppercase flex items-center gap-2">
+                      <span>{item.pacienteNome}</span>
+                      {item.urgencia && (
+                        <span className="bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                          🚨 URGÊNCIA
+                        </span>
+                      )}
+                    </td>
                     <td className="p-3 font-bold text-slate-200">{item.unidade}</td>
                     <td className="p-3 font-bold">
                       <span className={`px-2 py-0.5 rounded text-[10px] ${
@@ -927,6 +972,15 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
                       }`}>
                         {item.regiao}
                       </span>
+                    </td>
+                    <td className="p-3 font-bold">
+                      {item.urgencia ? (
+                        <span className="bg-rose-600 text-white font-black text-[10px] px-2.5 py-0.5 rounded-full flex items-center gap-1 w-fit shadow-md shadow-rose-600/30">
+                          🚨 URGÊNCIA
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-[10px] font-semibold">Normal</span>
+                      )}
                     </td>
                     <td className="p-3 font-extrabold text-emerald-400 whitespace-nowrap">R$ {item.valor.toFixed(2)}</td>
                     <td className="p-3 text-right">
@@ -1197,6 +1251,35 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
                   className={`w-full p-2.5 rounded-xl border font-extrabold text-emerald-400 text-sm ${
                     darkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
                   }`}
+                />
+              </div>
+
+              {/* Opção de Marcar como Urgência */}
+              <div
+                onClick={() => setNovaUrgencia(!novaUrgencia)}
+                className={`p-3 rounded-2xl border flex items-center justify-between cursor-pointer select-none transition-all ${
+                  novaUrgencia
+                    ? 'bg-rose-500/20 border-rose-500/50 text-white shadow-lg shadow-rose-500/10'
+                    : darkMode ? 'bg-slate-800/60 border-slate-700 text-slate-300 hover:border-slate-600' : 'bg-slate-50 border-slate-200 text-slate-700'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className={`p-2 rounded-xl ${novaUrgencia ? 'bg-rose-600 text-white animate-bounce' : 'bg-slate-800 text-slate-400'}`}>
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="font-extrabold text-xs block text-slate-100 flex items-center gap-1.5">
+                      🚨 Exame de Urgência {novaUrgencia && <span className="text-[9px] font-black bg-rose-600 text-white px-2 py-0.2 rounded-full uppercase">ATIVADO</span>}
+                    </span>
+                    <span className="text-[10px] text-slate-400 block">Marque para destacar o exame com selo de urgência vermelho na lista</span>
+                  </div>
+                </div>
+
+                <input
+                  type="checkbox"
+                  checked={novaUrgencia}
+                  onChange={(e) => setNovaUrgencia(e.target.checked)}
+                  className="w-4 h-4 rounded border-rose-700 bg-slate-950 text-rose-500 focus:ring-rose-500 cursor-pointer"
                 />
               </div>
 

@@ -173,6 +173,7 @@ export interface ItemProducaoTomo {
   valor: number;
   unidade: 'Ariquemes' | 'Porto Velho' | 'Machadinho' | 'Cacoal' | 'Rolim de Moura' | 'Ouro Preto' | 'Ji-Paraná';
   proprietario: 'Fernando' | 'Bernardo';
+  urgencia?: boolean;
 }
 
 export interface TransacaoFinanceira {
