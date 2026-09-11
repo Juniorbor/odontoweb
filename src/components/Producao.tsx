@@ -31,6 +31,17 @@ interface ProducaoProps {
 const CLINICAS_FERNANDO = ['Ariquemes', 'Machadinho', 'Cacoal', 'Porto Velho'] as const;
 const CLINICAS_BERNARDO = ['Rolim de Moura', 'Ouro Preto', 'Ji-Paraná'] as const;
 
+// Função de fusão inteligente para garantir que exames adicionados localmente NUNCA sejam sobrescritos por respostas antigas do servidor
+const smartMergeProducao = (local: ItemProducaoTomo[], remote: ItemProducaoTomo[]): ItemProducaoTomo[] => {
+  if (!Array.isArray(remote) || remote.length === 0) return local;
+  if (!Array.isArray(local) || local.length === 0) return remote;
+
+  const remoteIds = new Set(remote.map((i) => i && i.id));
+  const missingLocals = local.filter((i) => i && i.id && !remoteIds.has(i.id));
+
+  return [...missingLocals, ...remote];
+};
+
 export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   const userKeys = getUserKeys(usuarioId);
   const STORAGE_KEY = userKeys.PRODUCAO;
@@ -46,6 +57,8 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
 
   const [sincronizando, setSincronizando] = useState<boolean>(false);
   const [subAba, setSubAba] = useState<'producao' | 'whatsapp'>('producao');
+  const [erroForm, setErroForm] = useState<string>('');
+  const [sucessoMsg, setSucessoMsg] = useState<string>('');
 
   // Salvamento automático permanente em localStorage local
   useEffect(() => {
@@ -55,6 +68,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
       localStorage.setItem('odonto_producao_backup_permanent', str);
       localStorage.setItem('odonto_producao_registros_usr_admin_master', str);
       localStorage.setItem('odonto_producao_registros_v2', str);
+      localStorage.setItem('odonto_producao_registros', str);
     }
   }, [itens, STORAGE_KEY]);
 
@@ -70,34 +84,49 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
     pushToCloud({ producao: novosItens }, usuarioId);
   };
 
-  // Carregamento Prioritário ao abrir e Polling em tempo real
+  // Carregamento Prioritário ao abrir e Polling em tempo real com Fusão Inteligente
   useEffect(() => {
     setSincronizando(true);
+
+    const mergeEAtualizar = (payloadProducao: ItemProducaoTomo[]) => {
+      if (!Array.isArray(payloadProducao)) return;
+      setItens((localAtual) => {
+        const merged = smartMergeProducao(localAtual, payloadProducao);
+        const str = JSON.stringify(merged);
+        localStorage.setItem(STORAGE_KEY, str);
+        localStorage.setItem('odonto_producao_backup_permanent', str);
+        localStorage.setItem('odonto_producao_registros_usr_admin_master', str);
+        localStorage.setItem('odonto_producao_registros_v2', str);
+        localStorage.setItem('odonto_producao_registros', str);
+        return merged;
+      });
+    };
+
     pullFromCloud((payload) => {
-      if (Array.isArray(payload.producao) && payload.producao.length > 0) {
-        setItens(payload.producao);
+      if (Array.isArray(payload.producao)) {
+        mergeEAtualizar(payload.producao);
       }
       setSincronizando(false);
     }, true, usuarioId);
 
     const unsubscribeBroadcast = subscribeLocalBroadcast((payload) => {
-      if (Array.isArray(payload.producao) && payload.producao.length > 0) {
-        setItens(payload.producao);
+      if (Array.isArray(payload.producao)) {
+        mergeEAtualizar(payload.producao);
       }
     }, usuarioId);
 
     const interval = setInterval(() => {
       pullFromCloud((payload) => {
-        if (Array.isArray(payload.producao) && payload.producao.length > 0) {
-          setItens(payload.producao);
+        if (Array.isArray(payload.producao)) {
+          mergeEAtualizar(payload.producao);
         }
       }, false, usuarioId);
-    }, 2000);
+    }, 3000);
 
     const handleFocus = () => {
       pullFromCloud((payload) => {
-        if (Array.isArray(payload.producao) && payload.producao.length > 0) {
-          setItens(payload.producao);
+        if (Array.isArray(payload.producao)) {
+          mergeEAtualizar(payload.producao);
         }
       }, true, usuarioId);
     };
@@ -108,7 +137,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
       clearInterval(interval);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [usuarioId]);
+  }, [usuarioId, STORAGE_KEY]);
 
   const [proprietarioFiltro, setProprietarioFiltro] = useState<'Todos' | 'Fernando' | 'Bernardo'>('Todos');
   const [unidadeFiltro, setUnidadeFiltro] = useState<string>('Todas');
@@ -141,6 +170,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   // Abrir Modal para Novo Registro
   const handleAbrirNovoModal = () => {
     setItemEditando(null);
+    setErroForm('');
     setNovoId(`${Math.floor(10000 + Math.random() * 90000)}`);
     setNovaData(new Date().toISOString().split('T')[0]);
     setNovoNome('');
@@ -155,6 +185,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   // Abrir Modal para Editar Registro Existente
   const handleAbrirEditarModal = (item: ItemProducaoTomo) => {
     setItemEditando(item);
+    setErroForm('');
     setNovoId(item.id);
     setNovoProprietario(item.proprietario);
     setNovaData(item.data);
@@ -197,12 +228,21 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
 
   const handleSalvarProducao = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!novoNome) return;
+    const nomeLimpo = novoNome.trim();
+    if (!nomeLimpo) {
+      setErroForm('Por favor, informe o nome do paciente.');
+      return;
+    }
+    setErroForm('');
+
+    const novoIdFinal = itemEditando
+      ? itemEditando.id
+      : (novoId && novoId.trim() ? novoId.trim() : `prod-${Date.now()}-${Math.floor(Math.random() * 10000)}`);
 
     const itemProcessado: ItemProducaoTomo = {
-      id: novoId || `${Date.now()}`,
+      id: novoIdFinal,
       data: novaData,
-      pacienteNome: novoNome.toUpperCase(),
+      pacienteNome: nomeLimpo.toUpperCase(),
       regiao: novaRegiao,
       valor: novoValor,
       unidade: novaUnidade as any,
@@ -218,11 +258,27 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
     }
 
     updateItensECloud(listaAtualizada);
+
+    // RESET COMPLETO DE FILTROS E PAGINAÇÃO PARA GARANTIR VISIBILIDADE IMEDIATA DO NOVO PACIENTE REGISTRADO NO TOPO DA TABELA
+    if (!itemEditando) {
+      setProprietarioFiltro('Todos');
+      setUnidadeFiltro('Todas');
+      setRegiaoFiltro('Todas');
+      setApenasUrgentes(false);
+      setBusca('');
+      setPaginaAtual(1);
+    }
+
+    setSucessoMsg(`✨ Paciente "${nomeLimpo.toUpperCase()}" (${novaUnidade}) registrado com sucesso!`);
     setModalAberto(false);
     setItemEditando(null);
     setNovoNome('');
     setNovaUrgencia(false);
     setNovoId(`${Math.floor(10000 + Math.random() * 90000)}`);
+
+    setTimeout(() => {
+      setSucessoMsg('');
+    }, 5000);
   };
 
   // Exclusão individual salva permanentemente
@@ -403,6 +459,18 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
         <WhatsappNotificacoes itensProducao={itens} darkMode={darkMode} />
       ) : (
         <>
+      {sucessoMsg && (
+        <div className="p-4 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-extrabold flex items-center justify-between shadow-lg animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-emerald-400 shrink-0" />
+            <span>{sucessoMsg}</span>
+          </div>
+          <button onClick={() => setSucessoMsg('')} className="text-slate-400 hover:text-white cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       <div className={`p-4 sm:p-6 rounded-3xl border shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${
         darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
       }`}>
@@ -1133,6 +1201,12 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
             </div>
 
             <form onSubmit={handleSalvarProducao} className="space-y-4 text-xs">
+              {erroForm && (
+                <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-bold flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
+                  <span>{erroForm}</span>
+                </div>
+              )}
               
               {/* Seleção do Proprietário */}
               <div>
