@@ -46,14 +46,26 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   const userKeys = getUserKeys(usuarioId);
   const STORAGE_KEY = userKeys.PRODUCAO;
 
-  // Inicializa a lista de registros com sincronia total da planilha Excel (296 registros = R$ 1.757,00)
+  // Inicializa a lista de registros com sincronia estrita da planilha Excel (296 registros = R$ 1.757,00)
   const [itens, setItens] = useState<ItemProducaoTomo[]>(() => {
-    const salvo = getItemJSON<ItemProducaoTomo[]>(STORAGE_KEY, []);
-    if (Array.isArray(salvo) && salvo.length >= DADOS_PRODUCAO_EXCEL.length) {
-      return salvo;
+    const MIGRATION_TAG = 'odonto_excel_v1757_exact_sync_v2';
+    const jaMigrou = localStorage.getItem(MIGRATION_TAG);
+
+    if (!jaMigrou) {
+      localStorage.setItem(MIGRATION_TAG, 'true');
+      const str = JSON.stringify(DADOS_PRODUCAO_EXCEL);
+      localStorage.setItem(STORAGE_KEY, str);
+      localStorage.setItem('odonto_producao_backup_permanent', str);
+      localStorage.setItem('odonto_producao_registros_usr_admin_master', str);
+      localStorage.setItem('odonto_producao_registros_v2', str);
+      localStorage.setItem('odonto_producao_registros', str);
+      pushToCloud({ producao: DADOS_PRODUCAO_EXCEL }, usuarioId);
+      return DADOS_PRODUCAO_EXCEL;
     }
+
+    const salvo = getItemJSON<ItemProducaoTomo[]>(STORAGE_KEY, []);
     if (Array.isArray(salvo) && salvo.length > 0) {
-      return smartMergeProducao(salvo, DADOS_PRODUCAO_EXCEL);
+      return salvo;
     }
     return DADOS_PRODUCAO_EXCEL;
   });
