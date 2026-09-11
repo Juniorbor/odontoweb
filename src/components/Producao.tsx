@@ -46,11 +46,14 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   const userKeys = getUserKeys(usuarioId);
   const STORAGE_KEY = userKeys.PRODUCAO;
 
-  // Inicializa a lista de registros. Se houver dados salvos no localStorage, utiliza-os. Caso contrário, carrega os dados da planilha Excel.
+  // Inicializa a lista de registros com sincronia total da planilha Excel (296 registros = R$ 1.757,00)
   const [itens, setItens] = useState<ItemProducaoTomo[]>(() => {
     const salvo = getItemJSON<ItemProducaoTomo[]>(STORAGE_KEY, []);
-    if (Array.isArray(salvo) && salvo.length > 0) {
+    if (Array.isArray(salvo) && salvo.length >= DADOS_PRODUCAO_EXCEL.length) {
       return salvo;
+    }
+    if (Array.isArray(salvo) && salvo.length > 0) {
+      return smartMergeProducao(salvo, DADOS_PRODUCAO_EXCEL);
     }
     return DADOS_PRODUCAO_EXCEL;
   });

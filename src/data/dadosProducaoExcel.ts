@@ -101,6 +101,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Fernando"
   },
   {
+    "id": "73731",
+    "data": "2026-09-09",
+    "pacienteNome": "CERILA",
+    "regiao": "UM DENTE",
+    "valor": 10,
+    "unidade": "Cacoal",
+    "proprietario": "Fernando"
+  },
+  {
     "id": "71146",
     "data": "2026-09-01",
     "pacienteNome": "LEANDRO",
@@ -119,6 +128,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Fernando"
   },
   {
+    "id": "14640",
+    "data": "2026-09-08",
+    "pacienteNome": "CLARISBERTO",
+    "regiao": "UM DENTE",
+    "valor": 10,
+    "unidade": "Machadinho",
+    "proprietario": "Fernando"
+  },
+  {
     "id": "71153",
     "data": "2026-09-01",
     "pacienteNome": "ISIS",
@@ -134,6 +152,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "regiao": "MAX OU MAND",
     "valor": 15,
     "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "14649",
+    "data": "2026-09-08",
+    "pacienteNome": "PAMELA",
+    "regiao": "MAX OU MAND",
+    "valor": 15,
+    "unidade": "Machadinho",
     "proprietario": "Fernando"
   },
   {
@@ -254,6 +281,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Fernando"
   },
   {
+    "id": "44307",
+    "data": "2026-09-08",
+    "pacienteNome": "NEUZA",
+    "regiao": "MAX E MAND",
+    "valor": 20,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
     "id": "71227",
     "data": "2026-09-04",
     "pacienteNome": "ADALTO",
@@ -263,11 +299,137 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Fernando"
   },
   {
+    "id": "44309",
+    "data": "2026-09-08",
+    "pacienteNome": "EVERSON",
+    "regiao": "MAX E MAND",
+    "valor": 20,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
     "id": "71233",
     "data": "2026-09-04",
     "pacienteNome": "EDILEUZA",
     "regiao": "UM DENTE",
     "valor": 10,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44333",
+    "data": "2026-09-08",
+    "pacienteNome": "JOSE",
+    "regiao": "MAX OU MAND",
+    "valor": 15,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71250",
+    "data": "2026-09-08",
+    "pacienteNome": "ADENILSA",
+    "regiao": "UM DENTE",
+    "valor": 10,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44272",
+    "data": "2026-09-09",
+    "pacienteNome": "FATIELE",
+    "regiao": "MAX OU MAND",
+    "valor": 15,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71264",
+    "data": "2026-09-08",
+    "pacienteNome": "EDILAINE",
+    "regiao": "MAX OU MAND",
+    "valor": 15,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44226",
+    "data": "2026-09-09",
+    "pacienteNome": "SOLANGE",
+    "regiao": "UM DENTE",
+    "valor": 10,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71311",
+    "data": "2026-09-09",
+    "pacienteNome": "VANDO",
+    "regiao": "UM DENTE",
+    "valor": 10,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44403",
+    "data": "2026-09-09",
+    "pacienteNome": "FRANCISNEIDE",
+    "regiao": "MAX OU MAND",
+    "valor": 15,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71313",
+    "data": "2026-09-09",
+    "pacienteNome": "APOLIANA",
+    "regiao": "UM DENTE",
+    "valor": 10,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44406",
+    "data": "2026-09-10",
+    "pacienteNome": "DAIANA",
+    "regiao": "MAX OU MAND",
+    "valor": 15,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71317",
+    "data": "2026-09-09",
+    "pacienteNome": "IVONE",
+    "regiao": "MAX OU MAND",
+    "valor": 15,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71318",
+    "data": "2026-09-09",
+    "pacienteNome": "MAURILIO",
+    "regiao": "MAX E MAND",
+    "valor": 20,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71321",
+    "data": "2026-09-09",
+    "pacienteNome": "CIALVA",
+    "regiao": "MAX E MAND",
+    "valor": 20,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71343",
+    "data": "2026-09-10",
+    "pacienteNome": "VALDETE",
+    "regiao": "MAX OU MAND",
+    "valor": 15,
     "unidade": "Ariquemes",
     "proprietario": "Fernando"
   },
@@ -650,6 +812,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Fernando"
   },
   {
+    "id": "14643",
+    "data": "2026-09-08",
+    "pacienteNome": "RONIVAN",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Machadinho",
+    "proprietario": "Fernando"
+  },
+  {
     "id": "73767",
     "data": "2026-09-04",
     "pacienteNome": "ARTHUR",
@@ -674,6 +845,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "regiao": "TRAÇADO",
     "valor": 4,
     "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "14656",
+    "data": "2026-09-09",
+    "pacienteNome": "PATRICIA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Machadinho",
     "proprietario": "Fernando"
   },
   {
@@ -704,6 +884,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Fernando"
   },
   {
+    "id": "14655",
+    "data": "2026-09-09",
+    "pacienteNome": "GABRIELY",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Machadinho",
+    "proprietario": "Fernando"
+  },
+  {
     "id": "73768",
     "data": "2026-09-04",
     "pacienteNome": "ELAINE",
@@ -731,6 +920,24 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Fernando"
   },
   {
+    "id": "14652",
+    "data": "2026-09-09",
+    "pacienteNome": "IASMIN",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Machadinho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "73779",
+    "data": "2026-09-08",
+    "pacienteNome": "CAMILA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
+    "proprietario": "Fernando"
+  },
+  {
     "id": "71218",
     "data": "2026-09-03",
     "pacienteNome": "PABLO",
@@ -746,6 +953,24 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "regiao": "TRAÇADO",
     "valor": 4,
     "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "14659",
+    "data": "2026-09-10",
+    "pacienteNome": "AURELIO",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Machadinho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "73784",
+    "data": "2026-09-08",
+    "pacienteNome": "JEKETLIN",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
     "proprietario": "Fernando"
   },
   {
@@ -767,6 +992,24 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Fernando"
   },
   {
+    "id": "14666",
+    "data": "2026-09-10",
+    "pacienteNome": "AMANDA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Machadinho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "73787",
+    "data": "2026-09-08",
+    "pacienteNome": "YASMIN",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
+    "proprietario": "Fernando"
+  },
+  {
     "id": "71231",
     "data": "2026-09-04",
     "pacienteNome": "SARA",
@@ -782,6 +1025,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "regiao": "TRAÇADO",
     "valor": 4,
     "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "73774",
+    "data": "2026-09-08",
+    "pacienteNome": "GRACIELE",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
     "proprietario": "Fernando"
   },
   {
@@ -803,6 +1055,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Fernando"
   },
   {
+    "id": "73801",
+    "data": "2026-09-08",
+    "pacienteNome": "ERICKISSON",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
+    "proprietario": "Fernando"
+  },
+  {
     "id": "71225",
     "data": "2026-09-04",
     "pacienteNome": "ANDERSON",
@@ -818,6 +1079,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "regiao": "TRAÇADO",
     "valor": 4,
     "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "73800",
+    "data": "2026-09-08",
+    "pacienteNome": "ANDRESSA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
     "proprietario": "Fernando"
   },
   {
@@ -839,6 +1109,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Fernando"
   },
   {
+    "id": "73791",
+    "data": "2026-09-08",
+    "pacienteNome": "RHAYSSA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
+    "proprietario": "Fernando"
+  },
+  {
     "id": "71245",
     "data": "2026-09-05",
     "pacienteNome": "DAIANE",
@@ -854,6 +1133,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "regiao": "TRAÇADO",
     "valor": 4,
     "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "73776",
+    "data": "2026-09-08",
+    "pacienteNome": "ANGELA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
     "proprietario": "Fernando"
   },
   {
@@ -875,6 +1163,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Fernando"
   },
   {
+    "id": "73831",
+    "data": "2026-09-09",
+    "pacienteNome": "CAIO",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
+    "proprietario": "Fernando"
+  },
+  {
     "id": "71243",
     "data": "2026-09-05",
     "pacienteNome": "PAOLA",
@@ -890,6 +1187,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "regiao": "TRAÇADO",
     "valor": 4,
     "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "73847",
+    "data": "2026-09-09",
+    "pacienteNome": "VICTOR",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
     "proprietario": "Fernando"
   },
   {
@@ -911,6 +1217,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Fernando"
   },
   {
+    "id": "73812",
+    "data": "2026-09-09",
+    "pacienteNome": "NICOLLE",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
+    "proprietario": "Fernando"
+  },
+  {
     "id": "71222",
     "data": "2026-09-04",
     "pacienteNome": "ARTHUR",
@@ -926,6 +1241,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "regiao": "TRAÇADO",
     "valor": 4,
     "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "73815",
+    "data": "2026-09-09",
+    "pacienteNome": "EVELYN",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
     "proprietario": "Fernando"
   },
   {
@@ -947,12 +1271,48 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Fernando"
   },
   {
+    "id": "73841",
+    "data": "2026-09-09",
+    "pacienteNome": "NATIELLY",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71276",
+    "data": "2026-09-08",
+    "pacienteNome": "LAVINIA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
     "id": "44214",
     "data": "2026-09-04",
     "pacienteNome": "VINICIUS",
     "regiao": "TRAÇADO",
     "valor": 4,
     "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "73833",
+    "data": "2026-09-09",
+    "pacienteNome": "MARIA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71288",
+    "data": "2026-09-08",
+    "pacienteNome": "CELMA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ariquemes",
     "proprietario": "Fernando"
   },
   {
@@ -965,12 +1325,48 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Fernando"
   },
   {
+    "id": "73825",
+    "data": "2026-09-09",
+    "pacienteNome": "DIANA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71287",
+    "data": "2026-09-08",
+    "pacienteNome": "AZIEL",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
     "id": "44255",
     "data": "2026-09-05",
     "pacienteNome": "MARIA",
     "regiao": "TRAÇADO",
     "valor": 4,
     "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "73852",
+    "data": "2026-09-10",
+    "pacienteNome": "ANA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71282",
+    "data": "2026-09-08",
+    "pacienteNome": "TIFANY",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ariquemes",
     "proprietario": "Fernando"
   },
   {
@@ -983,9 +1379,279 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Fernando"
   },
   {
+    "id": "73870",
+    "data": "2026-09-10",
+    "pacienteNome": "THAYS",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71277",
+    "data": "2026-09-08",
+    "pacienteNome": "PEDRO",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
     "id": "44167",
     "data": "2026-09-03",
     "pacienteNome": "GILVONEIDE",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "73882",
+    "data": "2026-09-10",
+    "pacienteNome": "JULIO",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Cacoal",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71268",
+    "data": "2026-09-08",
+    "pacienteNome": "PAULO",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44177",
+    "data": "2026-09-08",
+    "pacienteNome": "ISADORA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71259",
+    "data": "2026-09-08",
+    "pacienteNome": "CLAUDIA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44270",
+    "data": "2026-09-08",
+    "pacienteNome": "MARCIA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71258",
+    "data": "2026-09-08",
+    "pacienteNome": "OZIANE",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44341",
+    "data": "2026-09-09",
+    "pacienteNome": "ADRIANY",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71261",
+    "data": "2026-09-08",
+    "pacienteNome": "IVANEIDE",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44366",
+    "data": "2026-09-09",
+    "pacienteNome": "LUIZA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71324",
+    "data": "2026-09-09",
+    "pacienteNome": "MARCOS",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44350",
+    "data": "2026-09-09",
+    "pacienteNome": "ARTHUR",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71302",
+    "data": "2026-09-09",
+    "pacienteNome": "JACKELINE",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44363",
+    "data": "2026-09-09",
+    "pacienteNome": "LADYANA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71312",
+    "data": "2026-09-09",
+    "pacienteNome": "VANDIELI",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44343",
+    "data": "2026-09-09",
+    "pacienteNome": "NICOLY",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71352",
+    "data": "2026-09-10",
+    "pacienteNome": "ANDRESSA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44312",
+    "data": "2026-09-09",
+    "pacienteNome": "PAULO",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "71348",
+    "data": "2026-09-10",
+    "pacienteNome": "FRANCISCO",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ariquemes",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44313",
+    "data": "2026-09-09",
+    "pacienteNome": "NADIR",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44325",
+    "data": "2026-09-09",
+    "pacienteNome": "CAIO",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44329",
+    "data": "2026-09-09",
+    "pacienteNome": "JULIANA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44316",
+    "data": "2026-09-09",
+    "pacienteNome": "RAISSA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44319",
+    "data": "2026-09-09",
+    "pacienteNome": "KAUA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44414",
+    "data": "2026-09-10",
+    "pacienteNome": "DANTE",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44393",
+    "data": "2026-09-10",
+    "pacienteNome": "ALEXANDRE",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44386",
+    "data": "2026-09-10",
+    "pacienteNome": "OLINDA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44400",
+    "data": "2026-09-10",
+    "pacienteNome": "HELENA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Porto Velho",
+    "proprietario": "Fernando"
+  },
+  {
+    "id": "44376",
+    "data": "2026-09-10",
+    "pacienteNome": "DEIVISON",
     "regiao": "TRAÇADO",
     "valor": 4,
     "unidade": "Porto Velho",
@@ -1415,6 +2081,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Bernardo"
   },
   {
+    "id": "57646",
+    "data": "2026-09-08",
+    "pacienteNome": "TAYNARA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ouro Preto",
+    "proprietario": "Bernardo"
+  },
+  {
     "id": "71883",
     "data": "2026-09-03",
     "pacienteNome": "TAINA",
@@ -1430,6 +2105,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "regiao": "TRAÇADO",
     "valor": 4,
     "unidade": "Ji-Paraná",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "57669",
+    "data": "2026-09-08",
+    "pacienteNome": "JHENIFFER",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ouro Preto",
     "proprietario": "Bernardo"
   },
   {
@@ -1451,6 +2135,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Bernardo"
   },
   {
+    "id": "57658",
+    "data": "2026-09-08",
+    "pacienteNome": "EMANUELLY",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ouro Preto",
+    "proprietario": "Bernardo"
+  },
+  {
     "id": "71801",
     "data": "2026-09-03",
     "pacienteNome": "MARCUS",
@@ -1466,6 +2159,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "regiao": "TRAÇADO",
     "valor": 4,
     "unidade": "Ji-Paraná",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "57656",
+    "data": "2026-09-08",
+    "pacienteNome": "GEOVANNI",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ouro Preto",
     "proprietario": "Bernardo"
   },
   {
@@ -1487,6 +2189,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Bernardo"
   },
   {
+    "id": "57671",
+    "data": "2026-09-08",
+    "pacienteNome": "EMILLY",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ouro Preto",
+    "proprietario": "Bernardo"
+  },
+  {
     "id": "71829",
     "data": "2026-09-05",
     "pacienteNome": "LUCAS",
@@ -1502,6 +2213,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "regiao": "TRAÇADO",
     "valor": 4,
     "unidade": "Ji-Paraná",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "57691",
+    "data": "2026-09-09",
+    "pacienteNome": "KASIA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ouro Preto",
     "proprietario": "Bernardo"
   },
   {
@@ -1523,6 +2243,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Bernardo"
   },
   {
+    "id": "57699",
+    "data": "2026-09-09",
+    "pacienteNome": "LARA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ouro Preto",
+    "proprietario": "Bernardo"
+  },
+  {
     "id": "71828",
     "data": "2026-09-05",
     "pacienteNome": "RAISSA",
@@ -1541,12 +2270,30 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Bernardo"
   },
   {
+    "id": "57697",
+    "data": "2026-09-09",
+    "pacienteNome": "KEMILLY",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ouro Preto",
+    "proprietario": "Bernardo"
+  },
+  {
     "id": "71818",
     "data": "2026-09-04",
     "pacienteNome": "ELAINE",
     "regiao": "TRAÇADO",
     "valor": 4,
     "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "81971",
+    "data": "2026-09-08",
+    "pacienteNome": "GISLAINE",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ji-Paraná",
     "proprietario": "Bernardo"
   },
   {
@@ -1559,12 +2306,30 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Bernardo"
   },
   {
+    "id": "81974",
+    "data": "2026-09-08",
+    "pacienteNome": "SOPHIA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ji-Paraná",
+    "proprietario": "Bernardo"
+  },
+  {
     "id": "71811",
     "data": "2026-09-04",
     "pacienteNome": "ROGERIO",
     "regiao": "TRAÇADO",
     "valor": 4,
     "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "81977",
+    "data": "2026-09-08",
+    "pacienteNome": "DOUGLAS",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ji-Paraná",
     "proprietario": "Bernardo"
   },
   {
@@ -1577,12 +2342,30 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Bernardo"
   },
   {
+    "id": "81980",
+    "data": "2026-09-08",
+    "pacienteNome": "MARIA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ji-Paraná",
+    "proprietario": "Bernardo"
+  },
+  {
     "id": "71823",
     "data": "2026-09-04",
     "pacienteNome": "JANETE",
     "regiao": "TRAÇADO",
     "valor": 4,
     "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "81908",
+    "data": "2026-09-03",
+    "pacienteNome": "MIGUEL",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ji-Paraná",
     "proprietario": "Bernardo"
   },
   {
@@ -1595,12 +2378,30 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Bernardo"
   },
   {
+    "id": "81967",
+    "data": "2026-09-08",
+    "pacienteNome": "JOAO",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ji-Paraná",
+    "proprietario": "Bernardo"
+  },
+  {
     "id": "71806",
     "data": "2026-09-04",
     "pacienteNome": "ANA",
     "regiao": "TRAÇADO",
     "valor": 4,
     "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "81921",
+    "data": "2026-09-08",
+    "pacienteNome": "MAYCON",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ji-Paraná",
     "proprietario": "Bernardo"
   },
   {
@@ -1613,6 +2414,15 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Bernardo"
   },
   {
+    "id": "81999",
+    "data": "2026-09-09",
+    "pacienteNome": "SAMUEL",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ji-Paraná",
+    "proprietario": "Bernardo"
+  },
+  {
     "id": "71826",
     "data": "2026-09-05",
     "pacienteNome": "EMANUELY",
@@ -1622,8 +2432,233 @@ export const DADOS_PRODUCAO_EXCEL: ItemProducaoTomo[] = [
     "proprietario": "Bernardo"
   },
   {
+    "id": "81995",
+    "data": "2026-09-09",
+    "pacienteNome": "ANTONIO",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ji-Paraná",
+    "proprietario": "Bernardo"
+  },
+  {
     "id": "71780",
     "data": "2026-09-03",
+    "pacienteNome": "MARIA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "81994",
+    "data": "2026-09-09",
+    "pacienteNome": "VALERIA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ji-Paraná",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "71848",
+    "data": "2026-09-08",
+    "pacienteNome": "HELEN",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "81998",
+    "data": "2026-09-09",
+    "pacienteNome": "GISLAINE",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ji-Paraná",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "71834",
+    "data": "2026-09-08",
+    "pacienteNome": "CARLOS",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "81990",
+    "data": "2026-09-09",
+    "pacienteNome": "LUKAS",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ji-Paraná",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "71840",
+    "data": "2026-09-08",
+    "pacienteNome": "LUCAS",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "82030",
+    "data": "2026-09-10",
+    "pacienteNome": "LAURA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ji-Paraná",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "71836",
+    "data": "2026-09-08",
+    "pacienteNome": "LEIDIANE",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "82025",
+    "data": "2026-09-10",
+    "pacienteNome": "JOAO",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ji-Paraná",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "71845",
+    "data": "2026-09-08",
+    "pacienteNome": "VAGNER",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "82013",
+    "data": "2026-09-10",
+    "pacienteNome": "ENDRIO",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ji-Paraná",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "71890",
+    "data": "2026-09-09",
+    "pacienteNome": "EMILY",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "82027",
+    "data": "2026-09-10",
+    "pacienteNome": "JOAO",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ji-Paraná",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "71894",
+    "data": "2026-09-09",
+    "pacienteNome": "ELIDA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "82018",
+    "data": "2026-09-10",
+    "pacienteNome": "MARCOS",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Ji-Paraná",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "71868",
+    "data": "2026-09-09",
+    "pacienteNome": "ISRAEL",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "71885",
+    "data": "2026-09-09",
+    "pacienteNome": "DANILSON",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "71880",
+    "data": "2026-09-09",
+    "pacienteNome": "LOANA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "71850",
+    "data": "2026-09-09",
+    "pacienteNome": "EDUARDA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "71866",
+    "data": "2026-09-09",
+    "pacienteNome": "ROSINIR",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "71919",
+    "data": "2026-09-10",
+    "pacienteNome": "PATRICIA",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "71916",
+    "data": "2026-09-10",
+    "pacienteNome": "LUCAS",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "71905",
+    "data": "2026-09-10",
+    "pacienteNome": "MIGUEL",
+    "regiao": "TRAÇADO",
+    "valor": 4,
+    "unidade": "Rolim de Moura",
+    "proprietario": "Bernardo"
+  },
+  {
+    "id": "71901",
+    "data": "2026-09-10",
     "pacienteNome": "MARIA",
     "regiao": "TRAÇADO",
     "valor": 4,
