@@ -89,6 +89,13 @@ export function App() {
     setIsMobileMenuOpen(false);
   };
 
+  // Tranca o Financeiro automaticamente sempre que o usuário navegar para qualquer outra aba
+  useEffect(() => {
+    if (activeTab !== 'financeiro') {
+      setFinanceiroDesbloqueado(false);
+    }
+  }, [activeTab]);
+
   // Notificações Toast
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
