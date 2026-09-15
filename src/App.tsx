@@ -23,6 +23,7 @@ import { PaginaAgendamentoOnlinePublico } from './components/agenda/PaginaAgenda
 import { PainelDentistas } from './components/agenda/PainelDentistas';
 import { registrarSessaoDispositivoAtual } from './services/securityService';
 import { ModalPlanoEExpiracao } from './components/ModalPlanoEExpiracao';
+import { ModalSenhaFinanceiro } from './components/ModalSenhaFinanceiro';
 import { ToastContainer, type ToastMessage } from './components/Toast';
 import LOGO_BASE64 from './assets/logoData';
 
@@ -72,6 +73,21 @@ export function App() {
   // Navegação
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [pacientePerfilSelecionado, setPacientePerfilSelecionado] = useState<Paciente | null>(null);
+  const [financeiroDesbloqueado, setFinanceiroDesbloqueado] = useState<boolean>(false);
+  const [modalSenhaFinanceiroAberto, setModalSenhaFinanceiroAberto] = useState<boolean>(false);
+
+  const handleNavegarParaAba = (tab: string) => {
+    if (usuarioLogado?.role === 'cliente' && tab === 'producao') return;
+    if (tab === 'financeiro' && !financeiroDesbloqueado) {
+      setModalSenhaFinanceiroAberto(true);
+      return;
+    }
+    setActiveTab(tab);
+    if (tab !== 'perfil_paciente') {
+      setPacientePerfilSelecionado(null);
+    }
+    setIsMobileMenuOpen(false);
+  };
 
   // Notificações Toast
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -520,12 +536,7 @@ export function App() {
       {/* Sidebar Retrátil & Menu Mobile */}
       <Sidebar
         activeTab={activeTab === 'perfil_paciente' ? 'pacientes' : activeTab}
-        onNavigate={(tab) => {
-          if (usuarioLogado?.role === 'cliente' && tab === 'producao') return;
-          setActiveTab(tab);
-          setPacientePerfilSelecionado(null);
-          setIsMobileMenuOpen(false);
-        }}
+        onNavigate={handleNavegarParaAba}
         isCollapsed={isSidebarCollapsed}
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         isMobileOpen={isMobileMenuOpen}
@@ -550,10 +561,7 @@ export function App() {
           onToggleDarkMode={() => setDarkMode(!darkMode)}
           usuarioLogado={usuarioLogado}
           onLogout={handleLogout}
-          onNavigate={(tab) => {
-            if (usuarioLogado?.role === 'cliente' && tab === 'producao') return;
-            setActiveTab(tab);
-          }}
+          onNavigate={handleNavegarParaAba}
           pacientes={pacientes}
           consultas={consultas}
           onSelectPaciente={(p) => handleVerPerfilPaciente(p)}
@@ -609,7 +617,7 @@ export function App() {
         <main className="p-3 sm:p-6 flex-1 box-border w-full max-w-full transition-all">
           {activeTab === 'dashboard' && (
             <Dashboard
-              onNavigate={setActiveTab}
+              onNavigate={handleNavegarParaAba}
               darkMode={darkMode}
               userRole={usuarioLogado?.role || 'admin'}
               usuarioId={usuarioLogado?.id}
@@ -723,6 +731,10 @@ export function App() {
               darkMode={darkMode}
               userRole={usuarioLogado?.role || 'admin'}
               usuarioId={usuarioLogado?.id}
+              onTrancarFinanceiro={() => {
+                setFinanceiroDesbloqueado(false);
+                setActiveTab('dashboard');
+              }}
             />
           )}
 
@@ -864,6 +876,22 @@ export function App() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Modal de Senha para Acesso Restrito ao Financeiro */}
+      {modalSenhaFinanceiroAberto && (
+        <ModalSenhaFinanceiro
+          darkMode={darkMode}
+          usuarioLogado={usuarioLogado}
+          onSucesso={() => {
+            setModalSenhaFinanceiroAberto(false);
+            setFinanceiroDesbloqueado(true);
+            setActiveTab('financeiro');
+          }}
+          onCancelar={() => {
+            setModalSenhaFinanceiroAberto(false);
+          }}
+        />
       )}
     </div>
   );

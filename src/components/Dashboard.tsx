@@ -14,7 +14,9 @@ import {
   Clock,
   ArrowDownRight,
   PieChart,
-  Users
+  Users,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 import { getUserKeys, getProducaoComoTransacoes, getItemJSON } from '../services/cloudSync';
@@ -36,6 +38,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const userKeys = getUserKeys(usuarioId);
   const chaveFinanceiro = userKeys.FINANCEIRO;
+
+  // Estado para Ocultar / Visualizar Valores no Dashboard (Modo Privacidade)
+  const [ocultarValores, setOcultarValores] = useState<boolean>(() => {
+    return localStorage.getItem('odonto_ocultar_valores_dashboard') === 'true';
+  });
+
+  const toggleOcultarValores = () => {
+    setOcultarValores((prev) => {
+      const next = !prev;
+      localStorage.setItem('odonto_ocultar_valores_dashboard', String(next));
+      return next;
+    });
+  };
+
+  const formatarValor = (valor: number, prefix: string = 'R$ ') => {
+    if (ocultarValores) {
+      return '••••••';
+    }
+    return `${prefix}${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+  };
 
   const [transacoesFinanceiras, setTransacoesFinanceiras] = useState<TransacaoPessoal[]>(() => {
     return getItemJSON<TransacaoPessoal[]>(chaveFinanceiro, []);
@@ -144,7 +166,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={toggleOcultarValores}
+              className={`px-4 py-3 rounded-2xl text-xs font-bold border transition-all flex items-center gap-2 cursor-pointer ${
+                ocultarValores
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30'
+                  : 'bg-slate-800/80 text-slate-200 border-slate-700 hover:bg-slate-700'
+              }`}
+              title={ocultarValores ? 'Exibir Valores Financeiros' : 'Ocultar Valores Financeiros'}
+            >
+              {ocultarValores ? (
+                <>
+                  <EyeOff className="w-4.5 h-4.5 text-amber-400" />
+                  <span>Valores Ocultos</span>
+                </>
+              ) : (
+                <>
+                  <Eye className="w-4.5 h-4.5 text-teal-400" />
+                  <span>Ocultar Valores</span>
+                </>
+              )}
+            </button>
+
             <button
               onClick={() => onNavigate('financeiro')}
               className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold px-5 py-3 rounded-2xl text-xs shadow-xl shadow-teal-500/25 transition-all flex items-center gap-2 cursor-pointer hover:scale-[1.03]"
@@ -167,7 +211,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
           <p className="text-2xl sm:text-3xl font-black mt-3 text-emerald-400 tracking-tight">
-            R$ {totalEntradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            {formatarValor(totalEntradas)}
           </p>
           <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-emerald-300">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Salário & Rendas Cadastradas
@@ -183,7 +227,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
           <p className="text-2xl sm:text-3xl font-black mt-3 text-rose-400 tracking-tight">
-            R$ {totalDespesasGerais.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            {formatarValor(totalDespesasGerais)}
           </p>
           <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-rose-300">
             <ArrowDownRight className="w-3.5 h-3.5 text-rose-400" /> Comprometimento de {comprometimentoRenda}%
@@ -199,7 +243,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
           <p className={`text-2xl sm:text-3xl font-black mt-3 tracking-tight ${saldoLiquidoGeral >= 0 ? 'text-teal-300' : 'text-rose-400'}`}>
-            R$ {saldoLiquidoGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            {formatarValor(saldoLiquidoGeral)}
           </p>
           <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-teal-300">
             <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
@@ -267,7 +311,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <div className="flex justify-between items-center text-xs font-normal">
                         <span className="text-white font-semibold">{cat.categoria}</span>
                         <span className="text-rose-400 font-bold">
-                          R$ {cat.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          {formatarValor(cat.valor)}
                         </span>
                       </div>
 
@@ -316,12 +360,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
 
             <h3 className={`text-2xl font-black tracking-tight ${saldoLiquidoGeral >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-              R$ {saldoLiquidoGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              {formatarValor(saldoLiquidoGeral)}
             </h3>
 
             <div className="flex justify-between text-[11px] text-slate-300 pt-2 border-t border-slate-800/80 font-normal">
-              <span>Fixas: <strong className="font-bold text-white">R$ {totalDespesasFixas.toLocaleString('pt-BR')}</strong></span>
-              <span>Variáveis: <strong className="font-bold text-white">R$ {totalDespesasVariaveis.toLocaleString('pt-BR')}</strong></span>
+              <span>Fixas: <strong className="font-bold text-white">{formatarValor(totalDespesasFixas)}</strong></span>
+              <span>Variáveis: <strong className="font-bold text-white">{formatarValor(totalDespesasVariaveis)}</strong></span>
             </div>
           </div>
 

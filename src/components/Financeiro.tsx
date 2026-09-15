@@ -31,13 +31,15 @@ import {
   Camera,
   Calendar,
   Compass,
-  Mic
+  Mic,
+  Lock
 } from 'lucide-react';
 
 interface FinanceiroProps {
   darkMode?: boolean;
   userRole?: 'admin' | 'cliente';
   usuarioId?: string;
+  onTrancarFinanceiro?: () => void;
 }
 
 const CATEGORIAS_PESSOAIS = [
@@ -54,7 +56,7 @@ const CATEGORIAS_PESSOAIS = [
   'Materiais & Outros'
 ];
 
-export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) => {
+export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId, onTrancarFinanceiro }) => {
   const userKeys = getUserKeys(usuarioId);
   const STORAGE_KEY = userKeys.FINANCEIRO;
 
@@ -458,6 +460,16 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId }) =
           >
             <Camera className="w-4 h-4" /> Ler Foto (OCR IA)
           </button>
+
+          {onTrancarFinanceiro && (
+            <button
+              onClick={onTrancarFinanceiro}
+              className="bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 shadow-md cursor-pointer transition-all hover:scale-105"
+              title="Bloquear acesso à aba Financeiro com senha"
+            >
+              <Lock className="w-4 h-4 text-amber-400" /> Trancar
+            </button>
+          )}
         </div>
       </div>
 
