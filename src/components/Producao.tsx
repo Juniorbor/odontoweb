@@ -38,6 +38,16 @@ interface ProducaoProps {
 const CLINICAS_FERNANDO = ['Ariquemes', 'Machadinho', 'Cacoal', 'Porto Velho'] as const;
 const CLINICAS_BERNARDO = ['Rolim de Moura', 'Ouro Preto', 'Ji-Paraná'] as const;
 
+// Função de fusão inteligente para garantir que exames adicionados localmente NUNCA sejam sobrescritos por respostas antigas do servidor
+const smartMergeProducao = (local: ItemProducaoTomo[], remote: ItemProducaoTomo[]): ItemProducaoTomo[] => {
+  if (!Array.isArray(remote) || remote.length === 0) return local;
+  if (!Array.isArray(local) || local.length === 0) return remote;
+
+  const remoteIds = new Set(remote.map((i) => i && i.id));
+  const missingLocals = local.filter((i) => i && i.id && !remoteIds.has(i.id));
+
+  return [...missingLocals, ...remote];
+};
 
 export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   const userKeys = getUserKeys(usuarioId);
@@ -120,47 +130,45 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   useEffect(() => {
     setSincronizando(true);
 
-    const mergeEAtualizar = (payloadProducao?: ItemProducaoTomo[], payloadFechamentos?: FechamentoProducao[]) => {
-      if (Array.isArray(payloadProducao) && payloadProducao.length > 0) {
-        setItens(payloadProducao);
-        const str = JSON.stringify(payloadProducao);
+    const mergeEAtualizar = (payloadProducao: ItemProducaoTomo[]) => {
+      if (!Array.isArray(payloadProducao)) return;
+      setItens((localAtual) => {
+        const merged = smartMergeProducao(localAtual, payloadProducao);
+        const str = JSON.stringify(merged);
         localStorage.setItem(STORAGE_KEY, str);
         localStorage.setItem('odonto_producao_backup_permanent', str);
         localStorage.setItem('odonto_producao_registros_usr_admin_master', str);
         localStorage.setItem('odonto_producao_registros_v2', str);
         localStorage.setItem('odonto_producao_registros', str);
-      }
-      if (Array.isArray(payloadFechamentos)) {
-        setFechamentos(payloadFechamentos);
-        localStorage.setItem(STORAGE_KEY_FECHAMENTOS, JSON.stringify(payloadFechamentos));
-      }
+        return merged;
+      });
     };
 
     pullFromCloud((payload) => {
-      if (Array.isArray(payload.producao) || Array.isArray(payload.fechamentos)) {
-        mergeEAtualizar(payload.producao, payload.fechamentos);
+      if (Array.isArray(payload.producao)) {
+        mergeEAtualizar(payload.producao);
       }
       setSincronizando(false);
     }, true, usuarioId);
 
     const unsubscribeBroadcast = subscribeLocalBroadcast((payload) => {
-      if (Array.isArray(payload.producao) || Array.isArray(payload.fechamentos)) {
-        mergeEAtualizar(payload.producao, payload.fechamentos);
+      if (Array.isArray(payload.producao)) {
+        mergeEAtualizar(payload.producao);
       }
     }, usuarioId);
 
     const interval = setInterval(() => {
       pullFromCloud((payload) => {
-        if (Array.isArray(payload.producao) || Array.isArray(payload.fechamentos)) {
-          mergeEAtualizar(payload.producao, payload.fechamentos);
+        if (Array.isArray(payload.producao)) {
+          mergeEAtualizar(payload.producao);
         }
       }, false, usuarioId);
     }, 3000);
 
     const handleFocus = () => {
       pullFromCloud((payload) => {
-        if (Array.isArray(payload.producao) || Array.isArray(payload.fechamentos)) {
-          mergeEAtualizar(payload.producao, payload.fechamentos);
+        if (Array.isArray(payload.producao)) {
+          mergeEAtualizar(payload.producao);
         }
       }, true, usuarioId);
     };
@@ -171,7 +179,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
       clearInterval(interval);
       window.removeEventListener('focus', handleFocus);
     };
-  }, [usuarioId, STORAGE_KEY, STORAGE_KEY_FECHAMENTOS]);
+  }, [usuarioId, STORAGE_KEY]);
 
   const [proprietarioFiltro, setProprietarioFiltro] = useState<'Todos' | 'Fernando' | 'Bernardo'>('Todos');
   const [unidadeFiltro, setUnidadeFiltro] = useState<string>('Todas');
