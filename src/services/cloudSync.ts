@@ -29,6 +29,8 @@ export interface CloudDataPayload {
   pacientes?: any[];
   consultas?: any[];
   fotografias?: any[];
+  saldoContaPessoal?: number;
+  bancoNomePessoal?: string;
   onlineUsers?: UsuarioOnlineInfo[];
   updatedAt?: number;
   updatedBy?: string;
@@ -44,6 +46,7 @@ export const KEYS = {
   PRODUCAO: 'odonto_producao_registros_v2',
   FECHAMENTOS: 'odonto_fechamentos_producao_v1',
   FINANCEIRO: 'odonto_financeiro_pessoal_v1',
+  SALDO_CONTA_PESSOAL: 'odonto_saldo_conta_pessoal_v1',
   PACIENTES: 'odonto_pacientes_v1',
   CONSULTAS: 'odonto_consultas_v1',
   FOTOGRAFIAS: 'odonto_fotografias_v1',
@@ -56,6 +59,7 @@ export function getUserKeys(usuarioId?: string) {
     PRODUCAO: uid === 'usr-admin-master' ? 'odonto_producao_registros_usr_admin_master' : `odonto_producao_registros_${uid}`,
     FECHAMENTOS: uid === 'usr-admin-master' ? 'odonto_fechamentos_producao_usr_admin_master' : `odonto_fechamentos_producao_${uid}`,
     FINANCEIRO: uid === 'usr-admin-master' ? 'odonto_financeiro_pessoal_usr_admin_master' : `odonto_financeiro_pessoal_${uid}`,
+    SALDO_CONTA_PESSOAL: uid === 'usr-admin-master' ? 'odonto_saldo_conta_pessoal_usr_admin_master' : `odonto_saldo_conta_pessoal_${uid}`,
     LAST_UPDATE: `odonto_last_sync_timestamp_${uid}`
   };
 }

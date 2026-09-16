@@ -16,10 +16,14 @@ import {
   PieChart,
   Users,
   Eye,
-  EyeOff
+  EyeOff,
+  Landmark,
+  Edit3,
+  X,
+  Check
 } from 'lucide-react';
 
-import { getUserKeys, getProducaoComoTransacoes, getItemJSON } from '../services/cloudSync';
+import { getUserKeys, getProducaoComoTransacoes, getItemJSON, pushToCloud } from '../services/cloudSync';
 
 interface DashboardProps {
   onNavigate: (tab: string) => void;
@@ -89,6 +93,43 @@ export const Dashboard: React.FC<DashboardProps> = ({
     ...prodSegura
   ];
 
+  const chaveSaldoConta = userKeys.SALDO_CONTA_PESSOAL || 'odonto_saldo_conta_pessoal_v1';
+
+  // Estado para Saldo em Conta Pessoal (Minha Conta)
+  const [saldoContaPessoal, setSaldoContaPessoal] = useState<number>(() => {
+    const val = localStorage.getItem(chaveSaldoConta);
+    return val !== null ? parseFloat(val) : 0;
+  });
+
+  const [bancoNomePessoal, setBancoNomePessoal] = useState<string>(() => {
+    return localStorage.getItem(`${chaveSaldoConta}_banco`) || 'Conta Bancária Pessoal';
+  });
+
+  const [modalContaAberto, setModalContaAberto] = useState<boolean>(false);
+  const [inputNovoSaldo, setInputNovoSaldo] = useState<string>('');
+  const [inputNovoBanco, setInputNovoBanco] = useState<string>('');
+
+  const handleAbrirModalConta = () => {
+    setInputNovoSaldo(String(saldoContaPessoal));
+    setInputNovoBanco(bancoNomePessoal);
+    setModalContaAberto(true);
+  };
+
+  const handleSalvarSaldoConta = (e: React.FormEvent) => {
+    e.preventDefault();
+    const valorNum = parseFloat(inputNovoSaldo.replace(',', '.')) || 0;
+    const bancoStr = inputNovoBanco.trim() || 'Conta Bancária Pessoal';
+
+    setSaldoContaPessoal(valorNum);
+    setBancoNomePessoal(bancoStr);
+
+    localStorage.setItem(chaveSaldoConta, String(valorNum));
+    localStorage.setItem(`${chaveSaldoConta}_banco`, bancoStr);
+
+    pushToCloud({ saldoContaPessoal: valorNum, bancoNomePessoal: bancoStr }, usuarioId);
+    setModalContaAberto(false);
+  };
+
   // --- ESTATÍSTICAS DO FINANCEIRO PESSOAL DO USUÁRIO ---
   const totalEntradas = todasTransacoesCombinadas
     .filter((t) => t.tipo === 'Entrada')
@@ -103,7 +144,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     .reduce((acc, t) => acc + t.valor, 0);
 
   const totalDespesasGerais = totalDespesasFixas + totalDespesasVariaveis;
-  const saldoLiquidoGeral = totalEntradas - totalDespesasGerais;
+  const saldoOperacional = totalEntradas - totalDespesasGerais;
+  const saldoLiquidoConsolidado = saldoOperacional + saldoContaPessoal;
   
   const comprometimentoRenda = totalEntradas > 0 
     ? Math.round((totalDespesasGerais / totalEntradas) * 100) 
@@ -234,7 +276,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        {/* KPI 3: Saldo Líquido */}
+        {/* KPI 3: Saldo Líquido Consolidado */}
         <div className="card-cyber p-5 rounded-3xl transition-all hover:scale-[1.02]">
           <div className="flex items-center justify-between">
             <p className="text-xs font-bold text-teal-400 uppercase tracking-wider">Saldo Líquido Disponível</p>
@@ -242,12 +284,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <Wallet className="w-6 h-6" />
             </div>
           </div>
-          <p className={`text-2xl sm:text-3xl font-black mt-3 tracking-tight ${saldoLiquidoGeral >= 0 ? 'text-teal-300' : 'text-rose-400'}`}>
-            {formatarValor(saldoLiquidoGeral)}
+          <p className={`text-2xl sm:text-3xl font-black mt-3 tracking-tight ${saldoLiquidoConsolidado >= 0 ? 'text-teal-300' : 'text-rose-400'}`}>
+            {formatarValor(saldoLiquidoConsolidado)}
           </p>
-          <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-teal-300">
-            <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
-            <span>Balanço Orçamentário Atual</span>
+          <div className="mt-2 flex items-center justify-between text-[11px] font-bold text-teal-300 border-t border-teal-500/20 pt-1.5">
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+              <span>Consolidado (+ Conta)</span>
+            </span>
+            {saldoContaPessoal > 0 && (
+              <span className="text-[10px] text-indigo-300 bg-indigo-500/20 px-2 py-0.5 rounded border border-indigo-500/30">
+                + {formatarValor(saldoContaPessoal)} na conta
+              </span>
+            )}
           </div>
         </div>
 
@@ -266,6 +315,42 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <Clock className="w-3.5 h-3.5 text-amber-400" /> {totalContasPendentes} pendentes em aberto
           </div>
         </div>
+      </div>
+
+      {/* CARD DEDICADO "MINHA CONTA PESSOAL" */}
+      <div className="p-5 sm:p-6 rounded-3xl border shadow-xl bg-gradient-to-r from-slate-900 via-slate-950 to-indigo-950 border-indigo-500/30 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex items-center gap-4">
+          <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-sky-500/10 text-indigo-400 border border-indigo-500/30 shadow-lg shrink-0">
+            <Landmark className="w-7 h-7 text-indigo-400" />
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider text-indigo-300 bg-indigo-500/20 px-2.5 py-0.5 rounded-full border border-indigo-500/30">
+                Minha Conta Pessoal
+              </span>
+              <span className="text-xs text-slate-400 font-bold">{bancoNomePessoal}</span>
+            </div>
+
+            <h3 className="text-xl font-extrabold text-white mt-1 flex items-center gap-3">
+              <span>Saldo em Conta:</span>
+              <span className="text-2xl font-black text-indigo-300 tracking-tight">
+                {formatarValor(saldoContaPessoal)}
+              </span>
+            </h3>
+
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Este valor é somado automaticamente ao <strong className="text-teal-400 font-bold">Saldo Líquido Disponível</strong> no Dashboard para calcular seu patrimônio líquido total.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={handleAbrirModalConta}
+          className="px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white font-extrabold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 cursor-pointer transition-all hover:scale-105 shrink-0 w-full sm:w-auto"
+        >
+          <Edit3 className="w-4 h-4" /> ✏️ Atualizar Saldo da Minha Conta
+        </button>
       </div>
 
       {/* ASSISTENTE DE IA FINBOT & GAMIFICAÇÃO */}
@@ -359,8 +444,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </span>
             </div>
 
-            <h3 className={`text-2xl font-black tracking-tight ${saldoLiquidoGeral >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-              {formatarValor(saldoLiquidoGeral)}
+            <h3 className={`text-2xl font-black tracking-tight ${saldoOperacional >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              {formatarValor(saldoOperacional)}
             </h3>
 
             <div className="flex justify-between text-[11px] text-slate-300 pt-2 border-t border-slate-800/80 font-normal">
@@ -394,6 +479,89 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
       </div>
+
+      {/* MODAL DE EDIÇÃO DO SALDO DA MINHA CONTA PESSOAL */}
+      {modalContaAberto && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
+          <div className={`w-full max-w-md rounded-3xl border shadow-2xl p-6 relative overflow-hidden space-y-5 ${
+            darkMode ? 'bg-slate-900 border-indigo-900/60 text-white' : 'bg-white border-indigo-200 text-slate-900'
+          }`}>
+            <button
+              onClick={() => setModalContaAberto(false)}
+              className="absolute right-4 top-4 p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800/80 hover:bg-slate-800 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+              <div className="p-3 rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">
+                <Landmark className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                  Minha Conta Bancária
+                </span>
+                <h3 className="text-lg font-black mt-0.5">
+                  Atualizar Saldo em Conta
+                </h3>
+              </div>
+            </div>
+
+            <form onSubmit={handleSalvarSaldoConta} className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-slate-400 block mb-1">Identificação / Nome da Conta ou Banco</label>
+                <input
+                  type="text"
+                  required
+                  value={inputNovoBanco}
+                  onChange={(e) => setInputNovoBanco(e.target.value)}
+                  placeholder="Ex: Itaú, Bradesco, Banco Inter, Carteira Pessoal"
+                  className={`w-full p-3 rounded-xl text-xs border outline-none font-bold ${
+                    darkMode ? 'bg-slate-950 border-slate-800 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-400 block mb-1">Saldo Actual da Conta (R$)</label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-3.5 text-xs font-black text-indigo-400">R$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={inputNovoSaldo}
+                    onChange={(e) => setInputNovoSaldo(e.target.value)}
+                    placeholder="0.00"
+                    className={`w-full pl-10 pr-4 py-3 rounded-xl text-base border outline-none font-black ${
+                      darkMode ? 'bg-slate-950 border-slate-800 text-white focus:border-indigo-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-indigo-500'
+                    }`}
+                  />
+                </div>
+                <span className="text-[11px] text-slate-400 mt-1 block">
+                  💡 Este valor será calculado junto com o Saldo Líquido Disponível no Dashboard.
+                </span>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-800/40">
+                <button
+                  type="button"
+                  onClick={() => setModalContaAberto(false)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 hover:text-white cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white shadow-lg shadow-indigo-600/30 cursor-pointer transition-all hover:scale-105"
+                >
+                  <Check className="w-4 h-4 inline mr-1" /> Salvar Saldo na Conta
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
