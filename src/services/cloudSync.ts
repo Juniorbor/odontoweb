@@ -1,5 +1,7 @@
-// Serviço de Sincronização em Nuvem em Tempo Real com Presença de Usuários Online
+// Serviço de Sincronização em Nuvem em Tempo Real com Presença de Usuários Online e Backup Persistente
 import { DADOS_PRODUCAO_EXCEL } from '../data/dadosProducaoExcel';
+
+const GIST_ID = 'd0ae37f57a78f4de102c0d5852aa7bc4';
 
 const getCloudEndpoint = () => {
   if (typeof window !== 'undefined') {
@@ -98,28 +100,31 @@ export async function pushToCloud(
     const timestamp = Date.now();
     const keys = getUserKeys(usuarioId);
 
-    // Salva imediatamente em localStorage local no repositório isolado do usuário + Backup Permanente de Quad-Redundância
-    if (Array.isArray(data.producao) && data.producao.length > 0) {
+    // Salva imediatamente em localStorage local no repositório isolado do usuário
+    if (Array.isArray(data.producao)) {
       const str = JSON.stringify(data.producao);
       localStorage.setItem(keys.PRODUCAO, str);
       localStorage.setItem('odonto_producao_backup_permanent', str);
       localStorage.setItem('odonto_producao_registros_usr_admin_master', str);
       localStorage.setItem('odonto_producao_registros_v2', str);
       localStorage.setItem('odonto_producao_registros', str);
-    } else if (Array.isArray(data.producao)) {
-      localStorage.setItem(keys.PRODUCAO, JSON.stringify(data.producao));
     }
 
-    if (Array.isArray(data.financeiro) && data.financeiro.length > 0) {
+    if (Array.isArray(data.fechamentos)) {
+      const str = JSON.stringify(data.fechamentos);
+      localStorage.setItem(keys.FECHAMENTOS, str);
+      localStorage.setItem('odonto_fechamentos_producao_usr_admin_master', str);
+    }
+
+    if (Array.isArray(data.financeiro)) {
       const str = JSON.stringify(data.financeiro);
       localStorage.setItem(keys.FINANCEIRO, str);
       localStorage.setItem('odonto_financeiro_backup_permanent', str);
       localStorage.setItem('odonto_financeiro_pessoal_usr_admin_master', str);
       localStorage.setItem('odonto_financeiro_pessoal_v1', str);
       localStorage.setItem('odonto_financeiro_pessoal', str);
-    } else if (Array.isArray(data.financeiro)) {
-      localStorage.setItem(keys.FINANCEIRO, JSON.stringify(data.financeiro));
     }
+
     if (Array.isArray(data.pacientes)) {
       localStorage.setItem(KEYS.PACIENTES, JSON.stringify(data.pacientes));
     }
@@ -130,15 +135,26 @@ export async function pushToCloud(
       localStorage.setItem(KEYS.FOTOGRAFIAS, JSON.stringify(data.fotografias));
     }
 
+    if (data.saldoContaPessoal !== undefined) {
+      localStorage.setItem(keys.SALDO_CONTA_PESSOAL, data.saldoContaPessoal.toString());
+    }
+    if (data.bancoNomePessoal !== undefined) {
+      localStorage.setItem(`${keys.SALDO_CONTA_PESSOAL}_banco`, data.bancoNomePessoal);
+      localStorage.setItem('odonto_banco_nome_pessoal_v1', data.bancoNomePessoal);
+    }
+
     localStorage.setItem(keys.LAST_UPDATE, timestamp.toString());
 
     const payload: CloudDataPayload & { heartbeat?: any } = {
       usuarioId: usuarioId || 'usr-admin-master',
       producao: data.producao !== undefined ? data.producao : getItemJSON(keys.PRODUCAO, []),
+      fechamentos: data.fechamentos !== undefined ? data.fechamentos : getItemJSON(keys.FECHAMENTOS, []),
       financeiro: data.financeiro !== undefined ? data.financeiro : getItemJSON(keys.FINANCEIRO, []),
       pacientes: data.pacientes !== undefined ? data.pacientes : getItemJSON(KEYS.PACIENTES, []),
       consultas: data.consultas !== undefined ? data.consultas : getItemJSON(KEYS.CONSULTAS, []),
       fotografias: data.fotografias !== undefined ? data.fotografias : getItemJSON(KEYS.FOTOGRAFIAS, []),
+      saldoContaPessoal: data.saldoContaPessoal !== undefined ? data.saldoContaPessoal : Number(localStorage.getItem(keys.SALDO_CONTA_PESSOAL) || '0'),
+      bancoNomePessoal: data.bancoNomePessoal !== undefined ? data.bancoNomePessoal : (localStorage.getItem(`${keys.SALDO_CONTA_PESSOAL}_banco`) || 'Conta Bancária Pessoal'),
       updatedAt: timestamp,
       updatedBy: typeof window !== 'undefined' && window.innerWidth < 768 ? 'Celular (Android/iOS)' : 'Notebook/PC'
     };
@@ -192,6 +208,7 @@ export async function pullFromCloud(
 
   const localProducao = getItemJSON(keys.PRODUCAO, []);
   const localFinanceiro = getItemJSON(keys.FINANCEIRO, []);
+  const localFechamentos = getItemJSON(keys.FECHAMENTOS, []);
 
   try {
     let url = `${getCloudEndpoint()}?usuarioId=${encodeURIComponent(usuarioId || 'usr-admin-master')}`;
@@ -199,69 +216,89 @@ export async function pullFromCloud(
       url += `&hbUsuarioId=${encodeURIComponent(usuarioId)}&hbNome=${encodeURIComponent(usuarioLogadoInfo.nome)}&hbEmail=${encodeURIComponent(usuarioLogadoInfo.email)}&hbRole=${encodeURIComponent(usuarioLogadoInfo.role)}`;
     }
 
-    const res = await fetch(url, {
-      headers: { 'Accept': 'application/json' }
-    });
-    
-    if (!res.ok) {
-      onUpdate({
-        producao: localProducao,
-        financeiro: localFinanceiro,
-        onlineUsers: []
-      });
-      isSyncing = false;
-      return false;
+    let cloudData: CloudDataPayload = {};
+    let fetchOk = false;
+
+    try {
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      if (res.ok) {
+        const result = await res.json();
+        cloudData = result.data || {};
+        fetchOk = true;
+      }
+    } catch (e) {
+      console.warn('Erro ao consultar endpoint de sync:', e);
     }
 
-    const result = await res.json();
-    const cloudData: CloudDataPayload = result.data || {};
+    // Fallback direto via CDN Gist Raw se o endpoint serverless falhar ou não retornar dados válidos
+    if (!fetchOk || !cloudData.updatedAt) {
+      try {
+        const rawRes = await fetch(`https://gist.githubusercontent.com/Juniorbor/${GIST_ID}/raw/store.json?t=${Date.now()}`);
+        if (rawRes.ok) {
+          const fullGist = await rawRes.json();
+          const uidKey = usuarioId || 'usr-admin-master';
+          if (fullGist && fullGist[uidKey]) {
+            cloudData = fullGist[uidKey];
+          }
+        }
+      } catch (e) {}
+    }
 
     const remoteTimestamp = cloudData.updatedAt || 0;
     const localTimestamp = Number(localStorage.getItem(keys.LAST_UPDATE) || '0');
 
-    // Se a nuvem estiver com timestamp zerado (cold start da serverless) e o dispositivo local tiver registros, envia os dados locais para a nuvem
-    if (remoteTimestamp === 0 && (localProducao.length > 0 || localFinanceiro.length > 0)) {
-      pushToCloud({
-        producao: localProducao,
-        financeiro: localFinanceiro,
-        pacientes: getItemJSON(KEYS.PACIENTES, []),
-        consultas: getItemJSON(KEYS.CONSULTAS, []),
-        fotografias: getItemJSON(KEYS.FOTOGRAFIAS, [])
-      }, usuarioId, usuarioLogadoInfo);
-
-      onUpdate({
-        ...cloudData,
-        producao: localProducao,
-        financeiro: localFinanceiro
-      });
-      isSyncing = false;
-      return true;
-    }
-
-    // Se o timestamp remoto for mais recente que o local, adota integralmente os dados atualizados da nuvem (incluindo exclusões efetuadas em outro dispositivo)
-    if (remoteTimestamp > localTimestamp) {
+    // Se o timestamp remoto for mais recente ou igual na primeira carga forçada, adota os dados atualizados da nuvem
+    if (remoteTimestamp > localTimestamp || (_force && remoteTimestamp > 0)) {
       if (Array.isArray(cloudData.producao)) {
         const str = JSON.stringify(cloudData.producao);
         localStorage.setItem(keys.PRODUCAO, str);
         localStorage.setItem('odonto_producao_backup_permanent', str);
         localStorage.setItem('odonto_producao_registros_usr_admin_master', str);
         localStorage.setItem('odonto_producao_registros_v2', str);
+        localStorage.setItem('odonto_producao_registros', str);
       }
+
+      if (Array.isArray(cloudData.fechamentos)) {
+        const str = JSON.stringify(cloudData.fechamentos);
+        localStorage.setItem(keys.FECHAMENTOS, str);
+        localStorage.setItem('odonto_fechamentos_producao_usr_admin_master', str);
+      }
+
       if (Array.isArray(cloudData.financeiro)) {
         const str = JSON.stringify(cloudData.financeiro);
         localStorage.setItem(keys.FINANCEIRO, str);
         localStorage.setItem('odonto_financeiro_backup_permanent', str);
         localStorage.setItem('odonto_financeiro_pessoal_usr_admin_master', str);
         localStorage.setItem('odonto_financeiro_pessoal_v1', str);
+        localStorage.setItem('odonto_financeiro_pessoal', str);
       }
-      localStorage.setItem(keys.LAST_UPDATE, remoteTimestamp.toString());
+
+      if (Array.isArray(cloudData.pacientes)) {
+        localStorage.setItem(KEYS.PACIENTES, JSON.stringify(cloudData.pacientes));
+      }
+      if (Array.isArray(cloudData.consultas)) {
+        localStorage.setItem(KEYS.CONSULTAS, JSON.stringify(cloudData.consultas));
+      }
+      if (Array.isArray(cloudData.fotografias)) {
+        localStorage.setItem(KEYS.FOTOGRAFIAS, JSON.stringify(cloudData.fotografias));
+      }
+
+      if (cloudData.saldoContaPessoal !== undefined) {
+        localStorage.setItem(keys.SALDO_CONTA_PESSOAL, cloudData.saldoContaPessoal.toString());
+      }
+      if (cloudData.bancoNomePessoal !== undefined) {
+        localStorage.setItem(`${keys.SALDO_CONTA_PESSOAL}_banco`, cloudData.bancoNomePessoal);
+        localStorage.setItem('odonto_banco_nome_pessoal_v1', cloudData.bancoNomePessoal);
+      }
+
+      localStorage.setItem(keys.LAST_UPDATE, (remoteTimestamp || Date.now()).toString());
       onUpdate(cloudData);
     } else {
-      // Preserva os dados locais seguros e mistura os usuarios online
       onUpdate({
         ...cloudData,
-        producao: localProducao,
-        financeiro: localFinanceiro
+        producao: localProducao.length > 0 ? localProducao : cloudData.producao,
+        fechamentos: localFechamentos.length > 0 ? localFechamentos : cloudData.fechamentos,
+        financeiro: localFinanceiro.length > 0 ? localFinanceiro : cloudData.financeiro
       });
     }
 
@@ -270,6 +307,7 @@ export async function pullFromCloud(
   } catch (e) {
     onUpdate({
       producao: localProducao,
+      fechamentos: localFechamentos,
       financeiro: localFinanceiro,
       onlineUsers: []
     });
@@ -301,7 +339,6 @@ export function getItemJSON<T = any>(key: string, fallback: T): T {
   try {
     let item = localStorage.getItem(key);
 
-    // Se a chave for estritamente nula (sem registro salvo ainda), procura nos backups legados
     if (item === null && key.includes('odonto_producao_registros')) {
       const keysToTry = [
         'odonto_producao_backup_permanent',
