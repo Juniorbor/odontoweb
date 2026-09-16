@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { ItemProducaoTomo } from '../types';
+import type { ItemProducaoTomo, FechamentoProducao } from '../types';
 import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, getUserKeys, getItemJSON } from '../services/cloudSync';
 import { WhatsappNotificacoes } from './WhatsappNotificacoes';
 import { DADOS_PRODUCAO_EXCEL } from '../data/dadosProducaoExcel';
@@ -20,7 +20,14 @@ import {
   AlertTriangle,
   RefreshCw,
   PieChart,
-  MessageSquare
+  MessageSquare,
+  Lock,
+  FolderArchive,
+  RotateCcw,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Copy
 } from 'lucide-react';
 
 interface ProducaoProps {
@@ -70,8 +77,14 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
     return DADOS_PRODUCAO_EXCEL;
   });
 
+  const STORAGE_KEY_FECHAMENTOS = userKeys.FECHAMENTOS;
+
+  const [fechamentos, setFechamentos] = useState<FechamentoProducao[]>(() => {
+    return getItemJSON<FechamentoProducao[]>(STORAGE_KEY_FECHAMENTOS, []);
+  });
+
   const [sincronizando, setSincronizando] = useState<boolean>(false);
-  const [subAba, setSubAba] = useState<'producao' | 'whatsapp'>('producao');
+  const [subAba, setSubAba] = useState<'producao' | 'historico' | 'whatsapp'>('producao');
   const [erroForm, setErroForm] = useState<string>('');
   const [sucessoMsg, setSucessoMsg] = useState<string>('');
 
@@ -87,6 +100,13 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
     }
   }, [itens, STORAGE_KEY]);
 
+  useEffect(() => {
+    if (Array.isArray(fechamentos)) {
+      const str = JSON.stringify(fechamentos);
+      localStorage.setItem(STORAGE_KEY_FECHAMENTOS, str);
+    }
+  }, [fechamentos, STORAGE_KEY_FECHAMENTOS]);
+
   // Função central para salvar localmente e enviar à nuvem sem sobregravar na carga inicial
   const updateItensECloud = (novosItens: ItemProducaoTomo[]) => {
     setItens(novosItens);
@@ -97,6 +117,13 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
     localStorage.setItem('odonto_producao_registros_v2', str);
     localStorage.setItem('odonto_producao_registros', str);
     pushToCloud({ producao: novosItens }, usuarioId);
+  };
+
+  const updateFechamentosECloud = (novosFechamentos: FechamentoProducao[]) => {
+    setFechamentos(novosFechamentos);
+    const str = JSON.stringify(novosFechamentos);
+    localStorage.setItem(STORAGE_KEY_FECHAMENTOS, str);
+    pushToCloud({ fechamentos: novosFechamentos }, usuarioId);
   };
 
   // Carregamento Prioritário ao abrir e Polling em tempo real com Fusão Inteligente
@@ -172,6 +199,123 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   const [modalAberto, setModalAberto] = useState<boolean>(false);
   const [modalZerarAberto, setModalZerarAberto] = useState<boolean>(false);
   const [itemEditando, setItemEditando] = useState<ItemProducaoTomo | null>(null);
+
+  // Modais de Fechamento de Período (Fernando / Bernardo)
+  const [modalFecharAberto, setModalFecharAberto] = useState<boolean>(false);
+  const [proprietarioFechar, setProprietarioFechar] = useState<'Fernando' | 'Bernardo'>('Fernando');
+  const [nomePeriodoFechar, setNomePeriodoFechar] = useState<string>('');
+  const [obsFechar, setObsFechar] = useState<string>('');
+
+  // States para a aba Histórico de Fechamentos
+  const [buscaHistorico, setBuscaHistorico] = useState<string>('');
+  const [proprietarioHistoricoFiltro, setProprietarioHistoricoFiltro] = useState<'Todos' | 'Fernando' | 'Bernardo'>('Todos');
+  const [fechamentoExpandidoId, setFechamentoExpandidoId] = useState<string | null>(null);
+
+  // Gerador de Nome Sugestivo de Período
+  const getPeriodoNomeSugestao = (p: 'Fernando' | 'Bernardo') => {
+    const hoje = new Date();
+    const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const mesNome = meses[hoje.getMonth()];
+    const ano = hoje.getFullYear();
+
+    if (p === 'Fernando') {
+      return `Mês de ${mesNome} / ${ano}`;
+    } else {
+      const dia = hoje.getDate();
+      const quinzena = dia <= 15 ? '1ª Quinzena' : '2ª Quinzena';
+      return `${quinzena} de ${mesNome} / ${ano}`;
+    }
+  };
+
+  const handleAbrirModalFechar = (p?: 'Fernando' | 'Bernardo') => {
+    const propSel = p || (proprietarioFiltro !== 'Todos' ? proprietarioFiltro : 'Fernando');
+    setProprietarioFechar(propSel);
+    setNomePeriodoFechar(getPeriodoNomeSugestao(propSel));
+    setObsFechar('');
+    setErroForm('');
+    setModalFecharAberto(true);
+  };
+
+  const handleProprietarioFecharChange = (p: 'Fernando' | 'Bernardo') => {
+    setProprietarioFechar(p);
+    setNomePeriodoFechar(getPeriodoNomeSugestao(p));
+  };
+
+  const handleConfirmarFechamento = (e: React.FormEvent) => {
+    e.preventDefault();
+    const examesProprietario = itens.filter((i) => i.proprietario === proprietarioFechar);
+
+    if (examesProprietario.length === 0) {
+      setErroForm(`Não há nenhum exame em aberto registrado para o proprietário ${proprietarioFechar}.`);
+      return;
+    }
+
+    const idFechamento = `fechamento-${proprietarioFechar.toLowerCase()}-${Date.now()}`;
+    const totalR$ = examesProprietario.reduce((acc, i) => acc + i.valor, 0);
+
+    const novoFechamento: FechamentoProducao = {
+      id: idFechamento,
+      proprietario: proprietarioFechar,
+      tipoFechamento: proprietarioFechar === 'Fernando' ? 'Mensal' : 'Quinzenal',
+      periodoNome: nomePeriodoFechar.trim() || getPeriodoNomeSugestao(proprietarioFechar),
+      dataFechamento: new Date().toISOString(),
+      totalValor: totalR$,
+      totalExames: examesProprietario.length,
+      itens: examesProprietario.map((i) => ({ ...i, fechamentoId: idFechamento })),
+      observacoes: obsFechar.trim()
+    };
+
+    const novosFechamentos = [novoFechamento, ...fechamentos];
+    updateFechamentosECloud(novosFechamentos);
+
+    // Remove apenas os exames desse proprietario da produção ativa!
+    const itensRestantesAtivos = itens.filter((i) => i.proprietario !== proprietarioFechar);
+    updateItensECloud(itensRestantesAtivos);
+
+    setSucessoMsg(`🔒 Período "${novoFechamento.periodoNome}" (${proprietarioFechar}) fechado com sucesso! ${novoFechamento.totalExames} exames (R$ ${novoFechamento.totalValor.toLocaleString('pt-BR')},00) foram arquivados no histórico.`);
+    setModalFecharAberto(false);
+    setSubAba('historico');
+
+    setTimeout(() => {
+      setSucessoMsg('');
+    }, 6000);
+  };
+
+  const handleReabrirFechamento = (f: FechamentoProducao) => {
+    if (window.confirm(`Deseja reabrir o fechamento "${f.periodoNome}" (${f.proprietario})?\n\nOs ${f.totalExames} exames (R$ ${f.totalValor.toLocaleString('pt-BR')},00) retornarão para a lista de produção ativa.`)) {
+      const examesRetornados = f.itens.map((i) => {
+        const { fechamentoId, ...rest } = i;
+        return rest;
+      });
+
+      const novosItensAtivos = [...examesRetornados, ...itens];
+      updateItensECloud(novosItensAtivos);
+
+      const fechamentosRestantes = fechamentos.filter((item) => item.id !== f.id);
+      updateFechamentosECloud(fechamentosRestantes);
+
+      setSucessoMsg(`↺ Fechamento "${f.periodoNome}" reaberto com sucesso! Os exames retornaram para a produção ativa.`);
+    }
+  };
+
+  const handleCopiarResumoFechamento = (f: FechamentoProducao) => {
+    let texto = `*RESUMO DE FECHAMENTO DE PRODUÇÃO - ${f.proprietario.toUpperCase()}*\n`;
+    texto += `📅 *Período:* ${f.periodoNome}\n`;
+    texto += `🔒 *Data de Fechamento:* ${new Date(f.dataFechamento).toLocaleDateString('pt-BR')}\n`;
+    texto += `📊 *Total de Exames:* ${f.totalExames}\n`;
+    texto += `💰 *Valor Total Geral:* R$ ${f.totalValor.toLocaleString('pt-BR')},00\n\n`;
+
+    texto += `*DETALHAMENTO POR CLÍNICA:*\n`;
+    const clinicasDoFechamento = f.proprietario === 'Fernando' ? CLINICAS_FERNANDO : CLINICAS_BERNARDO;
+    clinicasDoFechamento.forEach((clinica) => {
+      const examesClinica = f.itens.filter((i) => i.unidade === clinica);
+      const valClinica = examesClinica.reduce((acc, i) => acc + i.valor, 0);
+      texto += `• *${clinica}:* R$ ${valClinica.toLocaleString('pt-BR')},00 (${examesClinica.length} exames)\n`;
+    });
+
+    navigator.clipboard.writeText(texto);
+    alert(`✅ Resumo do fechamento "${f.periodoNome}" copiado para a área de transferência!`);
+  };
 
   const [novoProprietario, setNovoProprietario] = useState<'Fernando' | 'Bernardo'>('Fernando');
   const [novoId, setNovoId] = useState<string>(`${Math.floor(10000 + Math.random() * 90000)}`);
@@ -450,7 +594,18 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
                 : 'text-slate-400 hover:text-white hover:bg-slate-900'
             }`}
           >
-            <BarChart3 className="w-4 h-4 text-teal-300" /> Tabela de Lançamentos da Produção
+            <BarChart3 className="w-4 h-4 text-teal-300" /> ⚡ Produção Ativa (Lançamentos em Aberto)
+          </button>
+
+          <button
+            onClick={() => setSubAba('historico')}
+            className={`px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              subAba === 'historico'
+                ? 'bg-amber-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-white hover:bg-slate-900'
+            }`}
+          >
+            <FolderArchive className="w-4 h-4 text-amber-300" /> 📁 Histórico de Fechamentos ({fechamentos.length})
           </button>
 
           <button
@@ -472,6 +627,240 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
 
       {subAba === 'whatsapp' ? (
         <WhatsappNotificacoes itensProducao={itens} darkMode={darkMode} />
+      ) : subAba === 'historico' ? (
+        <div className="space-y-6">
+          <div className={`p-6 rounded-3xl border shadow-xl ${darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'}`}>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-md border border-amber-500/20 flex items-center gap-1.5 w-fit">
+                  <FolderArchive className="w-3.5 h-3.5" /> Arquivo Morto & Histórico Permanente
+                </span>
+                <h2 className="text-xl font-black flex items-center gap-2 mt-1">
+                  📁 Histórico de Fechamentos da Produção
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Consulte fechamentos arquivados de meses anteriores (Fernando - Mensal) e quinzenas (Bernardo - Quinzenal) com busca global por paciente.
+                </p>
+              </div>
+
+              <button
+                onClick={() => handleAbrirModalFechar()}
+                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black rounded-xl text-xs flex items-center gap-2 shadow-lg cursor-pointer transition-all hover:scale-105"
+              >
+                <Lock className="w-4 h-4" /> + Realizar Novo Fechamento
+              </button>
+            </div>
+
+            {/* FILTROS E BUSCA DO HISTÓRICO */}
+            <div className="mt-6 flex flex-col sm:flex-row items-center gap-3">
+              <div className="relative flex-1 w-full">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  placeholder="Buscar nome de paciente em todo o histórico de fechamentos..."
+                  value={buscaHistorico}
+                  onChange={(e) => setBuscaHistorico(e.target.value)}
+                  className={`w-full pl-9 pr-4 py-2.5 rounded-xl text-xs border outline-none font-medium transition-all ${
+                    darkMode ? 'bg-slate-950 border-slate-800 text-white focus:border-amber-500' : 'bg-slate-50 border-slate-200 text-slate-800 focus:border-amber-500'
+                  }`}
+                />
+                {buscaHistorico && (
+                  <button onClick={() => setBuscaHistorico('')} className="absolute right-3 top-3 text-slate-400 hover:text-white">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  onClick={() => setProprietarioHistoricoFiltro('Todos')}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    proprietarioHistoricoFiltro === 'Todos' ? 'bg-amber-500 text-slate-950 shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Todos
+                </button>
+                <button
+                  onClick={() => setProprietarioHistoricoFiltro('Fernando')}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    proprietarioHistoricoFiltro === 'Fernando' ? 'bg-sky-500 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Fernando (Mensal)
+                </button>
+                <button
+                  onClick={() => setProprietarioHistoricoFiltro('Bernardo')}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    proprietarioHistoricoFiltro === 'Bernardo' ? 'bg-indigo-500 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Bernardo (Quinzenal)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* LISTA DE CARDS DE FECHAMENTOS */}
+          {(() => {
+            const fechamentosFiltrados = fechamentos.filter((f) => {
+              const atendeProp = proprietarioHistoricoFiltro === 'Todos' || f.proprietario === proprietarioHistoricoFiltro;
+              const atendeBusca =
+                buscaHistorico.trim() === '' ||
+                f.itens.some((i) => i.pacienteNome.toLowerCase().includes(buscaHistorico.toLowerCase())) ||
+                f.periodoNome.toLowerCase().includes(buscaHistorico.toLowerCase());
+              return atendeProp && atendeBusca;
+            });
+
+            if (fechamentosFiltrados.length === 0) {
+              return (
+                <div className={`p-12 text-center rounded-3xl border ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-400' : 'bg-white border-slate-200 text-slate-500'}`}>
+                  <FolderArchive className="w-12 h-12 text-amber-500/50 mx-auto mb-3 animate-pulse" />
+                  <h3 className="text-base font-bold text-slate-300">Nenhum Fechamento Encontrado</h3>
+                  <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                    {fechamentos.length === 0
+                      ? 'Você ainda não arquivou nenhum período de produção. Clique em "Realizar Novo Fechamento" para fechar o mês do Fernando ou a quinzena do Bernardo.'
+                      : 'Nenhum fechamento corresponde aos filtros aplicados ou à busca do paciente.'}
+                  </p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-4">
+                {fechamentosFiltrados.map((f) => {
+                  const isExpandido = fechamentoExpandidoId === f.id || buscaHistorico.trim() !== '';
+                  const examesFiltradosBusca = buscaHistorico.trim()
+                    ? f.itens.filter((i) => i.pacienteNome.toLowerCase().includes(buscaHistorico.toLowerCase()))
+                    : f.itens;
+
+                  return (
+                    <div
+                      key={f.id}
+                      className={`rounded-3xl border transition-all overflow-hidden shadow-lg ${
+                        f.proprietario === 'Fernando'
+                          ? darkMode ? 'bg-slate-900 border-sky-900/60' : 'bg-white border-sky-200'
+                          : darkMode ? 'bg-slate-900 border-indigo-900/60' : 'bg-white border-indigo-200'
+                      }`}
+                    >
+                      {/* HEADER DO CARD DE FECHAMENTO */}
+                      <div className="p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-800/50">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-3 rounded-2xl ${f.proprietario === 'Fernando' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/30' : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'}`}>
+                            <FolderArchive className="w-6 h-6" />
+                          </div>
+
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                                f.proprietario === 'Fernando' ? 'bg-sky-500/20 text-sky-300 border-sky-400/30' : 'bg-indigo-500/20 text-indigo-300 border-indigo-400/30'
+                              }`}>
+                                {f.proprietario} • Fechamento {f.tipoFechamento}
+                              </span>
+                              <span className="text-[10px] text-slate-400 flex items-center gap-1 font-semibold">
+                                <Clock className="w-3 h-3" /> {new Date(f.dataFechamento).toLocaleDateString('pt-BR')} às {new Date(f.dataFechamento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+
+                            <h3 className="text-lg font-black text-white mt-1">
+                              {f.periodoNome}
+                            </h3>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+                          <div className="text-right">
+                            <span className="text-[10px] text-slate-400 font-bold block">{f.totalExames} exames arquivados</span>
+                            <span className={`text-xl font-black ${f.proprietario === 'Fernando' ? 'text-sky-400' : 'text-indigo-400'}`}>
+                              R$ {f.totalValor.toLocaleString('pt-BR')},00
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleCopiarResumoFechamento(f)}
+                              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 cursor-pointer transition-all"
+                              title="Copiar Resumo para WhatsApp"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => handleReabrirFechamento(f)}
+                              className="p-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 border border-rose-800/50 cursor-pointer transition-all"
+                              title="Reabrir este fechamento (Retornar exames para a lista ativa)"
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => setFechamentoExpandidoId(isExpandido && !buscaHistorico ? null : f.id)}
+                              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 cursor-pointer transition-all flex items-center gap-1 text-xs font-bold"
+                            >
+                              {isExpandido ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                              <span className="hidden sm:inline">{isExpandido ? 'Ocultar' : 'Ver Pacientes'}</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* DETALHAMENTO DE PACIENTES QUANDO EXPANDIDO */}
+                      {isExpandido && (
+                        <div className="p-5 bg-slate-950/50 space-y-4">
+                          <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-400 border-b border-slate-800/60 pb-3">
+                            <span>Exames do Período ({examesFiltradosBusca.length} de {f.totalExames}):</span>
+                            <div className="flex flex-wrap gap-3">
+                              {(f.proprietario === 'Fernando' ? CLINICAS_FERNANDO : CLINICAS_BERNARDO).map((clinica) => {
+                                const count = f.itens.filter((i) => i.unidade === clinica).length;
+                                const total = f.itens.filter((i) => i.unidade === clinica).reduce((acc, i) => acc + i.valor, 0);
+                                if (count === 0) return null;
+                                return (
+                                  <span key={clinica} className="bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800 text-[11px]">
+                                    {clinica}: <strong className="text-white">R$ {total.toLocaleString('pt-BR')},00</strong> ({count})
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="overflow-x-auto rounded-2xl border border-slate-800">
+                            <table className="w-full text-left text-xs">
+                              <thead className="bg-slate-900 text-slate-400 text-[10px] font-black uppercase tracking-wider">
+                                <tr>
+                                  <th className="p-3">ID / Código</th>
+                                  <th className="p-3">Data</th>
+                                  <th className="p-3">Paciente</th>
+                                  <th className="p-3">Região / Exame</th>
+                                  <th className="p-3">Clínica</th>
+                                  <th className="p-3 text-right">Valor</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-800/60 text-slate-300 font-medium">
+                                {examesFiltradosBusca.map((item) => (
+                                  <tr key={item.id} className="hover:bg-slate-900/60">
+                                    <td className="p-3 font-mono text-[11px] text-slate-400">{item.id}</td>
+                                    <td className="p-3">{new Date(item.data).toLocaleDateString('pt-BR')}</td>
+                                    <td className="p-3 font-bold text-white">{item.pacienteNome}</td>
+                                    <td className="p-3">
+                                      <span className="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[10px] font-bold">
+                                        {item.regiao}
+                                      </span>
+                                    </td>
+                                    <td className="p-3 text-teal-400 font-semibold">{item.unidade}</td>
+                                    <td className="p-3 text-right font-bold text-emerald-400">R$ {item.valor.toLocaleString('pt-BR')},00</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </div>
       ) : (
         <>
       {sucessoMsg && (
@@ -502,6 +891,15 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
         </div>
 
         <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 w-full md:w-auto">
+          <button
+            type="button"
+            onClick={() => handleAbrirModalFechar()}
+            className="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold px-3.5 py-2.5 rounded-2xl text-xs flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition-all hover:scale-105 w-full sm:w-auto"
+            title="Fechar mês do Fernando ou quinzena do Bernardo e arquivar no histórico"
+          >
+            <Lock className="w-4 h-4" /> 🔒 Fechar Período (Arquivar)
+          </button>
+
           <button
             type="button"
             onClick={handleManualSync}
@@ -586,10 +984,17 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
             </div>
           </div>
           
-          <div className="text-[11px] text-slate-400 pt-1 flex justify-between font-semibold border-t border-slate-800/40">
+          <div className="text-[11px] text-slate-400 pt-1 flex items-center justify-between font-semibold border-t border-slate-800/40">
             <span>Total de Exames:</span>
             <span className="font-bold text-white">{itensFernando.length} tomografias</span>
           </div>
+
+          <button
+            onClick={() => handleAbrirModalFechar('Fernando')}
+            className="w-full py-2 bg-sky-950/80 hover:bg-sky-900 text-sky-300 border border-sky-800/60 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow hover:scale-[1.02]"
+          >
+            <Lock className="w-3.5 h-3.5 text-sky-400" /> 🔒 Fechar Mês do Fernando
+          </button>
         </div>
 
         {/* CARD FATURAMENTO BERNARDO */}
@@ -630,10 +1035,17 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
             </div>
           </div>
 
-          <div className="text-[11px] text-slate-400 pt-1 flex justify-between font-semibold border-t border-slate-800/40">
+          <div className="text-[11px] text-slate-400 pt-1 flex items-center justify-between font-semibold border-t border-slate-800/40">
             <span>Total de Exames:</span>
             <span className="font-bold text-white">{itensBernardo.length} exames / traçados</span>
           </div>
+
+          <button
+            onClick={() => handleAbrirModalFechar('Bernardo')}
+            className="w-full py-2 bg-indigo-950/80 hover:bg-indigo-900 text-indigo-300 border border-indigo-800/60 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow hover:scale-[1.02]"
+          >
+            <Lock className="w-3.5 h-3.5 text-indigo-400" /> 🔒 Fechar Quinzena do Bernardo
+          </button>
         </div>
 
         {/* CARD FATURAMENTO UNIFICADO GERAL */}
@@ -1392,6 +1804,132 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
         </div>
       )}
         </>
+      )}
+
+      {/* MODAL DE CONFIRMAÇÃO DE FECHAMENTO DE PERÍODO & ARQUIVAMENTO */}
+      {modalFecharAberto && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
+          <div className={`w-full max-w-lg rounded-3xl border shadow-2xl p-6 relative overflow-hidden space-y-5 ${
+            darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
+          }`}>
+            <button
+              onClick={() => setModalFecharAberto(false)}
+              className="absolute right-4 top-4 p-2 text-slate-400 hover:text-white rounded-xl bg-slate-800/80 hover:bg-slate-800 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
+              <div className="p-3 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                <Lock className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                  Fechamento de Produção & Arquivamento
+                </span>
+                <h3 className="text-lg font-black mt-0.5">
+                  Fechar Período de Produção
+                </h3>
+              </div>
+            </div>
+
+            <form onSubmit={handleConfirmarFechamento} className="space-y-4">
+              {erroForm && (
+                <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-bold">
+                  {erroForm}
+                </div>
+              )}
+
+              <div>
+                <label className="text-xs font-bold text-slate-400 block mb-1">Proprietário do Fechamento</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleProprietarioFecharChange('Fernando')}
+                    className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      proprietarioFechar === 'Fernando'
+                        ? 'bg-sky-600 border-sky-400 text-white shadow-md'
+                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    FERNANDO (Mensal)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleProprietarioFecharChange('Bernardo')}
+                    className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      proprietarioFechar === 'Bernardo'
+                        ? 'bg-indigo-600 border-indigo-400 text-white shadow-md'
+                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    BERNARDO (Quinzenal)
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-400 block mb-1">Nome do Período / Identificador</label>
+                <input
+                  type="text"
+                  required
+                  value={nomePeriodoFechar}
+                  onChange={(e) => setNomePeriodoFechar(e.target.value)}
+                  placeholder="Ex: Mês de Setembro / 2026 ou 1ª Quinzena de Setembro"
+                  className={`w-full p-3 rounded-xl text-xs border outline-none font-bold ${
+                    darkMode ? 'bg-slate-950 border-slate-800 text-white focus:border-amber-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-amber-500'
+                  }`}
+                />
+              </div>
+
+              {/* RESUMO DOS EXAMES A SEREM ARQUIVADOS */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider block">
+                  Resumo dos Registros em Aberto para {proprietarioFechar}:
+                </span>
+                {(() => {
+                  const examesProp = itens.filter((i) => i.proprietario === proprietarioFechar);
+                  const totalVal = examesProp.reduce((acc, i) => acc + i.valor, 0);
+                  return (
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-300 font-semibold">{examesProp.length} exames prontos para arquivamento</span>
+                      <strong className="text-emerald-400 text-sm font-black">R$ {totalVal.toLocaleString('pt-BR')},00</strong>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-400 block mb-1">Observações do Fechamento (Opcional)</label>
+                <textarea
+                  rows={2}
+                  value={obsFechar}
+                  onChange={(e) => setObsFechar(e.target.value)}
+                  placeholder="Anotações ou avisos sobre este fechamento..."
+                  className={`w-full p-3 rounded-xl text-xs border outline-none font-medium ${
+                    darkMode ? 'bg-slate-950 border-slate-800 text-white focus:border-amber-500' : 'bg-slate-50 border-slate-200 text-slate-900 focus:border-amber-500'
+                  }`}
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setModalFecharAberto(false)}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-400 hover:text-white cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 shadow-lg cursor-pointer transition-all hover:scale-105"
+                >
+                  🔒 Confirmar Fechamento & Arquivar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

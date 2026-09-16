@@ -24,6 +24,7 @@ export interface UsuarioOnlineInfo {
 export interface CloudDataPayload {
   usuarioId?: string;
   producao?: any[];
+  fechamentos?: any[];
   financeiro?: any[];
   pacientes?: any[];
   consultas?: any[];
@@ -41,6 +42,7 @@ const broadcastChannel = typeof window !== 'undefined' && 'BroadcastChannel' in 
 // Chaves do localStorage por Usuário (Isolamento Estrito)
 export const KEYS = {
   PRODUCAO: 'odonto_producao_registros_v2',
+  FECHAMENTOS: 'odonto_fechamentos_producao_v1',
   FINANCEIRO: 'odonto_financeiro_pessoal_v1',
   PACIENTES: 'odonto_pacientes_v1',
   CONSULTAS: 'odonto_consultas_v1',
@@ -52,6 +54,7 @@ export function getUserKeys(usuarioId?: string) {
   const uid = usuarioId || 'usr-admin-master';
   return {
     PRODUCAO: uid === 'usr-admin-master' ? 'odonto_producao_registros_usr_admin_master' : `odonto_producao_registros_${uid}`,
+    FECHAMENTOS: uid === 'usr-admin-master' ? 'odonto_fechamentos_producao_usr_admin_master' : `odonto_fechamentos_producao_${uid}`,
     FINANCEIRO: uid === 'usr-admin-master' ? 'odonto_financeiro_pessoal_usr_admin_master' : `odonto_financeiro_pessoal_${uid}`,
     LAST_UPDATE: `odonto_last_sync_timestamp_${uid}`
   };

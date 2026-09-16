@@ -174,6 +174,22 @@ export interface ItemProducaoTomo {
   unidade: 'Ariquemes' | 'Porto Velho' | 'Machadinho' | 'Cacoal' | 'Rolim de Moura' | 'Ouro Preto' | 'Ji-Paraná';
   proprietario: 'Fernando' | 'Bernardo';
   urgencia?: boolean;
+  fechamentoId?: string;
+}
+
+export interface FechamentoProducao {
+  id: string;
+  proprietario: 'Fernando' | 'Bernardo';
+  tipoFechamento: 'Mensal' | 'Quinzenal';
+  periodoNome: string; // Ex: "Setembro / 2026" ou "1ª Quinzena de Setembro / 2026"
+  dataFechamento: string; // Data ISO (ex: "2026-09-16")
+  dataInicio?: string;
+  dataFim?: string;
+  totalValor: number;
+  totalExames: number;
+  itens: ItemProducaoTomo[];
+  observacoes?: string;
+  fechadoPor?: string;
 }
 
 export interface TransacaoFinanceira {
