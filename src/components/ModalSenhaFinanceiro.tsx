@@ -20,25 +20,32 @@ export const ModalSenhaFinanceiro: React.FC<ModalSenhaFinanceiroProps> = ({
   const [erro, setErro] = useState<string>('');
   const [modoAlterarSenha, setModoAlterarSenha] = useState<boolean>(false);
 
-  // States para alteração de senha personalizada
+  // States para alteração de senha personalizada com validação da senha atual
+  const [senhaAtual, setSenhaAtual] = useState<string>('');
   const [novaSenhaCustom, setNovaSenhaCustom] = useState<string>('');
+  const [confirmarNovaSenha, setConfirmarNovaSenha] = useState<string>('');
+  const [mostrarSenhaAtual, setMostrarSenhaAtual] = useState<boolean>(false);
+  const [mostrarNovaSenha, setMostrarNovaSenha] = useState<boolean>(false);
   const [sucessoCustomMsg, setSucessoCustomMsg] = useState<string>('');
 
   const CUSTOM_KEY = 'odonto_senha_financeiro_custom';
+
+  const validarSenha = (senha: string): boolean => {
+    const senhaCustomSalva = localStorage.getItem(CUSTOM_KEY);
+    const senhaHashUsuario = usuarioLogado?.senhaHash || 'bitoninha1234';
+
+    return Boolean(
+      (senhaCustomSalva && senha.trim() === senhaCustomSalva.trim()) ||
+      (senha.trim() === senhaHashUsuario.trim()) ||
+      (senha.trim() === '1234')
+    );
+  };
 
   const handleVerificarSenha = (e: React.FormEvent) => {
     e.preventDefault();
     setErro('');
 
-    const senhaCustomSalva = localStorage.getItem(CUSTOM_KEY);
-    const senhaHashUsuario = usuarioLogado?.senhaHash || 'bitoninha1234';
-
-    // Aceita a senha customizada do financeiro OU a senha mestre da conta OU PIN 1234
-    const senhaCorreta = (senhaCustomSalva && senhaDigitada.trim() === senhaCustomSalva.trim()) ||
-                         (senhaDigitada.trim() === senhaHashUsuario.trim()) ||
-                         (senhaDigitada.trim() === '1234');
-
-    if (senhaCorreta) {
+    if (validarSenha(senhaDigitada)) {
       onSucesso();
     } else {
       setErro('❌ Senha incorreta! Verifique a senha e tente novamente.');
@@ -49,15 +56,38 @@ export const ModalSenhaFinanceiro: React.FC<ModalSenhaFinanceiroProps> = ({
     e.preventDefault();
     setErro('');
 
+    if (!senhaAtual.trim()) {
+      setErro('Por favor, digite sua senha atual para autorizar a alteração.');
+      return;
+    }
+
+    if (!validarSenha(senhaAtual)) {
+      setErro('❌ Senha atual incorreta! Digite a senha atual correta para continuar.');
+      return;
+    }
+
     if (!novaSenhaCustom.trim()) {
       setErro('Por favor, digite a nova senha desejada.');
       return;
     }
 
+    if (novaSenhaCustom.trim().length < 3) {
+      setErro('A nova senha deve conter no mínimo 3 caracteres.');
+      return;
+    }
+
+    if (novaSenhaCustom.trim() !== confirmarNovaSenha.trim()) {
+      setErro('A confirmação da nova senha não confere. Repita a nova senha exatamente igual.');
+      return;
+    }
+
     localStorage.setItem(CUSTOM_KEY, novaSenhaCustom.trim());
-    setSucessoCustomMsg('✅ Nova senha do Financeiro salva com sucesso!');
+    setSucessoCustomMsg('✅ Senha do Financeiro alterada com sucesso!');
     setModoAlterarSenha(false);
     setSenhaDigitada(novaSenhaCustom.trim());
+    setSenhaAtual('');
+    setNovaSenhaCustom('');
+    setConfirmarNovaSenha('');
     setTimeout(() => setSucessoCustomMsg(''), 4000);
   };
 
@@ -151,10 +181,13 @@ export const ModalSenhaFinanceiro: React.FC<ModalSenhaFinanceiroProps> = ({
               <div className="flex justify-between items-center text-xs pt-2">
                 <button
                   type="button"
-                  onClick={() => setModoAlterarSenha(true)}
+                  onClick={() => {
+                    setModoAlterarSenha(true);
+                    setErro('');
+                  }}
                   className="text-teal-400 hover:text-teal-300 font-bold flex items-center gap-1.5 hover:underline cursor-pointer"
                 >
-                  <KeyRound className="w-3.5 h-3.5" /> Criar / Alterar Minha Senha Privada
+                  <KeyRound className="w-3.5 h-3.5" /> Alterar Minha Senha Privada
                 </button>
 
                 <button
@@ -170,24 +203,25 @@ export const ModalSenhaFinanceiro: React.FC<ModalSenhaFinanceiroProps> = ({
         ) : (
           <form onSubmit={handleSalvarNovaSenhaCustom} className="space-y-4 pt-1">
             <div className="p-3.5 rounded-2xl bg-teal-500/10 border border-teal-500/20 space-y-1">
-              <span className="text-[11px] font-extrabold text-teal-400 block flex items-center gap-1">
-                <KeyRound className="w-3.5 h-3.5" /> Configurar Nova Senha Exclusiva
+              <span className="text-[11px] font-extrabold text-teal-400 flex items-center gap-1">
+                <KeyRound className="w-3.5 h-3.5" /> Security Check: Alterar Senha
               </span>
               <p className="text-[11px] text-slate-300 font-medium">
-                Crie um PIN ou senha personalizada de sua preferência para proteger a página Financeira.
+                Por segurança, confirme sua <strong>senha atual</strong> para cadastrar a nova senha privada do Financeiro.
               </p>
             </div>
 
+            {/* Campo Senha Atual */}
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                Nova Senha Exclusiva do Financeiro
+                Senha Atual
               </label>
               <div className="relative">
                 <input
-                  type={mostrarSenha ? 'text' : 'password'}
-                  value={novaSenhaCustom}
-                  onChange={(e) => setNovaSenhaCustom(e.target.value)}
-                  placeholder="Ex: 1234 ou sua senha secreta"
+                  type={mostrarSenhaAtual ? 'text' : 'password'}
+                  value={senhaAtual}
+                  onChange={(e) => setSenhaAtual(e.target.value)}
+                  placeholder="Digite sua senha atual..."
                   required
                   autoFocus
                   className={`w-full p-3.5 pr-11 rounded-2xl border text-sm font-bold transition-all focus:ring-2 focus:ring-teal-500 focus:outline-none ${
@@ -196,25 +230,73 @@ export const ModalSenhaFinanceiro: React.FC<ModalSenhaFinanceiroProps> = ({
                 />
                 <button
                   type="button"
-                  onClick={() => setMostrarSenha(!mostrarSenha)}
+                  onClick={() => setMostrarSenhaAtual(!mostrarSenhaAtual)}
                   className="absolute right-3.5 top-3.5 text-slate-400 hover:text-white cursor-pointer"
+                  title={mostrarSenhaAtual ? 'Ocultar Senha' : 'Mostrar Senha'}
                 >
-                  {mostrarSenha ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {mostrarSenhaAtual ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+            </div>
+
+            {/* Campo Nova Senha */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                Nova Senha Privada do Financeiro
+              </label>
+              <div className="relative">
+                <input
+                  type={mostrarNovaSenha ? 'text' : 'password'}
+                  value={novaSenhaCustom}
+                  onChange={(e) => setNovaSenhaCustom(e.target.value)}
+                  placeholder="Digite a nova senha desejada..."
+                  required
+                  className={`w-full p-3.5 pr-11 rounded-2xl border text-sm font-bold transition-all focus:ring-2 focus:ring-teal-500 focus:outline-none ${
+                    darkMode ? 'bg-slate-800/90 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setMostrarNovaSenha(!mostrarNovaSenha)}
+                  className="absolute right-3.5 top-3.5 text-slate-400 hover:text-white cursor-pointer"
+                  title={mostrarNovaSenha ? 'Ocultar Senha' : 'Mostrar Senha'}
+                >
+                  {mostrarNovaSenha ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Campo Confirmar Nova Senha */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                Confirmar Nova Senha
+              </label>
+              <input
+                type={mostrarNovaSenha ? 'text' : 'password'}
+                value={confirmarNovaSenha}
+                onChange={(e) => setConfirmarNovaSenha(e.target.value)}
+                placeholder="Repita a nova senha exatamente..."
+                required
+                className={`w-full p-3.5 rounded-2xl border text-sm font-bold transition-all focus:ring-2 focus:ring-teal-500 focus:outline-none ${
+                  darkMode ? 'bg-slate-800/90 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400'
+                }`}
+              />
             </div>
 
             <div className="flex gap-2.5 pt-2">
               <button
                 type="button"
-                onClick={() => setModoAlterarSenha(false)}
+                onClick={() => {
+                  setModoAlterarSenha(false);
+                  setErro('');
+                }}
                 className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-2xl text-xs cursor-pointer"
               >
                 Voltar
               </button>
               <button
                 type="submit"
-                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold rounded-2xl text-xs shadow-lg cursor-pointer flex items-center justify-center gap-1.5"
+                className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold rounded-2xl text-xs shadow-lg cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Check className="w-4 h-4" /> Salvar Senha
               </button>
