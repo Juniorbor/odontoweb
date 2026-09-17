@@ -318,7 +318,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   };
 
   const [novoProprietario, setNovoProprietario] = useState<'Fernando' | 'Bernardo'>('Fernando');
-  const [novoId, setNovoId] = useState<string>(`${Math.floor(10000 + Math.random() * 90000)}`);
+  const [novoId, setNovoId] = useState<string>('');
   const [novaData, setNovaData] = useState<string>(new Date().toISOString().split('T')[0]);
   const [novoNome, setNovoNome] = useState<string>('');
   const [novaRegiao, setNovaRegiao] = useState<'TRAÇADO' | 'UM DENTE' | 'MAX OU MAND' | 'MAX E MAND'>('MAX OU MAND');
@@ -330,7 +330,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   const handleAbrirNovoModal = () => {
     setItemEditando(null);
     setErroForm('');
-    setNovoId(`${Math.floor(10000 + Math.random() * 90000)}`);
+    setNovoId('');
     setNovaData(new Date().toISOString().split('T')[0]);
     setNovoNome('');
     setNovaRegiao('MAX OU MAND');
@@ -433,7 +433,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
     setItemEditando(null);
     setNovoNome('');
     setNovaUrgencia(false);
-    setNovoId(`${Math.floor(10000 + Math.random() * 90000)}`);
+    setNovoId('');
 
     setTimeout(() => {
       setSucessoMsg('');
@@ -1683,12 +1683,12 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-400 mb-1">ID Exame</label>
+                  <label className="block font-bold text-slate-400 mb-1">ID Exame (opcional)</label>
                   <input
                     type="text"
                     value={novoId}
                     onChange={(e) => setNovoId(e.target.value)}
-                    required
+                    placeholder="Ex: 71128 (opcional)"
                     className={`w-full p-2.5 rounded-xl border font-mono ${
                       darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
                     }`}
