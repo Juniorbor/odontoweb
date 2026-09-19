@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Dashboard } from './components/Dashboard';
+import { Agenda } from './components/Agenda';
 import { Pacientes } from './components/Pacientes';
 import { PerfilPaciente } from './components/PerfilPaciente';
 import { AnamneseView } from './components/AnamneseView';
@@ -742,6 +743,13 @@ export function App() {
                 setFinanceiroDesbloqueado(false);
                 setActiveTab('dashboard');
               }}
+            />
+          )}
+
+          {activeTab === 'agenda' && (
+            <Agenda
+              darkMode={darkMode}
+              usuarioId={usuarioLogado?.id}
             />
           )}
 

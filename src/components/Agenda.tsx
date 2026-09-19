@@ -6,55 +6,78 @@ import {
   ChevronRight,
   Plus,
   Search,
-  CheckCircle,
-  UserCheck,
-  Play,
   Edit2,
   Trash2,
-  Clock,
   User,
   X,
   Grid,
   List as ListIcon,
   CalendarDays,
   Sparkles,
-  MessageCircle
+  MessageCircle,
+  HeartHandshake,
+  Briefcase,
+  DollarSign,
+  Check,
+  CheckCircle2
 } from 'lucide-react';
+import { getItemJSON, pushToCloud } from '../services/cloudSync';
 
-interface AgendaProps {
-  consultas: Consulta[];
-  pacientes: Paciente[];
-  onAddConsulta: (nova: Omit<Consulta, 'id'>) => void;
-  onEditConsulta: (consulta: Consulta) => void;
-  onDeleteConsulta: (id: string) => void;
-  onUpdateStatus: (id: string, novoStatus: StatusConsulta) => void;
-  darkMode?: boolean;
+export type CategoriaAgenda =
+  | 'Responsabilidade Familiar'
+  | 'Profissional / Clínica'
+  | 'Compromisso Financeiro'
+  | 'Pessoal / Saúde'
+  | 'Outro';
+
+export interface ItemAgendaCompromisso {
+  id: string;
+  data: string; // YYYY-MM-DD
+  horario: string; // HH:mm
+  duracaoMinutos: number;
+  titulo: string;
+  categoria: CategoriaAgenda;
+  responsavel: string;
+  pacienteNome?: string;
+  pacienteTelefone?: string;
+  status: StatusConsulta;
+  observacoes?: string;
 }
 
-type TipoVisualizacao = 'dia' | 'semana' | 'mes' | 'lista';
+interface AgendaProps {
+  consultas?: Consulta[];
+  pacientes?: Paciente[];
+  onAddConsulta?: (nova: Omit<Consulta, 'id'>) => void;
+  onEditConsulta?: (consulta: Consulta) => void;
+  onDeleteConsulta?: (id: string) => void;
+  onUpdateStatus?: (id: string, novoStatus: StatusConsulta) => void;
+  darkMode?: boolean;
+  usuarioId?: string;
+}
+
+type TipoVisualizacao = 'tabela' | 'dia' | 'semana' | 'mes';
 
 const statusCores: Record<StatusConsulta, { bg: string; text: string; border: string; badge: string; hex: string }> = {
-  'Agendado': { bg: 'bg-sky-500/10 hover:bg-sky-500/20', text: 'text-sky-500', border: 'border-sky-500/30', badge: 'bg-sky-500/20 text-sky-400 border-sky-500/30', hex: '#0284C7' },
-  'Confirmado': { bg: 'bg-teal-500/10 hover:bg-teal-500/20', text: 'text-teal-500', border: 'border-teal-500/30', badge: 'bg-teal-500/20 text-teal-400 border-teal-500/30', hex: '#0D9488' },
-  'Em Atendimento': { bg: 'bg-amber-500/10 hover:bg-amber-500/20', text: 'text-amber-500', border: 'border-amber-500/30', badge: 'bg-amber-500/20 text-amber-400 border-amber-500/30 animate-pulse', hex: '#D97706' },
-  'Finalizado': { bg: 'bg-emerald-500/10 hover:bg-emerald-500/20', text: 'text-emerald-500', border: 'border-emerald-500/30', badge: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', hex: '#059669' },
-  'Cancelado': { bg: 'bg-rose-500/10 hover:bg-rose-500/20', text: 'text-rose-500', border: 'border-rose-500/30', badge: 'bg-rose-500/20 text-rose-400 border-rose-500/30', hex: '#E11D48' },
+  'Agendado': { bg: 'bg-sky-500/10 hover:bg-sky-500/20', text: 'text-sky-400', border: 'border-sky-500/30', badge: 'bg-sky-500/20 text-sky-300 border-sky-500/30', hex: '#0284C7' },
+  'Confirmado': { bg: 'bg-teal-500/10 hover:bg-teal-500/20', text: 'text-teal-400', border: 'border-teal-500/30', badge: 'bg-teal-500/20 text-teal-300 border-teal-500/30', hex: '#0D9488' },
+  'Em Atendimento': { bg: 'bg-amber-500/10 hover:bg-amber-500/20', text: 'text-amber-400', border: 'border-amber-500/30', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30 animate-pulse', hex: '#D97706' },
+  'Finalizado': { bg: 'bg-emerald-500/10 hover:bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30', hex: '#059669' },
+  'Cancelado': { bg: 'bg-rose-500/10 hover:bg-rose-500/20', text: 'text-rose-400', border: 'border-rose-500/30', badge: 'bg-rose-500/20 text-rose-300 border-rose-500/30', hex: '#E11D48' },
 };
 
-const SALAS_CONSULTORIO = ['Todos', 'Consultório 1', 'Consultório 2', 'Consultório 3'];
-const DENTISTAS_LISTA = [
-  'Todos',
-  'Dr. Carlos Eduardo (Implantodontia)',
-  'Dra. Patricia Medeiros (Clínica Geral)',
-  'Dr. Lucas Alencar (Ortodontia)'
-];
+const categoriaBadges: Record<CategoriaAgenda, { badge: string; icon: any }> = {
+  'Responsabilidade Familiar': { badge: 'bg-purple-500/20 text-purple-300 border-purple-500/30', icon: HeartHandshake },
+  'Profissional / Clínica': { badge: 'bg-teal-500/20 text-teal-300 border-teal-500/30', icon: Briefcase },
+  'Compromisso Financeiro': { badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30', icon: DollarSign },
+  'Pessoal / Saúde': { badge: 'bg-sky-500/20 text-sky-300 border-sky-500/30', icon: User },
+  'Outro': { badge: 'bg-slate-700 text-slate-300 border-slate-600', icon: CalendarIcon }
+};
 
 const HORARIOS_DIA = [
   '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
   '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'
 ];
 
-// Helper para obter a data atual real em formato ISO YYYY-MM-DD
 const getHojeIso = (): string => {
   const d = new Date();
   const year = d.getFullYear();
@@ -63,35 +86,99 @@ const getHojeIso = (): string => {
   return `${year}-${month}-${day}`;
 };
 
+const INITIAL_MOCK_COMPROMISSOS: ItemAgendaCompromisso[] = [
+  {
+    id: 'comp-1',
+    data: getHojeIso(),
+    horario: '08:30',
+    duracaoMinutos: 45,
+    titulo: 'Levar os filhos na escola e reunião escolar',
+    categoria: 'Responsabilidade Familiar',
+    responsavel: 'Família',
+    status: 'Finalizado',
+    observacoes: 'Acompanhar horário da natação às 16h'
+  },
+  {
+    id: 'comp-2',
+    data: getHojeIso(),
+    horario: '10:00',
+    duracaoMinutos: 60,
+    titulo: 'Consulta Odontológica e Tomografia - CARLOS ALBERTO',
+    categoria: 'Profissional / Clínica',
+    responsavel: 'Fernando',
+    pacienteNome: 'CARLOS ALBERTO',
+    pacienteTelefone: '(69) 99364-9158',
+    status: 'Confirmado',
+    observacoes: 'Tomografia Max OU Mand / Ariquemes'
+  },
+  {
+    id: 'comp-3',
+    data: getHojeIso(),
+    horario: '14:00',
+    duracaoMinutos: 30,
+    titulo: 'Pagamento de fornecedores e balanço quinzenal',
+    categoria: 'Compromisso Financeiro',
+    responsavel: 'Bernardo',
+    status: 'Agendado',
+    observacoes: 'Verificar comprovantes da clínica de Ji-Paraná'
+  },
+  {
+    id: 'comp-4',
+    data: getHojeIso(),
+    horario: '17:30',
+    duracaoMinutos: 60,
+    titulo: 'Jantar em família e compras da semana',
+    categoria: 'Responsabilidade Familiar',
+    responsavel: 'Família',
+    status: 'Agendado',
+    observacoes: 'Supermercado e compromisso pessoal'
+  }
+];
+
 export const Agenda: React.FC<AgendaProps> = ({
-  consultas,
-  pacientes,
-  onAddConsulta,
-  onEditConsulta,
-  onDeleteConsulta,
-  onUpdateStatus,
-  darkMode
+  darkMode,
+  usuarioId
 }) => {
+  const AGENDA_STORAGE_KEY = `odonto_agenda_compromissos_${usuarioId || 'usr-admin-master'}`;
+
+  // Lista de Compromissos com Persistência Permanente Local & Cloud
+  const [compromissos, setCompromissos] = useState<ItemAgendaCompromisso[]>(() => {
+    return getItemJSON<ItemAgendaCompromisso[]>(AGENDA_STORAGE_KEY, INITIAL_MOCK_COMPROMISSOS);
+  });
+
+  // Salva permanentemente no localStorage e Nuvem a cada alteração
+  const salvarCompromissosECloud = (novos: ItemAgendaCompromisso[]) => {
+    setCompromissos(novos);
+    localStorage.setItem(AGENDA_STORAGE_KEY, JSON.stringify(novos));
+    localStorage.setItem('odonto_agenda_compromissos_v1', JSON.stringify(novos));
+    pushToCloud({ consultas: novos as any }, usuarioId);
+  };
+
+  // Padrão em TABELA conforme solicitado explicitamente pelo usuário
+  const [visualizacao, setVisualizacao] = useState<TipoVisualizacao>('tabela');
+
   const [dataSelecionada, setDataSelecionada] = useState<string>(getHojeIso());
-  const [visualizacao, setVisualizacao] = useState<TipoVisualizacao>('dia');
-  const [filtroDentista, setFiltroDentista] = useState<string>('Todos');
-  const [filtroSala, setFiltroSala] = useState<string>('Todos');
+  const [filtroPeriodo, setFiltroPeriodo] = useState<'hoje' | 'semana' | 'mes' | 'todos'>('todos');
+  const [filtroCategoria, setFiltroCategoria] = useState<string>('Todas');
   const [filtroStatus, setFiltroStatus] = useState<string>('Todos');
   const [busca, setBusca] = useState<string>('');
 
-  // Modais State
+  // States do Modal
   const [modalAberto, setModalAberto] = useState<boolean>(false);
-  const [consultaEditando, setConsultaEditando] = useState<Consulta | null>(null);
-  const [consultaExcluindoId, setConsultaExcluindoId] = useState<string | null>(null);
+  const [itemEditando, setItemEditando] = useState<ItemAgendaCompromisso | null>(null);
+  const [itemExcluindoId, setItemExcluindoId] = useState<string | null>(null);
 
-  // Form State
-  const [pacienteId, setPacienteId] = useState<string>('');
-  const [dentistaNome, setDentistaNome] = useState<string>('Dra. Patricia Medeiros (Clínica Geral)');
-  const [horaInicio, setHoraInicio] = useState<string>('09:00');
-  const [duracaoMinutos, setDuracaoMinutos] = useState<number>(45);
-  const [procedimento, setProcedimento] = useState<string>('Consulta Avaliação');
-  const [sala, setSala] = useState<string>('Consultório 1');
-  const [observacoes, setObservacoes] = useState<string>('');
+  // Form States
+  const [titulo, setTitulo] = useState<string>('');
+  const [dataForm, setDataForm] = useState<string>(getHojeIso());
+  const [horarioForm, setHorarioForm] = useState<string>('09:00');
+  const [duracaoForm, setDuracaoForm] = useState<number>(45);
+  const [categoriaForm, setCategoriaForm] = useState<CategoriaAgenda>('Profissional / Clínica');
+  const [responsavelForm, setResponsavelForm] = useState<string>('Fernando');
+  const [pacienteNomeForm, setPacienteNomeForm] = useState<string>('');
+  const [pacienteTelefoneForm, setPacienteTelefoneForm] = useState<string>('');
+  const [statusForm, setStatusForm] = useState<StatusConsulta>('Agendado');
+  const [observacoesForm, setObservacoesForm] = useState<string>('');
 
   // Navegação de Datas
   const handleDataAnterior = () => {
@@ -114,129 +201,157 @@ export const Agenda: React.FC<AgendaProps> = ({
 
   const handleHoje = () => {
     setDataSelecionada(getHojeIso());
+    setFiltroPeriodo('hoje');
   };
 
-  // Filtro de Consultas
-  const consultasFiltradas = consultas.filter((c) => {
-    const dataConsulta = c.dataHora.split('T')[0];
-    const atendeData = visualizacao === 'dia' ? dataConsulta === dataSelecionada : true;
-    const atendeDentista = filtroDentista === 'Todos' || c.dentistaNome.includes(filtroDentista);
-    const atendeSala = filtroSala === 'Todos' || (c.sala && c.sala === filtroSala);
-    const atendeStatus = filtroStatus === 'Todos' || c.status === filtroStatus;
-    const atendeBusca =
-      c.pacienteNome.toLowerCase().includes(busca.toLowerCase()) ||
-      c.procedimento.toLowerCase().includes(busca.toLowerCase());
+  // Filtro inteligente de compromissos
+  const compromissosFiltrados = compromissos.filter((item) => {
+    const hojeIso = getHojeIso();
 
-    return atendeData && atendeDentista && atendeSala && atendeStatus && atendeBusca;
+    // Filtro por período de data
+    let atendePeriodo = true;
+    if (filtroPeriodo === 'hoje') {
+      atendePeriodo = item.data === hojeIso;
+    } else if (filtroPeriodo === 'semana') {
+      const dItem = new Date(item.data + 'T00:00:00').getTime();
+      const dHoje = new Date(hojeIso + 'T00:00:00').getTime();
+      const diffDias = Math.abs(dItem - dHoje) / (1000 * 3600 * 24);
+      atendePeriodo = diffDias <= 7;
+    } else if (filtroPeriodo === 'mes') {
+      atendePeriodo = item.data.substring(0, 7) === hojeIso.substring(0, 7);
+    }
+
+    const atendeCategoria = filtroCategoria === 'Todas' || item.categoria === filtroCategoria;
+    const atendeStatus = filtroStatus === 'Todos' || item.status === filtroStatus;
+    const atendeBusca =
+      item.titulo.toLowerCase().includes(busca.toLowerCase()) ||
+      (item.pacienteNome && item.pacienteNome.toLowerCase().includes(busca.toLowerCase())) ||
+      (item.responsavel && item.responsavel.toLowerCase().includes(busca.toLowerCase())) ||
+      (item.observacoes && item.observacoes.toLowerCase().includes(busca.toLowerCase()));
+
+    return atendePeriodo && atendeCategoria && atendeStatus && atendeBusca;
   });
 
-  // KPIs Resumo do Dia
-  const totalDia = consultas.filter((c) => c.dataHora.split('T')[0] === dataSelecionada).length;
-  const confirmadosDia = consultas.filter((c) => c.dataHora.split('T')[0] === dataSelecionada && c.status === 'Confirmado').length;
-  const atendimentoDia = consultas.filter((c) => c.dataHora.split('T')[0] === dataSelecionada && c.status === 'Em Atendimento').length;
-  const finalizadosDia = consultas.filter((c) => c.dataHora.split('T')[0] === dataSelecionada && c.status === 'Finalizado').length;
+  // Ordena por data e horário (mais recentes/próximos primeiro)
+  const compromissosOrdenados = [...compromissosFiltrados].sort((a, b) => {
+    const keyA = `${a.data}T${a.horario}`;
+    const keyB = `${b.data}T${b.horario}`;
+    return keyA.localeCompare(keyB);
+  });
 
-  const handleAbrirNovoModal = (horarioPref = '09:00', salaPref = 'Consultório 1') => {
-    setConsultaEditando(null);
-    setPacienteId(pacientes[0]?.id || '');
-    setDentistaNome('Dra. Patricia Medeiros (Clínica Geral)');
-    setHoraInicio(horarioPref);
-    setDuracaoMinutos(45);
-    setProcedimento('Consulta Avaliação');
-    setSala(salaPref);
-    setObservacoes('');
+  // KPIs Resumo
+  const totalCompromissos = compromissos.length;
+  const familiaresCount = compromissos.filter((c) => c.categoria === 'Responsabilidade Familiar').length;
+  const profissionaisCount = compromissos.filter((c) => c.categoria === 'Profissional / Clínica').length;
+  const concluidosCount = compromissos.filter((c) => c.status === 'Finalizado').length;
+
+  const handleAbrirNovoModal = (horarioPref = '09:00', catPref: CategoriaAgenda = 'Profissional / Clínica') => {
+    setItemEditando(null);
+    setTitulo('');
+    setDataForm(dataSelecionada || getHojeIso());
+    setHorarioForm(horarioPref);
+    setDuracaoForm(45);
+    setCategoriaForm(catPref);
+    setResponsavelForm('Fernando');
+    setPacienteNomeForm('');
+    setPacienteTelefoneForm('');
+    setStatusForm('Agendado');
+    setObservacoesForm('');
     setModalAberto(true);
   };
 
-  const handleAbrirEditarModal = (consulta: Consulta) => {
-    setConsultaEditando(consulta);
-    setPacienteId(consulta.pacienteId);
-    setDentistaNome(consulta.dentistaNome);
-    const hora = consulta.dataHora.includes('T') ? consulta.dataHora.split('T')[1].substring(0, 5) : '09:00';
-    setHoraInicio(hora);
-    setDuracaoMinutos(consulta.duracaoMinutos);
-    setProcedimento(consulta.procedimento);
-    setSala(consulta.sala || 'Consultório 1');
-    setObservacoes(consulta.observacoes || '');
+  const handleAbrirEditarModal = (item: ItemAgendaCompromisso) => {
+    setItemEditando(item);
+    setTitulo(item.titulo);
+    setDataForm(item.data);
+    setHorarioForm(item.horario);
+    setDuracaoForm(item.duracaoMinutos);
+    setCategoriaForm(item.categoria);
+    setResponsavelForm(item.responsavel || 'Fernando');
+    setPacienteNomeForm(item.pacienteNome || '');
+    setPacienteTelefoneForm(item.pacienteTelefone || '');
+    setStatusForm(item.status);
+    setObservacoesForm(item.observacoes || '');
     setModalAberto(true);
+  };
+
+  const handleAlternarStatusConcluido = (item: ItemAgendaCompromisso) => {
+    const novoStatus: StatusConsulta = item.status === 'Finalizado' ? 'Agendado' : 'Finalizado';
+    const novos = compromissos.map((c) => (c.id === item.id ? { ...c, status: novoStatus } : c));
+    salvarCompromissosECloud(novos);
   };
 
   const handleSubmitForm = (e: React.FormEvent) => {
     e.preventDefault();
-    const pac = pacientes.find((p) => p.id === pacienteId) || {
-      nome: 'Paciente Avulso',
-      telefone: '(11) 99887-6655'
+    const tituloLimpo = titulo.trim();
+    if (!tituloLimpo) return;
+
+    const itemProcessado: ItemAgendaCompromisso = {
+      id: itemEditando ? itemEditando.id : `agenda-${Date.now()}`,
+      data: dataForm,
+      horario: horarioForm,
+      duracaoMinutos: Number(duracaoForm) || 30,
+      titulo: tituloLimpo,
+      categoria: categoriaForm,
+      responsavel: responsavelForm,
+      pacienteNome: pacienteNomeForm.trim() ? pacienteNomeForm.trim().toUpperCase() : undefined,
+      pacienteTelefone: pacienteTelefoneForm.trim() || undefined,
+      status: statusForm,
+      observacoes: observacoesForm.trim() || undefined
     };
 
-    const dataHoraIso = `${dataSelecionada}T${horaInicio}:00`;
-
-    if (consultaEditando) {
-      onEditConsulta({
-        ...consultaEditando,
-        pacienteId: pacienteId || 'pac-temp',
-        pacienteNome: pac.nome,
-        pacienteTelefone: pac.telefone,
-        dentistaNome,
-        dataHora: dataHoraIso,
-        duracaoMinutos,
-        procedimento,
-        sala,
-        observacoes
-      });
+    let novaLista: ItemAgendaCompromisso[];
+    if (itemEditando) {
+      novaLista = compromissos.map((c) => (c.id === itemEditando.id ? itemProcessado : c));
     } else {
-      onAddConsulta({
-        pacienteId: pacienteId || 'pac-temp',
-        pacienteNome: pac.nome,
-        pacienteTelefone: pac.telefone,
-        dentistaNome,
-        dataHora: dataHoraIso,
-        duracaoMinutos,
-        procedimento,
-        status: 'Agendado',
-        sala,
-        observacoes
-      });
+      novaLista = [itemProcessado, ...compromissos];
     }
+
+    salvarCompromissosECloud(novaLista);
     setModalAberto(false);
   };
 
-  // Formatador de Data por Extenso (ex: "Sexta-feira, 21 de Agosto de 2026")
-  const formatarDataPorExtenso = (dataIso: string) => {
+  const handleExcluirCompromisso = (id: string) => {
+    const novaLista = compromissos.filter((c) => c.id !== id);
+    salvarCompromissosECloud(novaLista);
+    setItemExcluindoId(null);
+  };
+
+  const formatarDataFormatada = (dataIso: string) => {
     const partes = dataIso.split('-');
     if (partes.length !== 3) return dataIso;
     const date = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
-    const semana = date.toLocaleDateString('pt-BR', { weekday: 'long' });
-    const dia = date.getDate();
-    const mes = date.toLocaleDateString('pt-BR', { month: 'long' });
+    const semana = date.toLocaleDateString('pt-BR', { weekday: 'short' }).toUpperCase();
+    const dia = String(date.getDate()).padStart(2, '0');
+    const mes = String(date.getMonth() + 1).padStart(2, '0');
     const ano = date.getFullYear();
-    const semanaCap = semana.charAt(0).toUpperCase() + semana.slice(1);
-    const mesCap = mes.charAt(0).toUpperCase() + mes.slice(1);
-    return `${semanaCap}, ${dia} de ${mesCap} de ${ano}`;
+    return `${dia}/${mes}/${ano} (${semana})`;
   };
 
   return (
-    <div className="w-full max-w-full space-y-6">
-      {/* 1. TOP HEADER & AGENDA CONTROLS ON-DOCTOR STYLE */}
+    <div className="w-full max-w-full space-y-6 font-sans">
+      
+      {/* 1. TOP HEADER DA AGENDA */}
       <div className={`p-4 sm:p-6 lg:p-8 rounded-3xl border shadow-xl space-y-6 w-full ${
         darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
       }`}>
 
-        {/* Linha 1: Título + Seleção de Data + Botão Novo Agendamento */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-          
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-teal-500/10 text-teal-500 rounded-2xl border border-teal-500/20 shadow-sm">
-              <CalendarIcon className="w-6 h-6" />
+            <div className="p-3 bg-teal-500/10 text-teal-400 rounded-2xl border border-teal-500/20 shadow-sm">
+              <CalendarIcon className="w-7 h-7" />
             </div>
             <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-teal-400 bg-teal-500/10 px-2 py-0.5 rounded-md">
-                Gestão Clínico-Odontológica Ondoctor 2026
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-teal-400 bg-teal-500/10 px-2.5 py-0.5 rounded-md border border-teal-500/20">
+                Organização do Dia & Compromissos
               </span>
-              <h2 className="text-xl font-extrabold mt-0.5">Agenda & Grade de Consultas</h2>
+              <h2 className="text-xl font-extrabold mt-0.5 flex items-center gap-2">
+                Agenda de Tarefas & Responsabilidades Familiares
+              </h2>
             </div>
           </div>
 
-          {/* Navegação de Datas com Mini-Picker */}
+          {/* Navegação por Datas */}
           <div className="flex flex-wrap items-center gap-2 bg-slate-950/40 p-1.5 rounded-2xl border border-slate-800">
             <button
               onClick={handleDataAnterior}
@@ -256,7 +371,10 @@ export const Agenda: React.FC<AgendaProps> = ({
             <input
               type="date"
               value={dataSelecionada}
-              onChange={(e) => setDataSelecionada(e.target.value)}
+              onChange={(e) => {
+                setDataSelecionada(e.target.value);
+                setFiltroPeriodo('todos');
+              }}
               className={`p-1.5 rounded-xl border text-xs font-extrabold ${
                 darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'
               }`}
@@ -269,80 +387,80 @@ export const Agenda: React.FC<AgendaProps> = ({
             >
               <ChevronRight className="w-5 h-5" />
             </button>
-
-            <span className="hidden sm:inline text-xs font-extrabold text-teal-400 px-3 border-l border-slate-800">
-              {formatarDataPorExtenso(dataSelecionada)}
-            </span>
           </div>
 
           {/* Botão Novo Agendamento */}
           <button
             onClick={() => handleAbrirNovoModal()}
-            className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-extrabold px-5 py-2.5 rounded-2xl text-xs flex items-center gap-2 shadow-lg shadow-teal-600/25 transition-all cursor-pointer shrink-0"
+            className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-extrabold px-5 py-2.5 rounded-2xl text-xs flex items-center gap-2 shadow-lg shadow-teal-500/25 transition-all cursor-pointer shrink-0"
           >
-            <Plus className="w-4.5 h-4.5" /> + Agendar Consulta
+            <Plus className="w-4.5 h-4.5" /> + Novo Compromisso
           </button>
         </div>
 
-        {/* Linha 2: Tabs de Visualização (Dia, Semana, Mês, Lista) + Filtros */}
+        {/* Linha 2: Seletor de Visão (Com TABELA em Destaque Inicial Padrão) + Filtros */}
         <div className="pt-4 border-t border-slate-800/40 flex flex-wrap items-center justify-between gap-4">
-
-          {/* Selector Tabs (Dia, Semana, Mês, Lista) */}
+          
+          {/* Alternador de Visão (Tabela por Padrão) */}
           <div className="flex items-center gap-1 bg-slate-950/50 p-1 rounded-2xl border border-slate-800">
             {[
-              { id: 'dia', label: 'Dia (Cadeiras)', icon: Grid },
-              { id: 'semana', label: 'Semana (7 Dias)', icon: CalendarDays },
-              { id: 'mes', label: 'Mês', icon: CalendarIcon },
-              { id: 'lista', label: 'Lista / Prontuário', icon: ListIcon }
+              { id: 'tabela', label: 'Tabela Padrão', icon: ListIcon },
+              { id: 'dia', label: 'Grade Diária', icon: Grid },
+              { id: 'semana', label: 'Visão Semanal', icon: CalendarDays },
+              { id: 'mes', label: 'Calendário Mensal', icon: CalendarIcon }
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setVisualizacao(tab.id as TipoVisualizacao)}
                 className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer ${
                   visualizacao === tab.id
-                    ? 'bg-gradient-to-r from-teal-600 to-teal-700 text-white shadow-md'
+                    ? 'bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-md font-extrabold scale-102'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <tab.icon className="w-3.5 h-3.5" />
+                <tab.icon className="w-4 h-4" />
                 <span>{tab.label}</span>
               </button>
             ))}
           </div>
 
-          {/* Filtros Rápidos (Dentista, Consultório, Status, Busca) */}
+          {/* Filtros Rápidos */}
           <div className="flex flex-wrap items-center gap-2.5 w-full xl:w-auto">
-            {/* Filtro Dentista */}
+            {/* Filtro Período */}
             <select
-              value={filtroDentista}
-              onChange={(e) => setFiltroDentista(e.target.value)}
-              className={`p-2.5 rounded-xl border text-xs font-bold flex-1 sm:flex-none min-w-[140px] ${
+              value={filtroPeriodo}
+              onChange={(e) => setFiltroPeriodo(e.target.value as any)}
+              className={`p-2.5 rounded-xl border text-xs font-bold ${
                 darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
               }`}
             >
-              {DENTISTAS_LISTA.map((d) => (
-                <option key={d} value={d === 'Todos' ? 'Todos' : d.split(' ')[1]}>{d}</option>
-              ))}
+              <option value="todos">Todas as Datas</option>
+              <option value="hoje">Apenas Hoje</option>
+              <option value="semana">Próximos 7 Dias</option>
+              <option value="mes">Este Mês</option>
             </select>
 
-            {/* Filtro Sala / Consultório */}
+            {/* Filtro Categoria */}
             <select
-              value={filtroSala}
-              onChange={(e) => setFiltroSala(e.target.value)}
-              className={`p-2.5 rounded-xl border text-xs font-bold flex-1 sm:flex-none min-w-[130px] ${
+              value={filtroCategoria}
+              onChange={(e) => setFiltroCategoria(e.target.value)}
+              className={`p-2.5 rounded-xl border text-xs font-bold ${
                 darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
               }`}
             >
-              {SALAS_CONSULTORIO.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
+              <option value="Todas">Todas as Categorias</option>
+              <option value="Responsabilidade Familiar">👨‍👩‍👧‍👦 Responsabilidade Familiar</option>
+              <option value="Profissional / Clínica">💼 Profissional / Clínica</option>
+              <option value="Compromisso Financeiro">💰 Compromisso Financeiro</option>
+              <option value="Pessoal / Saúde">⭐ Pessoal / Saúde</option>
+              <option value="Outro">Outro</option>
             </select>
 
             {/* Filtro Status */}
             <select
               value={filtroStatus}
               onChange={(e) => setFiltroStatus(e.target.value)}
-              className={`p-2.5 rounded-xl border text-xs font-bold flex-1 sm:flex-none min-w-[130px] ${
+              className={`p-2.5 rounded-xl border text-xs font-bold ${
                 darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
               }`}
             >
@@ -350,16 +468,16 @@ export const Agenda: React.FC<AgendaProps> = ({
               <option value="Agendado">Agendado</option>
               <option value="Confirmado">Confirmado</option>
               <option value="Em Atendimento">Em Atendimento</option>
-              <option value="Finalizado">Finalizado</option>
+              <option value="Finalizado">Concluído</option>
               <option value="Cancelado">Cancelado</option>
             </select>
 
             {/* Campo Busca */}
-            <div className="relative flex-1 sm:w-64 min-w-[200px]">
+            <div className="relative flex-1 sm:w-60 min-w-[180px]">
               <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
               <input
                 type="text"
-                placeholder="Buscar paciente ou procedimento..."
+                placeholder="Buscar compromisso ou paciente..."
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
                 className={`w-full pl-9 pr-3 py-2.5 rounded-xl border text-xs font-medium ${
@@ -373,16 +491,16 @@ export const Agenda: React.FC<AgendaProps> = ({
 
       </div>
 
-      {/* 2. SUMMARY CARDS KPIS DO DIA */}
+      {/* 2. SUMMARY CARDS KPIS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className={`p-4 rounded-2xl border shadow-sm flex items-center justify-between ${
           darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Hoje</span>
-            <h4 className="text-xl font-extrabold text-sky-400 mt-0.5">{totalDia} Consultas</h4>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Registrado</span>
+            <h4 className="text-xl font-extrabold text-teal-400 mt-0.5">{totalCompromissos} Tarefas</h4>
           </div>
-          <div className="p-3 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20">
+          <div className="p-3 bg-teal-500/10 text-teal-400 rounded-xl border border-teal-500/20">
             <CalendarIcon className="w-5 h-5" />
           </div>
         </div>
@@ -391,23 +509,11 @@ export const Agenda: React.FC<AgendaProps> = ({
           darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Confirmados</span>
-            <h4 className="text-xl font-extrabold text-teal-400 mt-0.5">{confirmadosDia} Pacientes</h4>
+            <span className="text-[11px] font-bold text-purple-400 uppercase tracking-wider">Familiar & Casa</span>
+            <h4 className="text-xl font-extrabold text-purple-300 mt-0.5">{familiaresCount} Tarefas</h4>
           </div>
-          <div className="p-3 bg-teal-500/10 text-teal-400 rounded-xl border border-teal-500/20">
-            <UserCheck className="w-5 h-5" />
-          </div>
-        </div>
-
-        <div className={`p-4 rounded-2xl border shadow-sm flex items-center justify-between ${
-          darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-        }`}>
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Em Atendimento</span>
-            <h4 className="text-xl font-extrabold text-amber-400 mt-0.5">{atendimentoDia} Na Cadeira</h4>
-          </div>
-          <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20 animate-pulse">
-            <Play className="w-5 h-5" />
+          <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl border border-purple-500/20">
+            <HeartHandshake className="w-5 h-5" />
           </div>
         </div>
 
@@ -415,150 +521,218 @@ export const Agenda: React.FC<AgendaProps> = ({
           darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
         }`}>
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Finalizados</span>
-            <h4 className="text-xl font-extrabold text-emerald-400 mt-0.5">{finalizadosDia} Concluídos</h4>
+            <span className="text-[11px] font-bold text-sky-400 uppercase tracking-wider">Profissional</span>
+            <h4 className="text-xl font-extrabold text-sky-300 mt-0.5">{profissionaisCount} Consultas</h4>
+          </div>
+          <div className="p-3 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20">
+            <Briefcase className="w-5 h-5" />
+          </div>
+        </div>
+
+        <div className={`p-4 rounded-2xl border shadow-sm flex items-center justify-between ${
+          darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+        }`}>
+          <div>
+            <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Concluídos</span>
+            <h4 className="text-xl font-extrabold text-emerald-300 mt-0.5">{concluidosCount} Finalizados</h4>
           </div>
           <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
-            <CheckCircle className="w-5 h-5" />
+            <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
       </div>
 
-      {/* 3. CONTEÚDO PRINCIPAL DA AGENDA POR TIPO DE VISUALIZAÇÃO */}
+      {/* 3. EXIBIÇÃO EM TABELA PADRÃO (CONFORME SOLICITADO PELO USUÁRIO) */}
+      {visualizacao === 'tabela' && (
+        <div className={`p-4 sm:p-6 lg:p-8 rounded-3xl border shadow-xl space-y-4 w-full ${
+          darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+        }`}>
+          <div className="flex items-center justify-between border-b border-slate-800/40 pb-3">
+            <h3 className="font-extrabold text-base flex items-center gap-2 text-teal-400">
+              <ListIcon className="w-5 h-5 text-teal-400" /> Tabela de Agendamentos & Compromissos ({compromissosOrdenados.length})
+            </h3>
 
-      {/* A) VISUALIZAÇÃO POR DIA (Grade Diária por Cadeira / Consultório) */}
+            <span className="text-xs font-bold text-slate-400 bg-slate-800/60 px-3 py-1 rounded-full border border-slate-700">
+              Ordenado por Data e Horário
+            </span>
+          </div>
+
+          {compromissosOrdenados.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-slate-800 text-slate-400 font-extrabold uppercase">
+                    <th className="p-3">Data</th>
+                    <th className="p-3">Horário</th>
+                    <th className="p-3">Compromisso / Descrição</th>
+                    <th className="p-3">Categoria</th>
+                    <th className="p-3">Responsável</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/40 font-medium">
+                  {compromissosOrdenados.map((item) => {
+                    const cor = statusCores[item.status] || statusCores['Agendado'];
+                    const catInfo = categoriaBadges[item.categoria] || categoriaBadges['Outro'];
+                    const CatIcon = catInfo.icon;
+                    const isConcluido = item.status === 'Finalizado';
+
+                    return (
+                      <tr
+                        key={item.id}
+                        className={`transition-colors ${
+                          isConcluido
+                            ? 'opacity-70 bg-slate-950/40 hover:bg-slate-900/60'
+                            : 'hover:bg-slate-800/40'
+                        }`}
+                      >
+                        {/* Data */}
+                        <td className="p-3 font-extrabold whitespace-nowrap text-teal-300">
+                          {formatarDataFormatada(item.data)}
+                        </td>
+
+                        {/* Horário */}
+                        <td className="p-3 font-bold whitespace-nowrap">
+                          <span className="bg-slate-800 px-2 py-1 rounded-md border border-slate-700 font-mono text-slate-200">
+                            {item.horario} ({item.duracaoMinutos}m)
+                          </span>
+                        </td>
+
+                        {/* Compromisso / Descrição */}
+                        <td className="p-3">
+                          <div className={`font-bold text-sm ${isConcluido ? 'line-through text-slate-400' : 'text-slate-100'}`}>
+                            {item.titulo}
+                          </div>
+                          {item.observacoes && (
+                            <div className="text-[11px] text-slate-400 italic mt-0.5">
+                              {item.observacoes}
+                            </div>
+                          )}
+                        </td>
+
+                        {/* Categoria */}
+                        <td className="p-3 whitespace-nowrap">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border flex items-center gap-1.5 w-fit ${catInfo.badge}`}>
+                            <CatIcon className="w-3.5 h-3.5" />
+                            {item.categoria}
+                          </span>
+                        </td>
+
+                        {/* Responsável */}
+                        <td className="p-3 whitespace-nowrap font-bold text-slate-300">
+                          {item.responsavel}
+                        </td>
+
+                        {/* Status */}
+                        <td className="p-3 whitespace-nowrap">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border ${cor.badge}`}>
+                            {item.status === 'Finalizado' ? '✓ Concluído' : item.status}
+                          </span>
+                        </td>
+
+                        {/* Ações */}
+                        <td className="p-3 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-2">
+                            {/* Botão de Concluir Rápido em 1 Clique */}
+                            <button
+                              onClick={() => handleAlternarStatusConcluido(item)}
+                              className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
+                                isConcluido
+                                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30'
+                                  : 'bg-slate-800 hover:bg-emerald-600 hover:text-white text-slate-400 border-slate-700'
+                              }`}
+                              title={isConcluido ? 'Marcar como Pendente' : 'Marcar como Concluído'}
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+
+                            {/* WhatsApp se houver telefone do paciente */}
+                            {item.pacienteTelefone && (
+                              <a
+                                href={`https://wa.me/55${item.pacienteTelefone.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="p-1.5 bg-slate-800 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded-xl border border-slate-700 transition-colors"
+                                title="WhatsApp"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                              </a>
+                            )}
+
+                            {/* Editar */}
+                            <button
+                              onClick={() => handleAbrirEditarModal(item)}
+                              className="p-1.5 bg-slate-800 hover:bg-sky-600 text-sky-400 hover:text-white rounded-xl border border-slate-700 transition-colors cursor-pointer"
+                              title="Editar Compromisso"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+
+                            {/* Excluir */}
+                            <button
+                              onClick={() => setItemExcluindoId(item.id)}
+                              className="p-1.5 bg-slate-800 hover:bg-rose-600 text-rose-400 hover:text-white rounded-xl border border-slate-700 transition-colors cursor-pointer"
+                              title="Excluir Compromisso"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="py-12 text-center text-slate-400 space-y-3 bg-slate-950/40 rounded-2xl border border-slate-800">
+              <CalendarIcon className="w-10 h-10 text-slate-500 mx-auto" />
+              <h4 className="font-bold text-sm text-slate-300">Nenhum compromisso encontrado para os filtros selecionados.</h4>
+              <p className="text-xs text-slate-400">Clique no botão acima para adicionar um novo compromisso pessoal, familiar ou profissional.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 4. OUTRAS VISUALIZAÇÕES AUXILIARES (GRADE DIÁRIA, SEMANAL, MÊS) */}
       {visualizacao === 'dia' && (
         <div className={`p-4 sm:p-6 lg:p-8 rounded-3xl border shadow-xl overflow-x-auto w-full ${
           darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
         }`}>
-          
-          {/* Header das Cadeiras / Consultórios */}
-          <div className="grid grid-cols-4 gap-4 min-w-[700px] w-full border-b border-slate-800/60 pb-3 font-extrabold text-xs">
-            <div className="text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Clock className="w-4 h-4 text-teal-400" /> Horário
-            </div>
-            {['Consultório 1 (Maxila)', 'Consultório 2 (Implantes)', 'Consultório 3 (Ortodontia)'].map((salaNome, idx) => (
-              <div key={idx} className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 text-teal-400 flex items-center justify-between font-bold">
-                <span>{salaNome}</span>
-                <span className="text-[10px] bg-teal-500/20 px-2 py-0.5 rounded-full text-teal-300">Livre</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Slots Horários x Cadeiras */}
-          <div className="space-y-3 pt-3 min-w-[700px] w-full">
+          <div className="space-y-3 min-w-[650px]">
             {HORARIOS_DIA.map((horaSlot) => {
-              // Consultas que caem neste horário
-              const consultasHora = consultasFiltradas.filter((c) => {
-                const h = c.dataHora.includes('T') ? c.dataHora.split('T')[1].substring(0, 5) : '09:00';
-                return h.substring(0, 2) === horaSlot.substring(0, 2);
-              });
+              const itensHora = compromissosFiltrados.filter((c) => c.data === dataSelecionada && c.horario.substring(0, 2) === horaSlot.substring(0, 2));
 
               return (
-                <div key={horaSlot} className="grid grid-cols-4 gap-4 items-stretch border-b border-slate-800/20 pb-3 min-h-[85px]">
-                  
-                  {/* Coluna 1: Hora */}
-                  <div className="flex flex-col justify-start pt-1 font-extrabold text-sm text-slate-400">
-                    <span>{horaSlot}</span>
-                    <span className="text-[10px] text-slate-400 font-normal">00 min</span>
-                  </div>
-
-                  {/* Colunas 2, 3 e 4: Consultórios 1, 2 e 3 */}
-                  {['Consultório 1', 'Consultório 2', 'Consultório 3'].map((salaNome) => {
-                    const cNaSala = consultasHora.find((c) => (c.sala || 'Consultório 1').includes(salaNome));
-
-                    if (cNaSala) {
-                      const corStatus = statusCores[cNaSala.status] || statusCores['Agendado'];
-
-                      return (
-                        <div
-                          key={cNaSala.id}
-                          className={`p-3 rounded-2xl border-2 transition-all shadow-lg flex flex-col justify-between relative group ${corStatus.bg} ${corStatus.border}`}
-                        >
-                          <div>
-                            <div className="flex items-center justify-between gap-1 mb-1">
-                              <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${corStatus.badge}`}>
-                                {cNaSala.status}
-                              </span>
-                              <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                                <Clock className="w-3 h-3 text-teal-400" /> {cNaSala.duracaoMinutos} min
-                              </span>
-                            </div>
-
-                            <h4 className="font-extrabold text-sm text-white truncate flex items-center gap-1.5">
-                              <User className="w-3.5 h-3.5 text-teal-400" /> {cNaSala.pacienteNome}
-                            </h4>
-
-                            <p className="text-xs font-bold text-teal-300 truncate mt-0.5">
-                              {cNaSala.procedimento}
-                            </p>
-
-                            <p className="text-[11px] text-slate-400 truncate">
-                              {cNaSala.dentistaNome}
-                            </p>
-                          </div>
-
-                          {/* Quick Controls no Card */}
-                          <div className="pt-2 border-t border-slate-800/30 flex items-center justify-between gap-1 text-[11px]">
-                            {/* Dropdown Mudança de Status */}
-                            <select
-                              value={cNaSala.status}
-                              onChange={(e) => onUpdateStatus(cNaSala.id, e.target.value as StatusConsulta)}
-                              className="bg-slate-900 border border-slate-700 text-slate-200 text-[10px] font-bold rounded-lg p-1 cursor-pointer"
-                            >
-                              <option value="Agendado">Agendado</option>
-                              <option value="Confirmado">Confirmado</option>
-                              <option value="Em Atendimento">Em Atendimento</option>
-                              <option value="Finalizado">Finalizado</option>
-                              <option value="Cancelado">Cancelado</option>
-                            </select>
-
-                            <div className="flex items-center gap-1">
-                              {/* WhatsApp Link */}
-                              <a
-                                href={`https://wa.me/55${cNaSala.pacienteTelefone.replace(/\D/g, '')}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="p-1 text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-colors"
-                                title="Enviar Mensagem no WhatsApp"
-                              >
-                                <MessageCircle className="w-3.5 h-3.5" />
-                              </a>
-
-                              <button
-                                onClick={() => handleAbrirEditarModal(cNaSala)}
-                                className="p-1 text-sky-400 hover:bg-sky-500/20 rounded-lg transition-colors cursor-pointer"
-                                title="Editar Agendamento"
-                              >
-                                <Edit2 className="w-3.5 h-3.5" />
-                              </button>
-
-                              <button
-                                onClick={() => setConsultaExcluindoId(cNaSala.id)}
-                                className="p-1 text-rose-400 hover:bg-rose-500/20 rounded-lg transition-colors cursor-pointer"
-                                title="Excluir Agendamento"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    // Slot Vazio para clicar e agendar
-                    return (
-                      <button
-                        key={salaNome}
-                        onClick={() => handleAbrirNovoModal(horaSlot, salaNome)}
-                        className="rounded-2xl border-2 border-dashed border-slate-800 hover:border-teal-500/50 hover:bg-teal-500/5 p-3 flex items-center justify-center text-slate-400 hover:text-teal-400 text-xs font-bold transition-all cursor-pointer group"
+                <div key={horaSlot} className="flex gap-4 border-b border-slate-800/30 pb-3 items-start min-h-[70px]">
+                  <div className="w-16 font-extrabold text-sm text-slate-400 pt-1 shrink-0">{horaSlot}</div>
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {itensHora.map((c) => (
+                      <div
+                        key={c.id}
+                        onClick={() => handleAbrirEditarModal(c)}
+                        className={`p-3 rounded-2xl border transition-all cursor-pointer shadow-md flex items-center justify-between ${statusCores[c.status].bg} ${statusCores[c.status].border}`}
                       >
-                        <span className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
-                          <Plus className="w-4 h-4" /> Agendar {horaSlot}
+                        <div>
+                          <span className="text-[10px] font-extrabold text-teal-400">{c.horario} • {c.categoria}</span>
+                          <h4 className="font-bold text-xs text-white">{c.titulo}</h4>
+                          <span className="text-[10px] text-slate-400 block">{c.responsavel}</span>
+                        </div>
+                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${statusCores[c.status].badge}`}>
+                          {c.status}
                         </span>
+                      </div>
+                    ))}
+                    {itensHora.length === 0 && (
+                      <button
+                        onClick={() => handleAbrirNovoModal(horaSlot)}
+                        className="py-2.5 px-3 rounded-xl border border-dashed border-slate-800 hover:border-teal-500/50 hover:bg-teal-500/5 text-slate-500 hover:text-teal-400 text-xs font-bold transition-all text-left"
+                      >
+                        + Agendar às {horaSlot}
                       </button>
-                    );
-                  })}
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -566,46 +740,34 @@ export const Agenda: React.FC<AgendaProps> = ({
         </div>
       )}
 
-      {/* B) VISUALIZAÇÃO POR SEMANA */}
       {visualizacao === 'semana' && (
         <div className={`p-4 sm:p-6 lg:p-8 rounded-3xl border shadow-xl overflow-x-auto w-full ${
           darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
         }`}>
-          <div className="grid grid-cols-7 gap-3 min-w-[850px] w-full">
-            {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].map((diaNome, idx) => {
-              const consultasDoDia = consultas.filter((c) => {
-                const diaIdx = new Date(c.dataHora.split('T')[0]).getDay();
-                return diaIdx === (idx + 1) % 7;
-              });
-
-              return (
-                <div key={diaNome} className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 space-y-3 min-h-[420px]">
-                  <div className="border-b border-slate-800 pb-2 text-center">
-                    <span className="font-extrabold text-xs text-teal-400">{diaNome}</span>
-                    <p className="text-[10px] text-slate-400">{consultasDoDia.length} consulta(s)</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    {consultasDoDia.map((c) => (
-                      <div
-                        key={c.id}
-                        onClick={() => handleAbrirEditarModal(c)}
-                        className={`p-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer hover:scale-102 ${statusCores[c.status].bg} ${statusCores[c.status].border}`}
-                      >
-                        <div className="text-[10px] text-teal-300">{c.dataHora.split('T')[1]?.substring(0, 5)}</div>
-                        <div className="truncate text-white">{c.pacienteNome}</div>
-                        <div className="text-[10px] text-slate-400 truncate">{c.procedimento}</div>
-                      </div>
-                    ))}
-                  </div>
+          <div className="grid grid-cols-7 gap-3 min-w-[850px]">
+            {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].map((diaNome) => (
+              <div key={diaNome} className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 space-y-3 min-h-[350px]">
+                <div className="border-b border-slate-800 pb-2 text-center">
+                  <span className="font-extrabold text-xs text-teal-400">{diaNome}</span>
                 </div>
-              );
-            })}
+                <div className="space-y-2">
+                  {compromissosFiltrados.slice(0, 5).map((c) => (
+                    <div
+                      key={c.id}
+                      onClick={() => handleAbrirEditarModal(c)}
+                      className={`p-2 rounded-xl border text-[11px] font-bold cursor-pointer ${statusCores[c.status].bg} ${statusCores[c.status].border}`}
+                    >
+                      <div className="text-[10px] text-teal-300">{c.horario}</div>
+                      <div className="truncate text-white">{c.titulo}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* C) VISUALIZAÇÃO POR MÊS */}
       {visualizacao === 'mes' && (
         <div className={`p-4 sm:p-6 lg:p-8 rounded-3xl border shadow-xl w-full ${
           darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
@@ -618,7 +780,7 @@ export const Agenda: React.FC<AgendaProps> = ({
             {Array.from({ length: 31 }, (_, i) => i + 1).map((diaNum) => {
               const prefixoAnoMes = dataSelecionada.substring(0, 7);
               const dataStr = `${prefixoAnoMes}-${diaNum < 10 ? '0' + diaNum : diaNum}`;
-              const countDia = consultas.filter((c) => c.dataHora.split('T')[0] === dataStr).length;
+              const countDia = compromissos.filter((c) => c.data === dataStr).length;
               const isSelected = dataSelecionada === dataStr;
 
               return (
@@ -626,9 +788,9 @@ export const Agenda: React.FC<AgendaProps> = ({
                   key={diaNum}
                   onClick={() => {
                     setDataSelecionada(dataStr);
-                    setVisualizacao('dia');
+                    setVisualizacao('tabela');
                   }}
-                  className={`min-h-[85px] sm:min-h-[100px] p-2.5 rounded-2xl border flex flex-col justify-between transition-all cursor-pointer ${
+                  className={`min-h-[85px] p-2.5 rounded-2xl border flex flex-col justify-between transition-all cursor-pointer ${
                     isSelected
                       ? 'bg-teal-600 text-white border-teal-400 ring-2 ring-teal-400'
                       : darkMode
@@ -639,7 +801,7 @@ export const Agenda: React.FC<AgendaProps> = ({
                   <span className="font-extrabold text-xs">{diaNum}</span>
                   {countDia > 0 && (
                     <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                      {countDia} agend.
+                      {countDia} tarefas
                     </span>
                   )}
                 </button>
@@ -649,70 +811,7 @@ export const Agenda: React.FC<AgendaProps> = ({
         </div>
       )}
 
-      {/* D) VISUALIZAÇÃO EM LISTA / PRONTUÁRIO */}
-      {visualizacao === 'lista' && (
-        <div className={`p-4 sm:p-6 lg:p-8 rounded-3xl border shadow-xl w-full ${
-          darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
-        }`}>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-800 text-slate-400 font-extrabold uppercase">
-                  <th className="p-3">Horário / Data</th>
-                  <th className="p-3">Paciente</th>
-                  <th className="p-3">Procedimento</th>
-                  <th className="p-3">Dentista</th>
-                  <th className="p-3">Consultório</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/40">
-                {consultasFiltradas.map((c) => {
-                  const cor = statusCores[c.status];
-                  return (
-                    <tr key={c.id} className="hover:bg-slate-800/40 transition-colors font-medium">
-                      <td className="p-3 font-extrabold text-teal-400">
-                        {c.dataHora.replace('T', ' ')}
-                      </td>
-                      <td className="p-3 font-bold text-white">
-                        {c.pacienteNome}
-                        <div className="text-[10px] text-slate-400">{c.pacienteTelefone}</div>
-                      </td>
-                      <td className="p-3">{c.procedimento}</td>
-                      <td className="p-3 text-slate-300">{c.dentistaNome}</td>
-                      <td className="p-3 text-slate-400">{c.sala || 'Consultório 1'}</td>
-                      <td className="p-3">
-                        <span className={`px-2.5 py-1 rounded-full border text-[10px] font-extrabold ${cor.badge}`}>
-                          {c.status}
-                        </span>
-                      </td>
-                      <td className="p-3 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleAbrirEditarModal(c)}
-                            className="p-1.5 bg-slate-800 hover:bg-slate-700 text-sky-400 rounded-xl transition-colors cursor-pointer"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => setConsultaExcluindoId(c.id)}
-                            className="p-1.5 bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-xl transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL DE AGENDAMENTO (NOVO / EDITAR) */}
+      {/* MODAL CADASTRAR / EDITAR COMPROMISSO */}
       {modalAberto && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className={`rounded-3xl p-6 max-w-lg w-full shadow-2xl border space-y-4 my-8 ${
@@ -721,7 +820,7 @@ export const Agenda: React.FC<AgendaProps> = ({
             <div className="flex items-center justify-between border-b border-slate-800/40 pb-3">
               <h3 className="text-lg font-extrabold flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-teal-400" />
-                {consultaEditando ? 'Editar Agendamento de Consulta' : 'Novo Agendamento Odontológico'}
+                {itemEditando ? 'Editar Compromisso' : 'Novo Agendamento / Compromisso'}
               </h3>
               <button onClick={() => setModalAberto(false)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
@@ -729,106 +828,129 @@ export const Agenda: React.FC<AgendaProps> = ({
             </div>
 
             <form onSubmit={handleSubmitForm} className="space-y-4 text-xs">
+              
+              {/* Título do Compromisso */}
               <div>
-                <label className="block font-bold text-slate-400 mb-1">Selecione o Paciente</label>
-                <select
-                  value={pacienteId}
-                  onChange={(e) => setPacienteId(e.target.value)}
-                  className={`w-full p-2.5 rounded-xl border ${
+                <label className="block font-bold text-slate-400 mb-1">Título / Descrição do Compromisso</label>
+                <input
+                  type="text"
+                  placeholder="Ex: Levar filhos na natação, Consulta Odontológica..."
+                  value={titulo}
+                  onChange={(e) => setTitulo(e.target.value)}
+                  required
+                  autoFocus
+                  className={`w-full p-3 rounded-xl border font-bold ${
                     darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
                   }`}
-                >
-                  {pacientes.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nome} ({p.telefone})</option>
-                  ))}
-                </select>
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              {/* Categoria & Responsável */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-400 mb-1">Dentista Responsável</label>
+                  <label className="block font-bold text-slate-400 mb-1">Categoria do Compromisso</label>
                   <select
-                    value={dentistaNome}
-                    onChange={(e) => setDentistaNome(e.target.value)}
-                    className={`w-full p-2.5 rounded-xl border ${
+                    value={categoriaForm}
+                    onChange={(e) => setCategoriaForm(e.target.value as CategoriaAgenda)}
+                    className={`w-full p-2.5 rounded-xl border font-bold ${
                       darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
                     }`}
                   >
-                    <option value="Dra. Patricia Medeiros (Clínica Geral)">Dra. Patricia Medeiros</option>
-                    <option value="Dr. Carlos Eduardo (Implantodontia)">Dr. Carlos Eduardo</option>
-                    <option value="Dr. Lucas Alencar (Ortodontia)">Dr. Lucas Alencar</option>
+                    <option value="Responsabilidade Familiar">👨‍👩‍👧‍👦 Responsabilidade Familiar</option>
+                    <option value="Profissional / Clínica">💼 Profissional / Clínica</option>
+                    <option value="Compromisso Financeiro">💰 Compromisso Financeiro</option>
+                    <option value="Pessoal / Saúde">⭐ Pessoal / Saúde</option>
+                    <option value="Outro">Outro</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-400 mb-1">Consultório / Sala</label>
-                  <select
-                    value={sala}
-                    onChange={(e) => setSala(e.target.value)}
-                    className={`w-full p-2.5 rounded-xl border ${
-                      darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
-                    }`}
-                  >
-                    <option value="Consultório 1">Consultório 1</option>
-                    <option value="Consultório 2">Consultório 2</option>
-                    <option value="Consultório 3">Consultório 3</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-400 mb-1">Horário de Início</label>
+                  <label className="block font-bold text-slate-400 mb-1">Responsável / Envolvido</label>
                   <input
-                    type="time"
-                    value={horaInicio}
-                    onChange={(e) => setHoraInicio(e.target.value)}
+                    type="text"
+                    placeholder="Ex: Fernando, Bernardo, Família..."
+                    value={responsavelForm}
+                    onChange={(e) => setResponsavelForm(e.target.value)}
+                    className={`w-full p-2.5 rounded-xl border font-bold ${
+                      darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              {/* Data, Horário e Duração */}
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-400 mb-1">Data</label>
+                  <input
+                    type="date"
+                    value={dataForm}
+                    onChange={(e) => setDataForm(e.target.value)}
                     required
-                    className={`w-full p-2.5 rounded-xl border ${
+                    className={`w-full p-2.5 rounded-xl border font-bold ${
                       darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
                     }`}
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-400 mb-1">Duração Estimada</label>
+                  <label className="block font-bold text-slate-400 mb-1">Horário</label>
+                  <input
+                    type="time"
+                    value={horarioForm}
+                    onChange={(e) => setHorarioForm(e.target.value)}
+                    required
+                    className={`w-full p-2.5 rounded-xl border font-bold ${
+                      darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-400 mb-1">Duração</label>
                   <select
-                    value={duracaoMinutos}
-                    onChange={(e) => setDuracaoMinutos(Number(e.target.value))}
-                    className={`w-full p-2.5 rounded-xl border ${
+                    value={duracaoForm}
+                    onChange={(e) => setDuracaoForm(Number(e.target.value))}
+                    className={`w-full p-2.5 rounded-xl border font-bold ${
                       darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
                     }`}
                   >
-                    <option value={30}>30 minutos</option>
-                    <option value={45}>45 minutos</option>
-                    <option value={60}>60 minutos (1h)</option>
-                    <option value={90}>90 minutos (1h30)</option>
-                    <option value={120}>120 minutos (2h)</option>
+                    <option value={15}>15 min</option>
+                    <option value={30}>30 min</option>
+                    <option value={45}>45 min</option>
+                    <option value={60}>1 hora</option>
+                    <option value={90}>1h 30m</option>
+                    <option value={120}>2 horas</option>
                   </select>
                 </div>
               </div>
 
+              {/* Status */}
               <div>
-                <label className="block font-bold text-slate-400 mb-1">Procedimento Odontológico</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Consulta Avaliação, Profilaxia, Canal, Implante..."
-                  value={procedimento}
-                  onChange={(e) => setProcedimento(e.target.value)}
-                  required
-                  className={`w-full p-2.5 rounded-xl border ${
+                <label className="block font-bold text-slate-400 mb-1">Status do Agendamento</label>
+                <select
+                  value={statusForm}
+                  onChange={(e) => setStatusForm(e.target.value as StatusConsulta)}
+                  className={`w-full p-2.5 rounded-xl border font-bold ${
                     darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
                   }`}
-                />
+                >
+                  <option value="Agendado">Agendado</option>
+                  <option value="Confirmado">Confirmado</option>
+                  <option value="Em Atendimento">Em Atendimento / Em Andamento</option>
+                  <option value="Finalizado">Concluído / Finalizado</option>
+                  <option value="Cancelado">Cancelado</option>
+                </select>
               </div>
 
+              {/* Observações */}
               <div>
-                <label className="block font-bold text-slate-400 mb-1">Observações do Agendamento</label>
+                <label className="block font-bold text-slate-400 mb-1">Observações Adicionais</label>
                 <textarea
                   rows={2}
-                  placeholder="Anotações para a recepcionista ou dentista..."
-                  value={observacoes}
-                  onChange={(e) => setObservacoes(e.target.value)}
+                  placeholder="Anotações extras sobre o compromisso..."
+                  value={observacoesForm}
+                  onChange={(e) => setObservacoesForm(e.target.value)}
                   className={`w-full p-2.5 rounded-xl border ${
                     darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
                   }`}
@@ -845,9 +967,9 @@ export const Agenda: React.FC<AgendaProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-extrabold rounded-xl shadow-lg shadow-teal-600/30 cursor-pointer"
+                  className="px-5 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-extrabold rounded-xl shadow-lg shadow-teal-500/30 cursor-pointer"
                 >
-                  {consultaEditando ? 'Salvar Alterações' : 'Confirmar Agendamento'}
+                  {itemEditando ? 'Salvar Alterações' : 'Confirmar Agendamento'}
                 </button>
               </div>
             </form>
@@ -855,8 +977,8 @@ export const Agenda: React.FC<AgendaProps> = ({
         </div>
       )}
 
-      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE CONSULTA */}
-      {consultaExcluindoId && (
+      {/* MODAL EXCLUSÃO */}
+      {itemExcluindoId && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className={`rounded-3xl p-6 max-w-md w-full shadow-2xl border space-y-4 ${
             darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
@@ -866,38 +988,36 @@ export const Agenda: React.FC<AgendaProps> = ({
                 <Trash2 className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-extrabold text-base">Cancelar Agendamento</h3>
-                <p className="text-xs text-slate-400">Esta consulta será removida da grade de horários.</p>
+                <h3 className="font-extrabold text-base">Excluir Compromisso</h3>
+                <p className="text-xs text-slate-400">Esta ação não poderá ser desfeita.</p>
               </div>
             </div>
 
             <p className="text-xs text-slate-300 bg-slate-800/50 p-3 rounded-2xl border border-slate-700">
-              Tem certeza que deseja desmarcar e excluir esta consulta da agenda?
+              Tem certeza de que deseja remover este compromisso da sua agenda?
             </p>
 
             <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => setConsultaExcluindoId(null)}
+                onClick={() => setItemExcluindoId(null)}
                 className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl font-bold text-xs cursor-pointer"
               >
-                Manter Agendamento
+                Cancelar
               </button>
 
               <button
                 type="button"
-                onClick={() => {
-                  onDeleteConsulta(consultaExcluindoId);
-                  setConsultaExcluindoId(null);
-                }}
+                onClick={() => handleExcluirCompromisso(itemExcluindoId)}
                 className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow-lg shadow-rose-600/30 cursor-pointer"
               >
-                Sim, Excluir Consulta
+                Sim, Excluir
               </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 };

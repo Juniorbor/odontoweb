@@ -8,6 +8,7 @@ import {
   LogOut,
   FileSpreadsheet,
   Database,
+  Calendar,
   X
 } from 'lucide-react';
 
@@ -44,6 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const allMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Activity },
+    { id: 'agenda', label: 'Agenda', icon: Calendar },
     { id: 'producao', label: 'Produção', icon: FileSpreadsheet },
     { id: 'financeiro', label: 'Financeiro', icon: DollarSign, badge: badgeCounts?.pendentes ? `! ${badgeCounts.pendentes}` : undefined },
     { id: 'relatorios', label: 'Relatórios', icon: BarChart3 },
