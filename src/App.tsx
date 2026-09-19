@@ -665,24 +665,6 @@ export function App() {
             />
           )}
 
-          {(activeTab === 'agenda' || activeTab === 'agendainteligente') && (
-            <AgendaInteligenteMain
-              darkMode={darkMode}
-              usuarioId={usuarioLogado?.id}
-              pacientesExistentes={pacientes}
-              onNavigateToProntuario={(pId) => {
-                const p = pacientes.find((pac) => pac.id === pId);
-                if (p) {
-                  setPacientePerfilSelecionado(p);
-                  setActiveTab('prontuario');
-                } else {
-                  setActiveTab('pacientes');
-                }
-              }}
-              onNavigateToAgendamentoOnline={() => setActiveTab('agendamentoonline')}
-            />
-          )}
-
           {activeTab === 'producao' && usuarioLogado?.role !== 'cliente' && (
             <Producao darkMode={darkMode} usuarioId={usuarioLogado?.id} />
           )}
