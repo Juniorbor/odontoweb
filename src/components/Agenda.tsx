@@ -8,18 +8,9 @@ import {
   Search,
   Edit2,
   Trash2,
-  User,
   X,
-  Grid,
-  List as ListIcon,
-  CalendarDays,
-  Sparkles,
-  MessageCircle,
-  HeartHandshake,
-  Briefcase,
-  DollarSign,
   Check,
-  CheckCircle2
+  Menu
 } from 'lucide-react';
 import { getItemJSON, pushToCloud } from '../services/cloudSync';
 
@@ -55,27 +46,55 @@ interface AgendaProps {
   usuarioId?: string;
 }
 
-type TipoVisualizacao = 'tabela' | 'dia' | 'semana' | 'mes';
+type TipoVisualizacao = 'mes' | 'semana' | 'dia' | 'agenda';
 
-const statusCores: Record<StatusConsulta, { bg: string; text: string; border: string; badge: string; hex: string }> = {
-  'Agendado': { bg: 'bg-sky-500/10 hover:bg-sky-500/20', text: 'text-sky-400', border: 'border-sky-500/30', badge: 'bg-sky-500/20 text-sky-300 border-sky-500/30', hex: '#0284C7' },
-  'Confirmado': { bg: 'bg-teal-500/10 hover:bg-teal-500/20', text: 'text-teal-400', border: 'border-teal-500/30', badge: 'bg-teal-500/20 text-teal-300 border-teal-500/30', hex: '#0D9488' },
-  'Em Atendimento': { bg: 'bg-amber-500/10 hover:bg-amber-500/20', text: 'text-amber-400', border: 'border-amber-500/30', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30 animate-pulse', hex: '#D97706' },
-  'Finalizado': { bg: 'bg-emerald-500/10 hover:bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30', hex: '#059669' },
-  'Cancelado': { bg: 'bg-rose-500/10 hover:bg-rose-500/20', text: 'text-rose-400', border: 'border-rose-500/30', badge: 'bg-rose-500/20 text-rose-300 border-rose-500/30', hex: '#E11D48' },
-};
-
-const categoriaBadges: Record<CategoriaAgenda, { badge: string; icon: any }> = {
-  'Responsabilidade Familiar': { badge: 'bg-purple-500/20 text-purple-300 border-purple-500/30', icon: HeartHandshake },
-  'Profissional / Clínica': { badge: 'bg-teal-500/20 text-teal-300 border-teal-500/30', icon: Briefcase },
-  'Compromisso Financeiro': { badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30', icon: DollarSign },
-  'Pessoal / Saúde': { badge: 'bg-sky-500/20 text-sky-300 border-sky-500/30', icon: User },
-  'Outro': { badge: 'bg-slate-700 text-slate-300 border-slate-600', icon: CalendarIcon }
+const categoriasConfig: Record<CategoriaAgenda, { label: string; bg: string; text: string; border: string; hex: string; dotColor: string }> = {
+  'Responsabilidade Familiar': {
+    label: 'Responsabilidade Familiar',
+    bg: 'bg-purple-500/15 hover:bg-purple-500/25',
+    text: 'text-purple-300',
+    border: 'border-purple-500/40',
+    hex: '#A855F7',
+    dotColor: 'bg-purple-500'
+  },
+  'Profissional / Clínica': {
+    label: 'Profissional / Clínica',
+    bg: 'bg-teal-500/15 hover:bg-teal-500/25',
+    text: 'text-teal-300',
+    border: 'border-teal-500/40',
+    hex: '#14B8A6',
+    dotColor: 'bg-teal-500'
+  },
+  'Compromisso Financeiro': {
+    label: 'Compromisso Financeiro',
+    bg: 'bg-amber-500/15 hover:bg-amber-500/25',
+    text: 'text-amber-300',
+    border: 'border-amber-500/40',
+    hex: '#F59E0B',
+    dotColor: 'bg-amber-500'
+  },
+  'Pessoal / Saúde': {
+    label: 'Pessoal / Saúde',
+    bg: 'bg-sky-500/15 hover:bg-sky-500/25',
+    text: 'text-sky-300',
+    border: 'border-sky-500/40',
+    hex: '#0EA5E9',
+    dotColor: 'bg-sky-500'
+  },
+  'Outro': {
+    label: 'Outro',
+    bg: 'bg-slate-700/40 hover:bg-slate-700/60',
+    text: 'text-slate-300',
+    border: 'border-slate-600',
+    hex: '#64748B',
+    dotColor: 'bg-slate-400'
+  }
 };
 
 const HORARIOS_DIA = [
   '07:00', '08:00', '09:00', '10:00', '11:00', '12:00',
-  '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'
+  '13:00', '14:00', '15:00', '16:00', '17:00', '18:00',
+  '19:00', '20:00'
 ];
 
 const getHojeIso = (): string => {
@@ -141,12 +160,11 @@ export const Agenda: React.FC<AgendaProps> = ({
 }) => {
   const AGENDA_STORAGE_KEY = `odonto_agenda_compromissos_${usuarioId || 'usr-admin-master'}`;
 
-  // Lista de Compromissos com Persistência Permanente Local & Cloud
+  // Compromissos com salvamento local & nuvem
   const [compromissos, setCompromissos] = useState<ItemAgendaCompromisso[]>(() => {
     return getItemJSON<ItemAgendaCompromisso[]>(AGENDA_STORAGE_KEY, INITIAL_MOCK_COMPROMISSOS);
   });
 
-  // Salva permanentemente no localStorage e Nuvem a cada alteração
   const salvarCompromissosECloud = (novos: ItemAgendaCompromisso[]) => {
     setCompromissos(novos);
     localStorage.setItem(AGENDA_STORAGE_KEY, JSON.stringify(novos));
@@ -154,16 +172,27 @@ export const Agenda: React.FC<AgendaProps> = ({
     pushToCloud({ consultas: novos as any }, usuarioId);
   };
 
-  // Padrão em TABELA conforme solicitado explicitamente pelo usuário
-  const [visualizacao, setVisualizacao] = useState<TipoVisualizacao>('tabela');
-
+  // Visão Estilo Google Calendar (Mês por Padrão)
+  const [visualizacao, setVisualizacao] = useState<TipoVisualizacao>('mes');
   const [dataSelecionada, setDataSelecionada] = useState<string>(getHojeIso());
-  const [filtroPeriodo, setFiltroPeriodo] = useState<'hoje' | 'semana' | 'mes' | 'todos'>('todos');
-  const [filtroCategoria, setFiltroCategoria] = useState<string>('Todas');
-  const [filtroStatus, setFiltroStatus] = useState<string>('Todos');
+  const [miniCalData, setMiniCalData] = useState<Date>(new Date());
   const [busca, setBusca] = useState<string>('');
+  const [mostrarPainelEsquerdo, setMostrarPainelEsquerdo] = useState<boolean>(true);
 
-  // States do Modal
+  // Filtros por Categoria (Checkboxes Estilo Google Calendar)
+  const [categoriasAtivas, setCategoriasAtivas] = useState<Record<CategoriaAgenda, boolean>>({
+    'Responsabilidade Familiar': true,
+    'Profissional / Clínica': true,
+    'Compromisso Financeiro': true,
+    'Pessoal / Saúde': true,
+    'Outro': true
+  });
+
+  const toggleCategoria = (cat: CategoriaAgenda) => {
+    setCategoriasAtivas((prev) => ({ ...prev, [cat]: !prev[cat] }));
+  };
+
+  // States dos Modais de Criação / Edição estilo Google Calendar
   const [modalAberto, setModalAberto] = useState<boolean>(false);
   const [itemEditando, setItemEditando] = useState<ItemAgendaCompromisso | null>(null);
   const [itemExcluindoId, setItemExcluindoId] = useState<string | null>(null);
@@ -180,76 +209,60 @@ export const Agenda: React.FC<AgendaProps> = ({
   const [statusForm, setStatusForm] = useState<StatusConsulta>('Agendado');
   const [observacoesForm, setObservacoesForm] = useState<string>('');
 
-  // Navegação de Datas
-  const handleDataAnterior = () => {
-    const d = new Date(dataSelecionada + 'T00:00:00');
-    d.setDate(d.getDate() - 1);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    setDataSelecionada(`${year}-${month}-${day}`);
-  };
+  // Objeto de data atual em foco
+  const dateFoco = new Date(dataSelecionada + 'T00:00:00');
 
-  const handleProximaData = () => {
-    const d = new Date(dataSelecionada + 'T00:00:00');
-    d.setDate(d.getDate() + 1);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    setDataSelecionada(`${year}-${month}-${day}`);
-  };
-
+  // Navegação de Datas no Estilo Google Calendar
   const handleHoje = () => {
-    setDataSelecionada(getHojeIso());
-    setFiltroPeriodo('hoje');
+    const hoje = getHojeIso();
+    setDataSelecionada(hoje);
+    setMiniCalData(new Date());
   };
 
-  // Filtro inteligente de compromissos
-  const compromissosFiltrados = compromissos.filter((item) => {
-    const hojeIso = getHojeIso();
-
-    // Filtro por período de data
-    let atendePeriodo = true;
-    if (filtroPeriodo === 'hoje') {
-      atendePeriodo = item.data === hojeIso;
-    } else if (filtroPeriodo === 'semana') {
-      const dItem = new Date(item.data + 'T00:00:00').getTime();
-      const dHoje = new Date(hojeIso + 'T00:00:00').getTime();
-      const diffDias = Math.abs(dItem - dHoje) / (1000 * 3600 * 24);
-      atendePeriodo = diffDias <= 7;
-    } else if (filtroPeriodo === 'mes') {
-      atendePeriodo = item.data.substring(0, 7) === hojeIso.substring(0, 7);
+  const handleNavegarData = (direcao: 'anterior' | 'proximo') => {
+    const d = new Date(dataSelecionada + 'T00:00:00');
+    if (visualizacao === 'mes') {
+      d.setMonth(d.getMonth() + (direcao === 'proximo' ? 1 : -1));
+    } else if (visualizacao === 'semana') {
+      d.setDate(d.getDate() + (direcao === 'proximo' ? 7 : -7));
+    } else {
+      d.setDate(d.getDate() + (direcao === 'proximo' ? 1 : -1));
     }
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const novaIso = `${year}-${month}-${day}`;
+    setDataSelecionada(novaIso);
+    setMiniCalData(d);
+  };
 
-    const atendeCategoria = filtroCategoria === 'Todas' || item.categoria === filtroCategoria;
-    const atendeStatus = filtroStatus === 'Todos' || item.status === filtroStatus;
+  // Titulo dinâmico do Header estilo Google Calendar (ex: "Setembro de 2026")
+  const getHeaderTitle = () => {
+    const mesNome = dateFoco.toLocaleDateString('pt-BR', { month: 'long' });
+    const mesCap = mesNome.charAt(0).toUpperCase() + mesNome.slice(1);
+    const ano = dateFoco.getFullYear();
+    return `${mesCap} de ${ano}`;
+  };
+
+  // Filtro de compromissos pelas categorias ativas e busca
+  const compromissosFiltrados = compromissos.filter((item) => {
+    const catAtiva = categoriasAtivas[item.categoria] ?? true;
     const atendeBusca =
+      !busca ||
       item.titulo.toLowerCase().includes(busca.toLowerCase()) ||
       (item.pacienteNome && item.pacienteNome.toLowerCase().includes(busca.toLowerCase())) ||
       (item.responsavel && item.responsavel.toLowerCase().includes(busca.toLowerCase())) ||
       (item.observacoes && item.observacoes.toLowerCase().includes(busca.toLowerCase()));
 
-    return atendePeriodo && atendeCategoria && atendeStatus && atendeBusca;
+    return catAtiva && atendeBusca;
   });
 
-  // Ordena por data e horário (mais recentes/próximos primeiro)
-  const compromissosOrdenados = [...compromissosFiltrados].sort((a, b) => {
-    const keyA = `${a.data}T${a.horario}`;
-    const keyB = `${b.data}T${b.horario}`;
-    return keyA.localeCompare(keyB);
-  });
-
-  // KPIs Resumo
-  const totalCompromissos = compromissos.length;
-  const familiaresCount = compromissos.filter((c) => c.categoria === 'Responsabilidade Familiar').length;
-  const profissionaisCount = compromissos.filter((c) => c.categoria === 'Profissional / Clínica').length;
-  const concluidosCount = compromissos.filter((c) => c.status === 'Finalizado').length;
-
-  const handleAbrirNovoModal = (horarioPref = '09:00', catPref: CategoriaAgenda = 'Profissional / Clínica') => {
+  // Handlers de Criação / Edição estilo Google Calendar
+  const handleAbrirNovoModal = (dataPref?: string, horaPref = '09:00', catPref: CategoriaAgenda = 'Profissional / Clínica') => {
     setItemEditando(null);
     setTitulo('');
-    setDataForm(dataSelecionada || getHojeIso());
-    setHorarioForm(horarioPref);
+    setDataForm(dataPref || dataSelecionada || getHojeIso());
+    setHorarioForm(horaPref);
     setDuracaoForm(45);
     setCategoriaForm(catPref);
     setResponsavelForm('Fernando');
@@ -275,7 +288,8 @@ export const Agenda: React.FC<AgendaProps> = ({
     setModalAberto(true);
   };
 
-  const handleAlternarStatusConcluido = (item: ItemAgendaCompromisso) => {
+  const handleAlternarStatusConcluido = (item: ItemAgendaCompromisso, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     const novoStatus: StatusConsulta = item.status === 'Finalizado' ? 'Agendado' : 'Finalizado';
     const novos = compromissos.map((c) => (c.id === item.id ? { ...c, status: novoStatus } : c));
     salvarCompromissosECloud(novos);
@@ -317,511 +331,525 @@ export const Agenda: React.FC<AgendaProps> = ({
     setItemExcluindoId(null);
   };
 
-  const formatarDataFormatada = (dataIso: string) => {
-    const partes = dataIso.split('-');
-    if (partes.length !== 3) return dataIso;
-    const date = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
-    const semana = date.toLocaleDateString('pt-BR', { weekday: 'short' }).toUpperCase();
-    const dia = String(date.getDate()).padStart(2, '0');
-    const mes = String(date.getMonth() + 1).padStart(2, '0');
-    const ano = date.getFullYear();
-    return `${dia}/${mes}/${ano} (${semana})`;
+  // Gerador da Grade do Mês no Estilo Google Calendar (7 colunas x 5/6 semanas)
+  const getDiasDoMesGrid = () => {
+    const ano = dateFoco.getFullYear();
+    const mes = dateFoco.getMonth();
+    const primeiroDiaMes = new Date(ano, mes, 1);
+    const ultimoDiaMes = new Date(ano, mes + 1, 0);
+
+    const diaSemanaInicio = primeiroDiaMes.getDay(); // 0 = Domingo
+    const totalDiasMes = ultimoDiaMes.getDate();
+
+    const diasGrid: { dataIso: string; numeroDia: number; eMesAtual: boolean; eHoje: boolean }[] = [];
+    const hojeIso = getHojeIso();
+
+    // Dias do mês anterior para preencher a primeira semana
+    const mesAnteriorUltimoDia = new Date(ano, mes, 0).getDate();
+    for (let i = diaSemanaInicio - 1; i >= 0; i--) {
+      const num = mesAnteriorUltimoDia - i;
+      const dAnterior = new Date(ano, mes - 1, num);
+      const iso = dAnterior.toISOString().split('T')[0];
+      diasGrid.push({ dataIso: iso, numeroDia: num, eMesAtual: false, eHoje: iso === hojeIso });
+    }
+
+    // Dias do mês atual
+    for (let i = 1; i <= totalDiasMes; i++) {
+      const mStr = String(mes + 1).padStart(2, '0');
+      const dStr = String(i).padStart(2, '0');
+      const iso = `${ano}-${mStr}-${dStr}`;
+      diasGrid.push({ dataIso: iso, numeroDia: i, eMesAtual: true, eHoje: iso === hojeIso });
+    }
+
+    // Dias do próximo mês para fechar a grade (completar múltiplos de 7)
+    const restante = 42 - diasGrid.length;
+    for (let i = 1; i <= restante; i++) {
+      const dProximo = new Date(ano, mes + 1, i);
+      const iso = dProximo.toISOString().split('T')[0];
+      diasGrid.push({ dataIso: iso, numeroDia: i, eMesAtual: false, eHoje: iso === hojeIso });
+    }
+
+    return diasGrid;
+  };
+
+  // Helper para renderizar os dias do Mini-Calendário na barra lateral
+  const getMiniCalendarGrid = () => {
+    const ano = miniCalData.getFullYear();
+    const mes = miniCalData.getMonth();
+    const primeiroDia = new Date(ano, mes, 1).getDay();
+    const ultimoDia = new Date(ano, mes + 1, 0).getDate();
+    const hojeIso = getHojeIso();
+
+    const dias: { num: number; iso: string; eAtual: boolean; eHoje: boolean; eSelecionado: boolean }[] = [];
+
+    // Mês anterior
+    const mesAntUltimo = new Date(ano, mes, 0).getDate();
+    for (let i = primeiroDia - 1; i >= 0; i--) {
+      const d = mesAntUltimo - i;
+      const iso = new Date(ano, mes - 1, d).toISOString().split('T')[0];
+      dias.push({ num: d, iso, eAtual: false, eHoje: iso === hojeIso, eSelecionado: iso === dataSelecionada });
+    }
+
+    // Mês Atual
+    for (let i = 1; i <= ultimoDia; i++) {
+      const mStr = String(mes + 1).padStart(2, '0');
+      const dStr = String(i).padStart(2, '0');
+      const iso = `${ano}-${mStr}-${dStr}`;
+      dias.push({ num: i, iso, eAtual: true, eHoje: iso === hojeIso, eSelecionado: iso === dataSelecionada });
+    }
+
+    return dias;
   };
 
   return (
-    <div className="w-full max-w-full space-y-6 font-sans">
+    <div className="w-full max-w-full font-sans text-slate-200 select-none flex flex-col h-[calc(100vh-6rem)]">
       
-      {/* 1. TOP HEADER DA AGENDA */}
-      <div className={`p-4 sm:p-6 lg:p-8 rounded-3xl border shadow-xl space-y-6 w-full ${
-        darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+      {/* 1. GOOGLE CALENDAR HEADER BAR */}
+      <div className={`px-4 py-3 rounded-t-3xl border border-b-0 flex flex-wrap items-center justify-between gap-3 ${
+        darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200 text-slate-800'
       }`}>
+        
+        {/* Esquerda: Menu Icon + Logo + Botão "+ Criar" Google Style */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setMostrarPainelEsquerdo(!mostrarPainelEsquerdo)}
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            title="Alternar Painel Lateral"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
 
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-teal-500/10 text-teal-400 rounded-2xl border border-teal-500/20 shadow-sm">
-              <CalendarIcon className="w-7 h-7" />
+          {/* Logo Estilo Google Calendar */}
+          <div className="flex items-center gap-2">
+            <div className="relative w-8 h-8 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 p-0.5 flex items-center justify-center text-white font-black text-sm shadow-md">
+              <CalendarIcon className="w-5 h-5 text-white" />
             </div>
-            <div>
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-teal-400 bg-teal-500/10 px-2.5 py-0.5 rounded-md border border-teal-500/20">
-                Organização do Dia & Compromissos
-              </span>
-              <h2 className="text-xl font-extrabold mt-0.5 flex items-center gap-2">
-                Agenda de Tarefas & Responsabilidades Familiares
-              </h2>
-            </div>
+            <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
+              Google <span className="text-teal-400 font-normal">Calendar</span>
+            </span>
           </div>
 
-          {/* Navegação por Datas */}
-          <div className="flex flex-wrap items-center gap-2 bg-slate-950/40 p-1.5 rounded-2xl border border-slate-800">
+          {/* Botão "+ Criar" Flutuante Estilo Google */}
+          <button
+            onClick={() => handleAbrirNovoModal()}
+            className="ml-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-extrabold px-4 py-2 rounded-2xl text-xs flex items-center gap-2 shadow-lg shadow-teal-500/20 transition-all cursor-pointer hover:scale-105"
+          >
+            <Plus className="w-4 h-4" />
+            <span>+ Criar</span>
+          </button>
+
+          {/* Botão "Hoje" */}
+          <button
+            onClick={handleHoje}
+            className="px-3.5 py-1.5 rounded-xl border border-slate-700 text-xs font-bold text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            Hoje
+          </button>
+
+          {/* Setas de Navegação */}
+          <div className="flex items-center gap-1">
             <button
-              onClick={handleDataAnterior}
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-              title="Dia Anterior"
+              onClick={() => handleNavegarData('anterior')}
+              className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
-
             <button
-              onClick={handleHoje}
-              className="px-3 py-1.5 rounded-xl bg-teal-600/20 text-teal-300 border border-teal-500/30 text-xs font-extrabold hover:bg-teal-600 hover:text-white transition-all cursor-pointer"
-            >
-              Hoje
-            </button>
-
-            <input
-              type="date"
-              value={dataSelecionada}
-              onChange={(e) => {
-                setDataSelecionada(e.target.value);
-                setFiltroPeriodo('todos');
-              }}
-              className={`p-1.5 rounded-xl border text-xs font-extrabold ${
-                darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-800'
-              }`}
-            />
-
-            <button
-              onClick={handleProximaData}
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-              title="Próximo Dia"
+              onClick={() => handleNavegarData('proximo')}
+              className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Botão Novo Agendamento */}
-          <button
-            onClick={() => handleAbrirNovoModal()}
-            className="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-extrabold px-5 py-2.5 rounded-2xl text-xs flex items-center gap-2 shadow-lg shadow-teal-500/25 transition-all cursor-pointer shrink-0"
-          >
-            <Plus className="w-4.5 h-4.5" /> + Novo Compromisso
-          </button>
+          {/* Mês & Ano Corrente (ex: "Setembro de 2026") */}
+          <h2 className="text-lg font-extrabold text-slate-900 dark:text-white capitalize ml-1">
+            {getHeaderTitle()}
+          </h2>
         </div>
 
-        {/* Linha 2: Seletor de Visão (Com TABELA em Destaque Inicial Padrão) + Filtros */}
-        <div className="pt-4 border-t border-slate-800/40 flex flex-wrap items-center justify-between gap-4">
-          
-          {/* Alternador de Visão (Tabela por Padrão) */}
-          <div className="flex items-center gap-1 bg-slate-950/50 p-1 rounded-2xl border border-slate-800">
+        {/* Direita: Busca + Seletor de Visão (Mês, Semana, Dia, Agenda) */}
+        <div className="flex items-center gap-3">
+          {/* Campo Busca */}
+          <div className="relative w-48 sm:w-60">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Pesquisar..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className={`w-full pl-9 pr-3 py-1.5 rounded-xl border text-xs font-medium ${
+                darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+              }`}
+            />
+          </div>
+
+          {/* Dropdown de Visão (Mês, Semana, Dia, Agenda) */}
+          <div className="flex items-center bg-slate-950/60 p-1 rounded-xl border border-slate-800">
             {[
-              { id: 'tabela', label: 'Tabela Padrão', icon: ListIcon },
-              { id: 'dia', label: 'Grade Diária', icon: Grid },
-              { id: 'semana', label: 'Visão Semanal', icon: CalendarDays },
-              { id: 'mes', label: 'Calendário Mensal', icon: CalendarIcon }
-            ].map((tab) => (
+              { id: 'mes', label: 'Mês' },
+              { id: 'semana', label: 'Semana' },
+              { id: 'dia', label: 'Dia' },
+              { id: 'agenda', label: 'Agenda' }
+            ].map((v) => (
               <button
-                key={tab.id}
-                onClick={() => setVisualizacao(tab.id as TipoVisualizacao)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer ${
-                  visualizacao === tab.id
-                    ? 'bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-md font-extrabold scale-102'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                key={v.id}
+                onClick={() => setVisualizacao(v.id as TipoVisualizacao)}
+                className={`px-3 py-1 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                  visualizacao === v.id
+                    ? 'bg-teal-600 text-white shadow-md'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <tab.icon className="w-4 h-4" />
-                <span>{tab.label}</span>
+                {v.label}
               </button>
             ))}
           </div>
+        </div>
 
-          {/* Filtros Rápidos */}
-          <div className="flex flex-wrap items-center gap-2.5 w-full xl:w-auto">
-            {/* Filtro Período */}
-            <select
-              value={filtroPeriodo}
-              onChange={(e) => setFiltroPeriodo(e.target.value as any)}
-              className={`p-2.5 rounded-xl border text-xs font-bold ${
-                darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
-              }`}
-            >
-              <option value="todos">Todas as Datas</option>
-              <option value="hoje">Apenas Hoje</option>
-              <option value="semana">Próximos 7 Dias</option>
-              <option value="mes">Este Mês</option>
-            </select>
+      </div>
 
-            {/* Filtro Categoria */}
-            <select
-              value={filtroCategoria}
-              onChange={(e) => setFiltroCategoria(e.target.value)}
-              className={`p-2.5 rounded-xl border text-xs font-bold ${
-                darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
-              }`}
-            >
-              <option value="Todas">Todas as Categorias</option>
-              <option value="Responsabilidade Familiar">👨‍👩‍👧‍👦 Responsabilidade Familiar</option>
-              <option value="Profissional / Clínica">💼 Profissional / Clínica</option>
-              <option value="Compromisso Financeiro">💰 Compromisso Financeiro</option>
-              <option value="Pessoal / Saúde">⭐ Pessoal / Saúde</option>
-              <option value="Outro">Outro</option>
-            </select>
+      {/* 2. BODY PRINCIPAL: PAINEL ESQUERDO (MINI CALENDÁRIO + CHECKBOXES) + GRADE GOOGLE CALENDAR */}
+      <div className="flex-1 flex overflow-hidden border border-t-0 rounded-b-3xl shadow-2xl relative">
+        
+        {/* A) PAINEL LATERAL ESQUERDO (MINI CALENDÁRIO + MINHAS AGENDAS) */}
+        {mostrarPainelEsquerdo && (
+          <div className={`w-64 border-r p-4 flex flex-col gap-5 overflow-y-auto shrink-0 transition-all ${
+            darkMode ? 'bg-slate-950/80 border-slate-800' : 'bg-slate-50 border-slate-200 text-slate-800'
+          }`}>
+            
+            {/* MINI CALENDÁRIO GOOGLE STYLE */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-extrabold text-slate-300 capitalize">
+                  {miniCalData.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => {
+                      const d = new Date(miniCalData);
+                      d.setMonth(d.getMonth() - 1);
+                      setMiniCalData(d);
+                    }}
+                    className="p-1 text-slate-400 hover:text-white"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      const d = new Date(miniCalData);
+                      d.setMonth(d.getMonth() + 1);
+                      setMiniCalData(d);
+                    }}
+                    className="p-1 text-slate-400 hover:text-white"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
 
-            {/* Filtro Status */}
-            <select
-              value={filtroStatus}
-              onChange={(e) => setFiltroStatus(e.target.value)}
-              className={`p-2.5 rounded-xl border text-xs font-bold ${
-                darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
-              }`}
-            >
-              <option value="Todos">Todos os Status</option>
-              <option value="Agendado">Agendado</option>
-              <option value="Confirmado">Confirmado</option>
-              <option value="Em Atendimento">Em Atendimento</option>
-              <option value="Finalizado">Concluído</option>
-              <option value="Cancelado">Cancelado</option>
-            </select>
+              {/* Dias da semana mini */}
+              <div className="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400">
+                <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
+              </div>
 
-            {/* Campo Busca */}
-            <div className="relative flex-1 sm:w-60 min-w-[180px]">
-              <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Buscar compromisso ou paciente..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                className={`w-full pl-9 pr-3 py-2.5 rounded-xl border text-xs font-medium ${
-                  darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
-                }`}
-              />
+              {/* Grid 7x5 mini */}
+              <div className="grid grid-cols-7 text-center text-xs gap-y-1">
+                {getMiniCalendarGrid().map((dia, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setDataSelecionada(dia.iso);
+                    }}
+                    className={`w-7 h-7 mx-auto rounded-full flex items-center justify-center text-[11px] font-bold transition-all cursor-pointer ${
+                      dia.eSelecionado
+                        ? 'bg-teal-600 text-white font-extrabold ring-2 ring-teal-400'
+                        : dia.eHoje
+                        ? 'bg-teal-500/20 text-teal-400 font-extrabold border border-teal-500/40'
+                        : dia.eAtual
+                        ? 'text-slate-200 hover:bg-slate-800'
+                        : 'text-slate-600 hover:bg-slate-800/40'
+                    }`}
+                  >
+                    {dia.num}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* SEÇÃO "MINHAS AGENDAS" (CHECKBOXES DE CATEGORIAS ESTILO GOOGLE CALENDAR) */}
+            <div className="border-t border-slate-800/60 pt-4 space-y-3">
+              <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block px-1">
+                Minhas Agendas
+              </span>
+
+              <div className="space-y-2 text-xs font-semibold">
+                {(Object.keys(categoriasConfig) as CategoriaAgenda[]).map((cat) => {
+                  const cfg = categoriasConfig[cat];
+                  const ativa = categoriasAtivas[cat];
+
+                  return (
+                    <label
+                      key={cat}
+                      className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-slate-800/50 cursor-pointer transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={ativa}
+                        onChange={() => toggleCategoria(cat)}
+                        className="w-4 h-4 rounded border-slate-700 accent-teal-500 cursor-pointer"
+                      />
+                      <span className={`w-2.5 h-2.5 rounded-full ${cfg.dotColor} shrink-0`}></span>
+                      <span className="truncate text-slate-200">{cfg.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
           </div>
+        )}
 
-        </div>
-
-      </div>
-
-      {/* 2. SUMMARY CARDS KPIS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className={`p-4 rounded-2xl border shadow-sm flex items-center justify-between ${
-          darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+        {/* B) CANVAS GOOGLE CALENDAR (VISÃO MÊS, SEMANA, DIA, AGENDA) */}
+        <div className={`flex-1 flex flex-col overflow-y-auto ${
+          darkMode ? 'bg-slate-900' : 'bg-white text-slate-800'
         }`}>
-          <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Registrado</span>
-            <h4 className="text-xl font-extrabold text-teal-400 mt-0.5">{totalCompromissos} Tarefas</h4>
-          </div>
-          <div className="p-3 bg-teal-500/10 text-teal-400 rounded-xl border border-teal-500/20">
-            <CalendarIcon className="w-5 h-5" />
-          </div>
-        </div>
+          
+          {/* VISÃO MÊS (GRADE 7 COLUNAS GOOGLE CALENDAR) */}
+          {visualizacao === 'mes' && (
+            <div className="flex-1 flex flex-col h-full">
+              
+              {/* Header dias da semana (Dom, Seg, Ter, Qua, Qui, Sex, Sáb) */}
+              <div className="grid grid-cols-7 border-b border-slate-800/60 text-center py-2 text-xs font-extrabold text-slate-400 bg-slate-950/40">
+                <span>DOM</span><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span>
+              </div>
 
-        <div className={`p-4 rounded-2xl border shadow-sm flex items-center justify-between ${
-          darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-        }`}>
-          <div>
-            <span className="text-[11px] font-bold text-purple-400 uppercase tracking-wider">Familiar & Casa</span>
-            <h4 className="text-xl font-extrabold text-purple-300 mt-0.5">{familiaresCount} Tarefas</h4>
-          </div>
-          <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl border border-purple-500/20">
-            <HeartHandshake className="w-5 h-5" />
-          </div>
-        </div>
+              {/* Grid 7 colunas x 6 semanas */}
+              <div className="flex-1 grid grid-cols-7 auto-rows-fr divide-x divide-y divide-slate-800/50 min-h-[550px]">
+                {getDiasDoMesGrid().map((diaObj, idx) => {
+                  const compromissosDoDia = compromissosFiltrados.filter((c) => c.data === diaObj.dataIso);
 
-        <div className={`p-4 rounded-2xl border shadow-sm flex items-center justify-between ${
-          darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-        }`}>
-          <div>
-            <span className="text-[11px] font-bold text-sky-400 uppercase tracking-wider">Profissional</span>
-            <h4 className="text-xl font-extrabold text-sky-300 mt-0.5">{profissionaisCount} Consultas</h4>
-          </div>
-          <div className="p-3 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20">
-            <Briefcase className="w-5 h-5" />
-          </div>
-        </div>
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => handleAbrirNovoModal(diaObj.dataIso)}
+                      className={`p-1.5 flex flex-col justify-between transition-colors min-h-[95px] relative group cursor-pointer ${
+                        diaObj.eMesAtual
+                          ? 'bg-transparent hover:bg-slate-800/20'
+                          : darkMode ? 'bg-slate-950/40 text-slate-600' : 'bg-slate-50 text-slate-400'
+                      }`}
+                    >
+                      {/* Top do Cell com número do Dia */}
+                      <div className="flex justify-between items-center px-1">
+                        <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full ${
+                          diaObj.eHoje
+                            ? 'bg-teal-600 text-white font-black shadow-md'
+                            : diaObj.dataIso === dataSelecionada
+                            ? 'bg-slate-800 text-teal-400 font-extrabold border border-teal-500/40'
+                            : 'text-slate-300'
+                        }`}>
+                          {diaObj.numeroDia}
+                        </span>
 
-        <div className={`p-4 rounded-2xl border shadow-sm flex items-center justify-between ${
-          darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
-        }`}>
-          <div>
-            <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">Concluídos</span>
-            <h4 className="text-xl font-extrabold text-emerald-300 mt-0.5">{concluidosCount} Finalizados</h4>
-          </div>
-          <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-        </div>
-      </div>
+                        <span className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-teal-400 transition-opacity">
+                          <Plus className="w-3.5 h-3.5" />
+                        </span>
+                      </div>
 
-      {/* 3. EXIBIÇÃO EM TABELA PADRÃO (CONFORME SOLICITADO PELO USUÁRIO) */}
-      {visualizacao === 'tabela' && (
-        <div className={`p-4 sm:p-6 lg:p-8 rounded-3xl border shadow-xl space-y-4 w-full ${
-          darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
-        }`}>
-          <div className="flex items-center justify-between border-b border-slate-800/40 pb-3">
-            <h3 className="font-extrabold text-base flex items-center gap-2 text-teal-400">
-              <ListIcon className="w-5 h-5 text-teal-400" /> Tabela de Agendamentos & Compromissos ({compromissosOrdenados.length})
-            </h3>
+                      {/* Event Cards Pílulas dentro do Dia Estilo Google */}
+                      <div className="space-y-1 overflow-hidden my-1 flex-1">
+                        {compromissosDoDia.slice(0, 3).map((item) => {
+                          const cfg = categoriasConfig[item.categoria] || categoriasConfig['Outro'];
+                          const isConcluido = item.status === 'Finalizado';
 
-            <span className="text-xs font-bold text-slate-400 bg-slate-800/60 px-3 py-1 rounded-full border border-slate-700">
-              Ordenado por Data e Horário
-            </span>
-          </div>
+                          return (
+                            <div
+                              key={item.id}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAbrirEditarModal(item);
+                              }}
+                              className={`px-2 py-0.5 rounded-md text-[10px] font-bold border truncate flex items-center justify-between transition-all hover:scale-[1.02] shadow-sm ${cfg.bg} ${cfg.border} ${cfg.text}`}
+                              title={`${item.horario} - ${item.titulo} (${item.categoria})`}
+                            >
+                              <div className="flex items-center gap-1.5 truncate">
+                                <span className={`w-1.5 h-1.5 rounded-full ${cfg.dotColor} shrink-0`}></span>
+                                <span className={`truncate ${isConcluido ? 'line-through opacity-60' : ''}`}>
+                                  {item.horario} {item.titulo}
+                                </span>
+                              </div>
 
-          {compromissosOrdenados.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-slate-800 text-slate-400 font-extrabold uppercase">
-                    <th className="p-3">Data</th>
-                    <th className="p-3">Horário</th>
-                    <th className="p-3">Compromisso / Descrição</th>
-                    <th className="p-3">Categoria</th>
-                    <th className="p-3">Responsável</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3 text-right">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/40 font-medium">
-                  {compromissosOrdenados.map((item) => {
-                    const cor = statusCores[item.status] || statusCores['Agendado'];
-                    const catInfo = categoriaBadges[item.categoria] || categoriaBadges['Outro'];
-                    const CatIcon = catInfo.icon;
-                    const isConcluido = item.status === 'Finalizado';
-
-                    return (
-                      <tr
-                        key={item.id}
-                        className={`transition-colors ${
-                          isConcluido
-                            ? 'opacity-70 bg-slate-950/40 hover:bg-slate-900/60'
-                            : 'hover:bg-slate-800/40'
-                        }`}
-                      >
-                        {/* Data */}
-                        <td className="p-3 font-extrabold whitespace-nowrap text-teal-300">
-                          {formatarDataFormatada(item.data)}
-                        </td>
-
-                        {/* Horário */}
-                        <td className="p-3 font-bold whitespace-nowrap">
-                          <span className="bg-slate-800 px-2 py-1 rounded-md border border-slate-700 font-mono text-slate-200">
-                            {item.horario} ({item.duracaoMinutos}m)
-                          </span>
-                        </td>
-
-                        {/* Compromisso / Descrição */}
-                        <td className="p-3">
-                          <div className={`font-bold text-sm ${isConcluido ? 'line-through text-slate-400' : 'text-slate-100'}`}>
-                            {item.titulo}
-                          </div>
-                          {item.observacoes && (
-                            <div className="text-[11px] text-slate-400 italic mt-0.5">
-                              {item.observacoes}
+                              <button
+                                onClick={(e) => handleAlternarStatusConcluido(item, e)}
+                                className="p-0.5 hover:text-emerald-300 text-slate-400 shrink-0"
+                                title={isConcluido ? 'Marcar Pendente' : 'Concluir'}
+                              >
+                                <Check className={`w-3 h-3 ${isConcluido ? 'text-emerald-400' : ''}`} />
+                              </button>
                             </div>
-                          )}
-                        </td>
+                          );
+                        })}
 
-                        {/* Categoria */}
-                        <td className="p-3 whitespace-nowrap">
-                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border flex items-center gap-1.5 w-fit ${catInfo.badge}`}>
-                            <CatIcon className="w-3.5 h-3.5" />
-                            {item.categoria}
+                        {compromissosDoDia.length > 3 && (
+                          <span className="text-[9px] font-extrabold text-teal-400 block px-1">
+                            +{compromissosDoDia.length - 3} mais
                           </span>
-                        </td>
+                        )}
+                      </div>
 
-                        {/* Responsável */}
-                        <td className="p-3 whitespace-nowrap font-bold text-slate-300">
-                          {item.responsavel}
-                        </td>
+                    </div>
+                  );
+                })}
+              </div>
 
-                        {/* Status */}
-                        <td className="p-3 whitespace-nowrap">
-                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border ${cor.badge}`}>
-                            {item.status === 'Finalizado' ? '✓ Concluído' : item.status}
-                          </span>
-                        </td>
+            </div>
+          )}
 
-                        {/* Ações */}
-                        <td className="p-3 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-2">
-                            {/* Botão de Concluir Rápido em 1 Clique */}
+          {/* VISÃO SEMANA */}
+          {visualizacao === 'semana' && (
+            <div className="p-4 overflow-x-auto">
+              <div className="grid grid-cols-7 gap-3 min-w-[850px]">
+                {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].map((diaNome) => (
+                  <div key={diaNome} className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 space-y-3 min-h-[450px]">
+                    <div className="border-b border-slate-800 pb-2 text-center">
+                      <span className="font-extrabold text-xs text-teal-400">{diaNome}</span>
+                    </div>
+                    <div className="space-y-2">
+                      {compromissosFiltrados.slice(0, 6).map((item) => {
+                        const cfg = categoriasConfig[item.categoria] || categoriasConfig['Outro'];
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => handleAbrirEditarModal(item)}
+                            className={`p-2.5 rounded-xl border text-xs font-bold cursor-pointer transition-all hover:scale-102 ${cfg.bg} ${cfg.border} ${cfg.text}`}
+                          >
+                            <div className="text-[10px] text-teal-300">{item.horario} • {item.categoria}</div>
+                            <div className="truncate text-white">{item.titulo}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* VISÃO DIA */}
+          {visualizacao === 'dia' && (
+            <div className="p-6 space-y-3">
+              <h3 className="text-sm font-extrabold text-teal-400 mb-4">Grade Horária do Dia: {dataSelecionada}</h3>
+              {HORARIOS_DIA.map((hora) => {
+                const itensHora = compromissosFiltrados.filter((c) => c.data === dataSelecionada && c.horario.substring(0, 2) === hora.substring(0, 2));
+
+                return (
+                  <div key={hora} className="flex gap-4 border-b border-slate-800/40 pb-3 items-start min-h-[60px]">
+                    <span className="w-16 font-extrabold text-xs text-slate-400 pt-1">{hora}</span>
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {itensHora.map((item) => {
+                        const cfg = categoriasConfig[item.categoria] || categoriasConfig['Outro'];
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => handleAbrirEditarModal(item)}
+                            className={`p-3 rounded-2xl border cursor-pointer flex justify-between items-center ${cfg.bg} ${cfg.border}`}
+                          >
+                            <div>
+                              <span className="text-[10px] font-extrabold text-teal-300">{item.horario} • {item.categoria}</span>
+                              <h4 className="font-bold text-xs text-white">{item.titulo}</h4>
+                            </div>
                             <button
-                              onClick={() => handleAlternarStatusConcluido(item)}
-                              className={`p-1.5 rounded-xl border transition-all cursor-pointer ${
-                                isConcluido
-                                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30'
-                                  : 'bg-slate-800 hover:bg-emerald-600 hover:text-white text-slate-400 border-slate-700'
-                              }`}
-                              title={isConcluido ? 'Marcar como Pendente' : 'Marcar como Concluído'}
+                              onClick={(e) => handleAlternarStatusConcluido(item, e)}
+                              className="p-1 hover:text-emerald-400 text-slate-400"
                             >
                               <Check className="w-4 h-4" />
                             </button>
-
-                            {/* WhatsApp se houver telefone do paciente */}
-                            {item.pacienteTelefone && (
-                              <a
-                                href={`https://wa.me/55${item.pacienteTelefone.replace(/\D/g, '')}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="p-1.5 bg-slate-800 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded-xl border border-slate-700 transition-colors"
-                                title="WhatsApp"
-                              >
-                                <MessageCircle className="w-4 h-4" />
-                              </a>
-                            )}
-
-                            {/* Editar */}
-                            <button
-                              onClick={() => handleAbrirEditarModal(item)}
-                              className="p-1.5 bg-slate-800 hover:bg-sky-600 text-sky-400 hover:text-white rounded-xl border border-slate-700 transition-colors cursor-pointer"
-                              title="Editar Compromisso"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-
-                            {/* Excluir */}
-                            <button
-                              onClick={() => setItemExcluindoId(item.id)}
-                              className="p-1.5 bg-slate-800 hover:bg-rose-600 text-rose-400 hover:text-white rounded-xl border border-slate-700 transition-colors cursor-pointer"
-                              title="Excluir Compromisso"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
                           </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="py-12 text-center text-slate-400 space-y-3 bg-slate-950/40 rounded-2xl border border-slate-800">
-              <CalendarIcon className="w-10 h-10 text-slate-500 mx-auto" />
-              <h4 className="font-bold text-sm text-slate-300">Nenhum compromisso encontrado para os filtros selecionados.</h4>
-              <p className="text-xs text-slate-400">Clique no botão acima para adicionar um novo compromisso pessoal, familiar ou profissional.</p>
+                        );
+                      })}
+                      {itensHora.length === 0 && (
+                        <button
+                          onClick={() => handleAbrirNovoModal(dataSelecionada, hora)}
+                          className="py-2 px-3 rounded-xl border border-dashed border-slate-800 text-slate-500 hover:text-teal-400 text-xs font-bold text-left"
+                        >
+                          + Agendar às {hora}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
-        </div>
-      )}
 
-      {/* 4. OUTRAS VISUALIZAÇÕES AUXILIARES (GRADE DIÁRIA, SEMANAL, MÊS) */}
-      {visualizacao === 'dia' && (
-        <div className={`p-4 sm:p-6 lg:p-8 rounded-3xl border shadow-xl overflow-x-auto w-full ${
-          darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
-        }`}>
-          <div className="space-y-3 min-w-[650px]">
-            {HORARIOS_DIA.map((horaSlot) => {
-              const itensHora = compromissosFiltrados.filter((c) => c.data === dataSelecionada && c.horario.substring(0, 2) === horaSlot.substring(0, 2));
-
-              return (
-                <div key={horaSlot} className="flex gap-4 border-b border-slate-800/30 pb-3 items-start min-h-[70px]">
-                  <div className="w-16 font-extrabold text-sm text-slate-400 pt-1 shrink-0">{horaSlot}</div>
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {itensHora.map((c) => (
-                      <div
-                        key={c.id}
-                        onClick={() => handleAbrirEditarModal(c)}
-                        className={`p-3 rounded-2xl border transition-all cursor-pointer shadow-md flex items-center justify-between ${statusCores[c.status].bg} ${statusCores[c.status].border}`}
-                      >
-                        <div>
-                          <span className="text-[10px] font-extrabold text-teal-400">{c.horario} • {c.categoria}</span>
-                          <h4 className="font-bold text-xs text-white">{c.titulo}</h4>
-                          <span className="text-[10px] text-slate-400 block">{c.responsavel}</span>
-                        </div>
-                        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${statusCores[c.status].badge}`}>
-                          {c.status}
-                        </span>
-                      </div>
-                    ))}
-                    {itensHora.length === 0 && (
-                      <button
-                        onClick={() => handleAbrirNovoModal(horaSlot)}
-                        className="py-2.5 px-3 rounded-xl border border-dashed border-slate-800 hover:border-teal-500/50 hover:bg-teal-500/5 text-slate-500 hover:text-teal-400 text-xs font-bold transition-all text-left"
-                      >
-                        + Agendar às {horaSlot}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {visualizacao === 'semana' && (
-        <div className={`p-4 sm:p-6 lg:p-8 rounded-3xl border shadow-xl overflow-x-auto w-full ${
-          darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
-        }`}>
-          <div className="grid grid-cols-7 gap-3 min-w-[850px]">
-            {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].map((diaNome) => (
-              <div key={diaNome} className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800 space-y-3 min-h-[350px]">
-                <div className="border-b border-slate-800 pb-2 text-center">
-                  <span className="font-extrabold text-xs text-teal-400">{diaNome}</span>
-                </div>
-                <div className="space-y-2">
-                  {compromissosFiltrados.slice(0, 5).map((c) => (
-                    <div
-                      key={c.id}
-                      onClick={() => handleAbrirEditarModal(c)}
-                      className={`p-2 rounded-xl border text-[11px] font-bold cursor-pointer ${statusCores[c.status].bg} ${statusCores[c.status].border}`}
-                    >
-                      <div className="text-[10px] text-teal-300">{c.horario}</div>
-                      <div className="truncate text-white">{c.titulo}</div>
-                    </div>
-                  ))}
-                </div>
+          {/* VISÃO AGENDA / LISTA */}
+          {visualizacao === 'agenda' && (
+            <div className="p-6">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-400 font-extrabold uppercase">
+                      <th className="p-3">Data</th>
+                      <th className="p-3">Horário</th>
+                      <th className="p-3">Compromisso</th>
+                      <th className="p-3">Categoria</th>
+                      <th className="p-3">Responsável</th>
+                      <th className="p-3 text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/40">
+                    {compromissosFiltrados.map((item) => {
+                      const cfg = categoriasConfig[item.categoria] || categoriasConfig['Outro'];
+                      return (
+                        <tr key={item.id} className="hover:bg-slate-800/40">
+                          <td className="p-3 font-bold text-teal-400">{item.data}</td>
+                          <td className="p-3 font-bold">{item.horario}</td>
+                          <td className="p-3 font-bold text-white">{item.titulo}</td>
+                          <td className="p-3">
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${cfg.bg} ${cfg.border} ${cfg.text}`}>
+                              {item.categoria}
+                            </span>
+                          </td>
+                          <td className="p-3 text-slate-300">{item.responsavel}</td>
+                          <td className="p-3 text-right">
+                            <div className="flex justify-end gap-2">
+                              <button onClick={() => handleAbrirEditarModal(item)} className="p-1.5 bg-slate-800 text-sky-400 rounded-lg">
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button onClick={() => setItemExcluindoId(item.id)} className="p-1.5 bg-slate-800 text-rose-400 rounded-lg">
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+
         </div>
-      )}
 
-      {visualizacao === 'mes' && (
-        <div className={`p-4 sm:p-6 lg:p-8 rounded-3xl border shadow-xl w-full ${
-          darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
-        }`}>
-          <div className="grid grid-cols-7 gap-2 text-center text-xs font-extrabold text-teal-400 mb-3">
-            <span>DOM</span><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span>
-          </div>
+      </div>
 
-          <div className="grid grid-cols-7 gap-2.5">
-            {Array.from({ length: 31 }, (_, i) => i + 1).map((diaNum) => {
-              const prefixoAnoMes = dataSelecionada.substring(0, 7);
-              const dataStr = `${prefixoAnoMes}-${diaNum < 10 ? '0' + diaNum : diaNum}`;
-              const countDia = compromissos.filter((c) => c.data === dataStr).length;
-              const isSelected = dataSelecionada === dataStr;
-
-              return (
-                <button
-                  key={diaNum}
-                  onClick={() => {
-                    setDataSelecionada(dataStr);
-                    setVisualizacao('tabela');
-                  }}
-                  className={`min-h-[85px] p-2.5 rounded-2xl border flex flex-col justify-between transition-all cursor-pointer ${
-                    isSelected
-                      ? 'bg-teal-600 text-white border-teal-400 ring-2 ring-teal-400'
-                      : darkMode
-                      ? 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
-                      : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
-                  }`}
-                >
-                  <span className="font-extrabold text-xs">{diaNum}</span>
-                  {countDia > 0 && (
-                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                      {countDia} tarefas
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* MODAL CADASTRAR / EDITAR COMPROMISSO */}
+      {/* 3. MODAL DE CRIAÇÃO / EDIÇÃO ESTILO GOOGLE CALENDAR */}
       {modalAberto && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto animate-fadeIn">
           <div className={`rounded-3xl p-6 max-w-lg w-full shadow-2xl border space-y-4 my-8 ${
             darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
           }`}>
+            
             <div className="flex items-center justify-between border-b border-slate-800/40 pb-3">
-              <h3 className="text-lg font-extrabold flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-teal-400" />
-                {itemEditando ? 'Editar Compromisso' : 'Novo Agendamento / Compromisso'}
-              </h3>
+              <div className="flex items-center gap-2">
+                <div className="p-2 bg-teal-500/20 text-teal-400 rounded-xl border border-teal-500/30">
+                  <CalendarIcon className="w-5 h-5" />
+                </div>
+                <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                  {itemEditando ? 'Editar Agendamento' : 'Novo Agendamento / Compromisso'}
+                </h3>
+              </div>
               <button onClick={() => setModalAberto(false)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
@@ -829,52 +857,45 @@ export const Agenda: React.FC<AgendaProps> = ({
 
             <form onSubmit={handleSubmitForm} className="space-y-4 text-xs">
               
-              {/* Título do Compromisso */}
+              {/* Título Estilo Google */}
               <div>
-                <label className="block font-bold text-slate-400 mb-1">Título / Descrição do Compromisso</label>
                 <input
                   type="text"
-                  placeholder="Ex: Levar filhos na natação, Consulta Odontológica..."
+                  placeholder="Adicionar título do compromisso..."
                   value={titulo}
                   onChange={(e) => setTitulo(e.target.value)}
                   required
                   autoFocus
-                  className={`w-full p-3 rounded-xl border font-bold ${
-                    darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
+                  className={`w-full p-3.5 rounded-2xl border text-sm font-extrabold transition-all focus:ring-2 focus:ring-teal-500 focus:outline-none ${
+                    darkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400'
                   }`}
                 />
               </div>
 
-              {/* Categoria & Responsável */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-400 mb-1">Categoria do Compromisso</label>
-                  <select
-                    value={categoriaForm}
-                    onChange={(e) => setCategoriaForm(e.target.value as CategoriaAgenda)}
-                    className={`w-full p-2.5 rounded-xl border font-bold ${
-                      darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
-                    }`}
-                  >
-                    <option value="Responsabilidade Familiar">👨‍👩‍👧‍👦 Responsabilidade Familiar</option>
-                    <option value="Profissional / Clínica">💼 Profissional / Clínica</option>
-                    <option value="Compromisso Financeiro">💰 Compromisso Financeiro</option>
-                    <option value="Pessoal / Saúde">⭐ Pessoal / Saúde</option>
-                    <option value="Outro">Outro</option>
-                  </select>
-                </div>
+              {/* Seletor de Categoria com Pílulas Coloridas */}
+              <div>
+                <label className="block font-bold text-slate-400 mb-1.5">Agenda / Categoria</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(Object.keys(categoriasConfig) as CategoriaAgenda[]).map((cat) => {
+                    const cfg = categoriasConfig[cat];
+                    const isSelected = categoriaForm === cat;
 
-                <div>
-                  <label className="block font-bold text-slate-400 mb-1">Responsável / Envolvido</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Fernando, Bernardo, Família..."
-                    value={responsavelForm}
-                    onChange={(e) => setResponsavelForm(e.target.value)}
-                    className={`w-full p-2.5 rounded-xl border font-bold ${
-                      darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
-                    }`}
-                  />
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setCategoriaForm(cat)}
+                        className={`p-2.5 rounded-xl border font-extrabold text-left transition-all cursor-pointer flex items-center gap-2 ${
+                          isSelected
+                            ? `${cfg.bg} ${cfg.border} ${cfg.text} ring-2 ring-teal-500`
+                            : 'bg-slate-800/40 border-slate-700 text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <span className={`w-2.5 h-2.5 rounded-full ${cfg.dotColor} shrink-0`}></span>
+                        <span className="truncate text-[11px]">{cfg.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -925,30 +946,26 @@ export const Agenda: React.FC<AgendaProps> = ({
                 </div>
               </div>
 
-              {/* Status */}
+              {/* Responsável */}
               <div>
-                <label className="block font-bold text-slate-400 mb-1">Status do Agendamento</label>
-                <select
-                  value={statusForm}
-                  onChange={(e) => setStatusForm(e.target.value as StatusConsulta)}
+                <label className="block font-bold text-slate-400 mb-1">Responsável / Envolvidos</label>
+                <input
+                  type="text"
+                  placeholder="Ex: Fernando, Bernardo, Família..."
+                  value={responsavelForm}
+                  onChange={(e) => setResponsavelForm(e.target.value)}
                   className={`w-full p-2.5 rounded-xl border font-bold ${
                     darkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-slate-50 border-slate-200 text-slate-800'
                   }`}
-                >
-                  <option value="Agendado">Agendado</option>
-                  <option value="Confirmado">Confirmado</option>
-                  <option value="Em Atendimento">Em Atendimento / Em Andamento</option>
-                  <option value="Finalizado">Concluído / Finalizado</option>
-                  <option value="Cancelado">Cancelado</option>
-                </select>
+                />
               </div>
 
               {/* Observações */}
               <div>
-                <label className="block font-bold text-slate-400 mb-1">Observações Adicionais</label>
+                <label className="block font-bold text-slate-400 mb-1">Observações / Detalhes</label>
                 <textarea
                   rows={2}
-                  placeholder="Anotações extras sobre o compromisso..."
+                  placeholder="Anotações extras..."
                   value={observacoesForm}
                   onChange={(e) => setObservacoesForm(e.target.value)}
                   className={`w-full p-2.5 rounded-xl border ${
@@ -967,17 +984,18 @@ export const Agenda: React.FC<AgendaProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-extrabold rounded-xl shadow-lg shadow-teal-500/30 cursor-pointer"
+                  className="px-6 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-extrabold rounded-xl shadow-lg cursor-pointer flex items-center gap-1.5"
                 >
-                  {itemEditando ? 'Salvar Alterações' : 'Confirmar Agendamento'}
+                  <Check className="w-4 h-4" /> Salvar no Google Calendar
                 </button>
               </div>
             </form>
+
           </div>
         </div>
       )}
 
-      {/* MODAL EXCLUSÃO */}
+      {/* MODAL DE EXCLUSÃO */}
       {itemExcluindoId && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className={`rounded-3xl p-6 max-w-md w-full shadow-2xl border space-y-4 ${
@@ -988,14 +1006,10 @@ export const Agenda: React.FC<AgendaProps> = ({
                 <Trash2 className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-extrabold text-base">Excluir Compromisso</h3>
-                <p className="text-xs text-slate-400">Esta ação não poderá ser desfeita.</p>
+                <h3 className="font-extrabold text-base">Excluir Agendamento</h3>
+                <p className="text-xs text-slate-400">Esta ação irá remover o compromisso da agenda.</p>
               </div>
             </div>
-
-            <p className="text-xs text-slate-300 bg-slate-800/50 p-3 rounded-2xl border border-slate-700">
-              Tem certeza de que deseja remover este compromisso da sua agenda?
-            </p>
 
             <div className="flex justify-end gap-3 pt-2">
               <button
@@ -1005,11 +1019,10 @@ export const Agenda: React.FC<AgendaProps> = ({
               >
                 Cancelar
               </button>
-
               <button
                 type="button"
                 onClick={() => handleExcluirCompromisso(itemExcluindoId)}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow-lg shadow-rose-600/30 cursor-pointer"
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow-lg cursor-pointer"
               >
                 Sim, Excluir
               </button>
