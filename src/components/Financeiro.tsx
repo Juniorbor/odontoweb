@@ -877,14 +877,30 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId, onT
                     <td className="p-3 text-slate-300 font-bold">{t.categoria}</td>
                     <td className="p-3">
                       <button
+                        type="button"
                         onClick={() => handleToggleStatus(t.id)}
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border cursor-pointer transition-all ${
+                        className={`px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition-all flex items-center gap-1.5 shadow-sm hover:scale-105 ${
                           t.status === 'Pago'
-                            ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30'
-                            : 'bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500/30'
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
+                            : 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30 animate-pulse'
                         }`}
+                        title={
+                          t.status === 'Pago'
+                            ? 'Conta PAGA! Clique para alterar para Pendente'
+                            : 'Conta PENDENTE. Clique para MARCAR COMO PAGO (subtrai das Despesas no Dashboard)'
+                        }
                       >
-                        {t.status === 'Pago' ? '✓ Pago' : '⏳ Pendente'}
+                        {t.status === 'Pago' ? (
+                          <>
+                            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <span>✓ Pago</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                            <span>⏳ Marcar como Pago</span>
+                          </>
+                        )}
                       </button>
                     </td>
                     <td className={`p-3 font-extrabold text-sm whitespace-nowrap ${

@@ -135,15 +135,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
     .filter((t) => t.tipo === 'Entrada')
     .reduce((acc, t) => acc + t.valor, 0);
 
+  // Despesas Fixas e Variáveis Pendentes (Contas marcadas como 'Pago' são SUBTRAÍDAS das Despesas Totais do Lar no Dashboard)
   const totalDespesasFixas = transacoesFinanceiras
-    .filter((t) => t.tipo === 'Despesa Fixa')
+    .filter((t) => t.tipo === 'Despesa Fixa' && t.status !== 'Pago')
     .reduce((acc, t) => acc + t.valor, 0);
 
   const totalDespesasVariaveis = transacoesFinanceiras
-    .filter((t) => t.tipo === 'Despesa Variável')
+    .filter((t) => t.tipo === 'Despesa Variável' && t.status !== 'Pago')
     .reduce((acc, t) => acc + t.valor, 0);
 
   const totalDespesasGerais = totalDespesasFixas + totalDespesasVariaveis;
+
+  const totalDespesasPagasValor = transacoesFinanceiras
+    .filter((t) => t.tipo !== 'Entrada' && t.status === 'Pago')
+    .reduce((acc, t) => acc + t.valor, 0);
+
   const saldoOperacional = totalEntradas - totalDespesasGerais;
   const saldoLiquidoConsolidado = saldoOperacional + saldoContaPessoal;
   
@@ -271,8 +277,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <p className="text-2xl sm:text-3xl font-black mt-3 text-rose-400 tracking-tight">
             {formatarValor(totalDespesasGerais)}
           </p>
-          <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-rose-300">
-            <ArrowDownRight className="w-3.5 h-3.5 text-rose-400" /> Comprometimento de {comprometimentoRenda}%
+          <div className="mt-2 flex items-center justify-between text-[11px] font-bold text-rose-300">
+            <span className="flex items-center gap-1">
+              <ArrowDownRight className="w-3.5 h-3.5 text-rose-400" /> Comprometimento: {comprometimentoRenda}%
+            </span>
+            {totalDespesasPagasValor > 0 && (
+              <span className="text-[10px] text-emerald-300 bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-500/30 font-extrabold" title="Valor subtraído das despesas por já ter sido pago">
+                - {formatarValor(totalDespesasPagasValor)} pagos
+              </span>
+            )}
           </div>
         </div>
 
