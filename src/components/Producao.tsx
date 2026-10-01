@@ -54,6 +54,19 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
 
   // Inicializa a lista de registros de produção em aberto (zerada por padrão para novos ciclos)
   const [itens, setItens] = useState<ItemProducaoTomo[]>(() => {
+    const CLEANUP_TAG = 'odonto_clean_legacy_mock_entradas_v1';
+    if (!localStorage.getItem(CLEANUP_TAG)) {
+      localStorage.setItem(CLEANUP_TAG, 'true');
+      const emptyStr = JSON.stringify([]);
+      localStorage.setItem(STORAGE_KEY, emptyStr);
+      localStorage.setItem('odonto_producao_backup_permanent', emptyStr);
+      localStorage.setItem('odonto_producao_registros_usr_admin_master', emptyStr);
+      localStorage.setItem('odonto_producao_registros_v2', emptyStr);
+      localStorage.setItem('odonto_producao_registros', emptyStr);
+      pushToCloud({ producao: [] }, usuarioId);
+      return [];
+    }
+
     const salvo = getItemJSON<ItemProducaoTomo[] | null>(STORAGE_KEY, null);
     if (Array.isArray(salvo)) {
       return salvo;
