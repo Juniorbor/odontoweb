@@ -70,8 +70,8 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
       return DADOS_PRODUCAO_EXCEL;
     }
 
-    const salvo = getItemJSON<ItemProducaoTomo[]>(STORAGE_KEY, []);
-    if (Array.isArray(salvo) && salvo.length > 0) {
+    const salvo = getItemJSON<ItemProducaoTomo[] | null>(STORAGE_KEY, null);
+    if (Array.isArray(salvo)) {
       return salvo;
     }
     return DADOS_PRODUCAO_EXCEL;

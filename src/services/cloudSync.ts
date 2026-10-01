@@ -69,10 +69,8 @@ export function getUserKeys(usuarioId?: string) {
  */
 export function getProducaoComoTransacoes(usuarioId?: string): any[] {
   const keys = getUserKeys(usuarioId);
-  let itensProducao: any[] = getItemJSON<any[]>(keys.PRODUCAO, []);
-  if (!Array.isArray(itensProducao) || itensProducao.length === 0) {
-    itensProducao = DADOS_PRODUCAO_EXCEL;
-  }
+  const salvo = getItemJSON<any[] | null>(keys.PRODUCAO, null);
+  let itensProducao: any[] = Array.isArray(salvo) ? salvo : DADOS_PRODUCAO_EXCEL;
 
   return itensProducao.map((item: any, idx: number) => ({
     id: `prod-entrada-${item.id || idx}`,
