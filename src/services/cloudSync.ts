@@ -1,5 +1,4 @@
 // Serviço de Sincronização em Nuvem em Tempo Real com Presença de Usuários Online
-import { DADOS_PRODUCAO_EXCEL } from '../data/dadosProducaoExcel';
 
 const getCloudEndpoint = () => {
   if (typeof window !== 'undefined') {
@@ -69,19 +68,25 @@ export function getUserKeys(usuarioId?: string) {
  */
 export function getProducaoComoTransacoes(usuarioId?: string): any[] {
   const keys = getUserKeys(usuarioId);
-  const salvo = getItemJSON<any[] | null>(keys.PRODUCAO, null);
-  let itensProducao: any[] = Array.isArray(salvo) ? salvo : DADOS_PRODUCAO_EXCEL;
+  const raw = localStorage.getItem(keys.PRODUCAO);
+  if (!raw) return [];
+  try {
+    const itensProducao = JSON.parse(raw);
+    if (!Array.isArray(itensProducao)) return [];
 
-  return itensProducao.map((item: any, idx: number) => ({
-    id: `prod-entrada-${item.id || idx}`,
-    descricao: `Faturamento Produção: ${item.pacienteNome || item.paciente || 'Paciente'} - ${item.regiao || item.procedimento || 'Procedimento'} (${item.unidade || item.clinica || 'Unidade'})`,
-    valor: Number(item.valor || 0),
-    data: item.data || new Date().toISOString().split('T')[0],
-    categoria: 'Faturamento de Produção',
-    tipo: 'Entrada' as const,
-    status: 'Pago' as const,
-    origemProducao: true
-  }));
+    return itensProducao.map((item: any, idx: number) => ({
+      id: `prod-entrada-${item.id || idx}`,
+      descricao: `Faturamento Produção: ${item.pacienteNome || item.paciente || 'Paciente'} - ${item.regiao || item.procedimento || 'Procedimento'} (${item.unidade || item.clinica || 'Unidade'})`,
+      valor: Number(item.valor || 0),
+      data: item.data || new Date().toISOString().split('T')[0],
+      categoria: 'Faturamento de Produção',
+      tipo: 'Entrada' as const,
+      status: 'Pago' as const,
+      origemProducao: true
+    }));
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -297,41 +302,7 @@ export function subscribeLocalBroadcast(onUpdate: (payload: CloudDataPayload) =>
 
 export function getItemJSON<T = any>(key: string, fallback: T): T {
   try {
-    let item = localStorage.getItem(key);
-
-    // Se a chave for estritamente nula (sem registro salvo ainda), procura nos backups legados
-    if (item === null && key.includes('odonto_producao_registros')) {
-      const keysToTry = [
-        'odonto_producao_backup_permanent',
-        'odonto_producao_registros_usr_admin_master',
-        'odonto_producao_registros_v2',
-        'odonto_producao_registros'
-      ];
-      for (const k of keysToTry) {
-        const candidateItem = localStorage.getItem(k);
-        if (candidateItem !== null) {
-          item = candidateItem;
-          break;
-        }
-      }
-    }
-
-    if (item === null && key.includes('odonto_financeiro_pessoal')) {
-      const keysToTry = [
-        'odonto_financeiro_backup_permanent',
-        'odonto_financeiro_pessoal_usr_admin_master',
-        'odonto_financeiro_pessoal_v1',
-        'odonto_financeiro_pessoal'
-      ];
-      for (const k of keysToTry) {
-        const candidateItem = localStorage.getItem(k);
-        if (candidateItem !== null) {
-          item = candidateItem;
-          break;
-        }
-      }
-    }
-
+    const item = localStorage.getItem(key);
     if (item === null || item === undefined) return fallback;
     const parsed = JSON.parse(item);
     if (parsed === null || parsed === undefined) return fallback;

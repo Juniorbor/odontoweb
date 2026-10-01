@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import type { ItemProducaoTomo, FechamentoProducao } from '../types';
 import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, getUserKeys, getItemJSON } from '../services/cloudSync';
 import { WhatsappNotificacoes } from './WhatsappNotificacoes';
-import { DADOS_PRODUCAO_EXCEL } from '../data/dadosProducaoExcel';
 import {
   BarChart3,
   Plus,
@@ -53,28 +52,13 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
   const userKeys = getUserKeys(usuarioId);
   const STORAGE_KEY = userKeys.PRODUCAO;
 
-  // Inicializa a lista de registros com sincronia estrita da planilha Excel (296 registros = R$ 1.757,00)
+  // Inicializa a lista de registros de produção em aberto (zerada por padrão para novos ciclos)
   const [itens, setItens] = useState<ItemProducaoTomo[]>(() => {
-    const MIGRATION_TAG = 'odonto_excel_v1757_exact_sync_v2';
-    const jaMigrou = localStorage.getItem(MIGRATION_TAG);
-
-    if (!jaMigrou) {
-      localStorage.setItem(MIGRATION_TAG, 'true');
-      const str = JSON.stringify(DADOS_PRODUCAO_EXCEL);
-      localStorage.setItem(STORAGE_KEY, str);
-      localStorage.setItem('odonto_producao_backup_permanent', str);
-      localStorage.setItem('odonto_producao_registros_usr_admin_master', str);
-      localStorage.setItem('odonto_producao_registros_v2', str);
-      localStorage.setItem('odonto_producao_registros', str);
-      pushToCloud({ producao: DADOS_PRODUCAO_EXCEL }, usuarioId);
-      return DADOS_PRODUCAO_EXCEL;
-    }
-
     const salvo = getItemJSON<ItemProducaoTomo[] | null>(STORAGE_KEY, null);
     if (Array.isArray(salvo)) {
       return salvo;
     }
-    return DADOS_PRODUCAO_EXCEL;
+    return [];
   });
 
   const STORAGE_KEY_FECHAMENTOS = userKeys.FECHAMENTOS;
