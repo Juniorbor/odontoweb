@@ -8,7 +8,9 @@ import {
   LogOut,
   ChevronDown,
   Menu,
-  Users
+  Users,
+  PlusCircle,
+  Wallet
 } from 'lucide-react';
 import type { Paciente, Consulta } from '../types';
 import type { UsuarioSistema } from '../services/authService';
@@ -70,19 +72,19 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
   return (
     <header
-      className={`sticky top-0 z-20 h-16 border-b transition-colors backdrop-blur-md px-3 sm:px-6 flex items-center justify-between gap-2.5 ${
+      className={`sticky top-0 z-20 h-16 border-b transition-colors backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between gap-2.5 ${
         darkMode
-          ? 'bg-slate-900/90 border-slate-800/80 text-white'
+          ? 'bg-[#070b14]/85 border-slate-800/70 text-white'
           : 'bg-white/90 border-slate-200/80 text-slate-800'
       }`}
     >
-      {/* Botão Menu Hamburger para Celulares (Android & iOS) + Logo + Busca Global */}
-      <div className="flex items-center gap-2 flex-1 max-w-md">
+      {/* Botão Menu Hamburger para Celulares + Logo + Busca Global */}
+      <div className="flex items-center gap-2.5 flex-1 max-w-lg">
         <button
           onClick={onToggleMobileMenu}
-          className={`p-2 rounded-2xl border md:hidden flex items-center justify-center cursor-pointer transition-all shrink-0 ${
+          className={`p-2 rounded-xl border md:hidden flex items-center justify-center cursor-pointer transition-all shrink-0 ${
             darkMode
-              ? 'bg-slate-800 border-slate-700 text-teal-400 hover:bg-slate-700'
+              ? 'bg-slate-900 border-slate-800 text-teal-400 hover:bg-slate-800'
               : 'bg-slate-100 border-slate-200 text-teal-600 hover:bg-slate-200'
           }`}
           aria-label="Abrir Menu de Navegação"
@@ -90,41 +92,41 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           <Menu className="w-5 h-5" />
         </button>
 
-        {/* Logo Oficial OdontoWeb no Header (Visível em Celulares e PC) */}
+        {/* Logo Oficial OdontoWeb no Header */}
         <div
           onClick={() => onNavigate('dashboard')}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all cursor-pointer shrink-0 ${
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all cursor-pointer shrink-0 ${
             darkMode
-              ? 'bg-slate-800/60 border-slate-700/60 hover:bg-slate-800 text-white shadow-sm'
+              ? 'bg-slate-900/90 border-slate-800 hover:border-teal-500/40 text-white shadow-sm'
               : 'bg-slate-100 border-slate-200 hover:bg-slate-200/80 text-slate-800 shadow-sm'
           }`}
         >
           <img
             src={LOGO_BASE64}
             alt="OdontoWeb - Finanças Logo"
-            className="w-6 h-6 sm:w-7 sm:h-7 object-contain rounded-full border border-teal-500/60 bg-white p-0.5 shrink-0"
+            className="w-6 h-6 object-contain rounded-lg border border-teal-500/50 bg-white p-0.5 shrink-0"
           />
           <span className="font-bold text-xs tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
-            OdontoWeb <span className="text-teal-400 font-extrabold">- Finanças</span>
+            OdontoWeb <span className="text-teal-400 font-extrabold hidden sm:inline">PRO</span>
           </span>
         </div>
 
         {/* Campo de Busca Inteligente */}
         <div className="relative flex-1">
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
-              placeholder="Buscar paciente, CPF..."
+              placeholder="Buscar paciente ou registro..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setSearchOpen(true);
               }}
               onFocus={() => setSearchOpen(true)}
-              className={`w-full pl-9 pr-3 py-2 text-xs rounded-2xl border transition-all focus:outline-none focus:ring-2 focus:ring-teal-500 ${
+              className={`w-full pl-8 pr-3 py-2 text-xs rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-teal-500/50 ${
                 darkMode
-                  ? 'bg-slate-800/80 border-slate-700 text-white placeholder-slate-500'
+                  ? 'bg-slate-900/90 border-slate-800 text-white placeholder-slate-500 focus:border-teal-500/50'
                   : 'bg-slate-100/80 border-slate-200 text-slate-800 placeholder-slate-400'
               }`}
             />
@@ -161,7 +163,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                 ))
               ) : (
                 <div className="p-3 text-center text-xs text-slate-400">
-                  Nenhum paciente localizado para "{searchQuery}".
+                  Nenhum registro localizado para "{searchQuery}".
                 </div>
               )}
             </div>
@@ -169,12 +171,28 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         </div>
       </div>
 
-      {/* Ações da Direita */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      {/* Ações Rápidas & Perfil da Direita */}
+      <div className="flex items-center gap-2">
+        {/* Atalhos Rápidos no Topo (Desktop) */}
+        <div className="hidden lg:flex items-center gap-1.5 mr-1">
+          <button
+            onClick={() => onNavigate('producao')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 transition-all cursor-pointer"
+          >
+            <PlusCircle className="w-3.5 h-3.5" /> Produção
+          </button>
+          <button
+            onClick={() => onNavigate('financeiro')}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 border border-teal-500/25 transition-all cursor-pointer"
+          >
+            <Wallet className="w-3.5 h-3.5" /> Financeiro
+          </button>
+        </div>
+
         {/* Indicador de Presença de Usuários Online em Tempo Real (EXCLUSIVO PARA O ADMIN MASTER) */}
         {usuarioLogado?.role === 'admin' && (
           <div className="relative group">
-            <div className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-extrabold px-2.5 py-1.5 rounded-2xl text-[11px] flex items-center gap-1.5 border border-emerald-500/30 transition-all cursor-pointer shadow-sm">
+            <div className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-extrabold px-2.5 py-1.5 rounded-xl text-[11px] flex items-center gap-1.5 border border-emerald-500/25 transition-all cursor-pointer shadow-sm">
               <span className="w-2 h-2 bg-emerald-400 rounded-full animate-ping shrink-0"></span>
               <Users className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span className="hidden sm:inline font-mono">{onlineUsers.length || 1} Online</span>
@@ -219,15 +237,16 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         {/* Toggle Tema (Claro / Escuro) */}
         <button
           onClick={onToggleDarkMode}
-          className={`p-2 rounded-2xl border transition-all cursor-pointer ${
+          className={`p-2 rounded-xl border transition-all cursor-pointer ${
             darkMode
-              ? 'bg-slate-800 border-slate-700 text-amber-400 hover:bg-slate-700'
+              ? 'bg-slate-900 border-slate-800 text-amber-400 hover:bg-slate-800'
               : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
           }`}
           title={darkMode ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}
         >
           {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
+
         {/* Notificações */}
         <div className="relative">
           {(() => {
@@ -247,9 +266,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                   }
                   setProfileOpen(false);
                 }}
-                className={`p-2 rounded-2xl border transition-all cursor-pointer relative ${
+                className={`p-2 rounded-xl border transition-all cursor-pointer relative ${
                   darkMode
-                    ? 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                    ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
                     : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
                 }`}
                 title="Central de Notificações"
@@ -260,7 +279,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                     {naoLidosCount}
                   </span>
                 ) : (
-                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-slate-900 animate-pulse"></span>
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-teal-400 rounded-full border border-slate-900"></span>
                 )}
               </button>
             );
@@ -304,13 +323,13 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
               setProfileOpen(!profileOpen);
               setNotifOpen(false);
             }}
-            className={`flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-2xl border transition-all cursor-pointer ${
+            className={`flex items-center gap-2 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border transition-all cursor-pointer ${
               darkMode
-                ? 'bg-slate-800 border-slate-700 hover:bg-slate-700'
+                ? 'bg-slate-900 border-slate-800 hover:bg-slate-800'
                 : 'bg-slate-100 border-slate-200 hover:bg-slate-200'
             }`}
           >
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-teal-600 to-cyan-500 flex items-center justify-center text-xs font-extrabold text-white shadow shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-teal-600 to-cyan-500 flex items-center justify-center text-[11px] font-extrabold text-white shadow shrink-0">
               {iniciais}
             </div>
 
@@ -350,7 +369,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
               <button
                 onClick={onLogout}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
               >
                 <LogOut className="w-4 h-4" /> Sair da Conta
               </button>
