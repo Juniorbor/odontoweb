@@ -23,7 +23,7 @@ import {
   Check
 } from 'lucide-react';
 
-import { getUserKeys, getProducaoComoTransacoes, getItemJSON, pushToCloud } from '../services/cloudSync';
+import { getUserKeys, getProducaoComoTransacoes, getItemJSON, pushToCloud, ensureCleanSlateV10 } from '../services/cloudSync';
 
 interface DashboardProps {
   onNavigate: (tab: string) => void;
@@ -40,8 +40,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
   usuarioId,
   onlineUsersCount = 1
 }) => {
+  ensureCleanSlateV10(usuarioId);
   const userKeys = getUserKeys(usuarioId);
   const chaveFinanceiro = userKeys.FINANCEIRO;
+  const chaveSaldoConta = userKeys.SALDO_CONTA_PESSOAL || 'odonto_saldo_conta_pessoal_v1';
 
   // Estado para Ocultar / Visualizar Valores no Dashboard (Modo Privacidade)
   const [ocultarValores, setOcultarValores] = useState<boolean>(() => {
@@ -67,39 +69,43 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return getItemJSON<TransacaoPessoal[]>(chaveFinanceiro, []);
   });
 
-  // Atualização em tempo real quando ocorrem novos lançamentos ou exclusões no localStorage
-  useEffect(() => {
-    const atualizar = () => {
-      const dados = getItemJSON<TransacaoPessoal[]>(chaveFinanceiro, []);
-      setTransacoesFinanceiras(dados);
-    };
-
-    atualizar();
-    window.addEventListener('storage', atualizar);
-    const interval = setInterval(atualizar, 1000);
-
-    return () => {
-      window.removeEventListener('storage', atualizar);
-      clearInterval(interval);
-    };
-  }, [chaveFinanceiro]);
-
-  // COMBINAÇÃO CONSOLIDADA: Entradas Financeiras + Faturamento Geral da Produção
-  const transSeguras = Array.isArray(transacoesFinanceiras) ? transacoesFinanceiras : [];
-  const prodSegura = Array.isArray(getProducaoComoTransacoes(usuarioId)) ? getProducaoComoTransacoes(usuarioId) : [];
-
-  const todasTransacoesCombinadas = [
-    ...transSeguras,
-    ...prodSegura
-  ];
-
-  const chaveSaldoConta = userKeys.SALDO_CONTA_PESSOAL || 'odonto_saldo_conta_pessoal_v1';
+  const [prodSegura, setProdSegura] = useState<any[]>(() => {
+    return getProducaoComoTransacoes(usuarioId);
+  });
 
   // Estado para Saldo em Conta Pessoal (Minha Conta)
   const [saldoContaPessoal, setSaldoContaPessoal] = useState<number>(() => {
     const val = localStorage.getItem(chaveSaldoConta);
     return val !== null ? parseFloat(val) : 0;
   });
+
+  // Atualização orientada a eventos em tempo real (sem polling pesado de 1s)
+  useEffect(() => {
+    const atualizar = () => {
+      const dados = getItemJSON<TransacaoPessoal[]>(chaveFinanceiro, []);
+      setTransacoesFinanceiras(dados);
+      setProdSegura(getProducaoComoTransacoes(usuarioId));
+      const valConta = localStorage.getItem(chaveSaldoConta);
+      setSaldoContaPessoal(valConta !== null ? parseFloat(valConta) : 0);
+    };
+
+    atualizar();
+    window.addEventListener('storage', atualizar);
+    window.addEventListener('odonto_local_sync', atualizar);
+
+    return () => {
+      window.removeEventListener('storage', atualizar);
+      window.removeEventListener('odonto_local_sync', atualizar);
+    };
+  }, [chaveFinanceiro, chaveSaldoConta, usuarioId]);
+
+  // COMBINAÇÃO CONSOLIDADA: Entradas Financeiras + Faturamento Geral da Produção
+  const transSeguras = Array.isArray(transacoesFinanceiras) ? transacoesFinanceiras : [];
+
+  const todasTransacoesCombinadas = [
+    ...transSeguras,
+    ...(Array.isArray(prodSegura) ? prodSegura : [])
+  ];
 
   const [bancoNomePessoal, setBancoNomePessoal] = useState<string>(() => {
     return localStorage.getItem(`${chaveSaldoConta}_banco`) || 'Conta Bancária Pessoal';

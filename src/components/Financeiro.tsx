@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { TransacaoPessoal } from '../types';
-import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, getUserKeys, getProducaoComoTransacoes, getItemJSON } from '../services/cloudSync';
+import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, getUserKeys, getProducaoComoTransacoes, getItemJSON, ensureCleanSlateV10 } from '../services/cloudSync';
 import { LeitorComprovanteOCR } from './LeitorComprovanteOCR';
 import { DREGerencial } from './DREGerencial';
 import { CartoesEMetas } from './CartoesEMetas';
@@ -57,6 +57,7 @@ const CATEGORIAS_PESSOAIS = [
 ];
 
 export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId, onTrancarFinanceiro }) => {
+  ensureCleanSlateV10(usuarioId);
   const userKeys = getUserKeys(usuarioId);
   const STORAGE_KEY = userKeys.FINANCEIRO;
 
@@ -104,7 +105,7 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId, onT
     }
   };
 
-  // Carregamento e Polling em Tempo Real da Nuvem
+  // Carregamento e Sincronização Otimizada
   useEffect(() => {
     // 1. Busca imediata na nuvem ao abrir
     setSincronizando(true);
@@ -115,21 +116,21 @@ export const Financeiro: React.FC<FinanceiroProps> = ({ darkMode, usuarioId, onT
       setSincronizando(false);
     }, true, usuarioId);
 
-    // 2. Escuta alterações locais de abas simultâneas via BroadcastChannel
+    // 2. Escuta alterações locais de abas simultâneas via BroadcastChannel / CustomEvent
     const unsubscribeBroadcast = subscribeLocalBroadcast((payload) => {
       if (Array.isArray(payload.financeiro)) {
         setTransacoes(payload.financeiro);
       }
     }, usuarioId);
 
-    // 3. Polling contínuo a cada 2 segundos
+    // 3. Polling leve a cada 15 segundos
     const interval = setInterval(() => {
       pullFromCloud((payload) => {
         if (Array.isArray(payload.financeiro)) {
           setTransacoes(payload.financeiro);
         }
       }, false, usuarioId);
-    }, 2000);
+    }, 15000);
 
     const handleFocus = () => {
       pullFromCloud((payload) => {

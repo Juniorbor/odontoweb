@@ -15,37 +15,12 @@ interface SimuladorSonhosMetasProps {
 }
 
 export const SimuladorSonhosMetas: React.FC<SimuladorSonhosMetasProps> = ({ darkMode }) => {
-  const [metas, setMetas] = useState<MetaSonho[]>([
-    {
-      id: 'm1',
-      titulo: 'Viagem de Férias da Família',
-      valorMeta: 15000,
-      valorAcumulado: 6200,
-      prazoMeses: 10,
-      categoria: 'Viagem'
-    },
-    {
-      id: 'm2',
-      titulo: 'Troca de Veículo / Carro Novo',
-      valorMeta: 60000,
-      valorAcumulado: 18000,
-      prazoMeses: 24,
-      categoria: 'Veículo'
-    },
-    {
-      id: 'm3',
-      titulo: 'Reserva de Emergência de 6 Meses',
-      valorMeta: 30000,
-      valorAcumulado: 19500,
-      prazoMeses: 12,
-      categoria: 'Reserva'
-    }
-  ]);
+  const [metas, setMetas] = useState<MetaSonho[]>([]);
 
   const [modalNovo, setModalNovo] = useState<boolean>(false);
   const [titulo, setTitulo] = useState<string>('');
-  const [valorMeta, setValorMeta] = useState<number>(10000);
-  const [valorAcumulado, setValorAcumulado] = useState<number>(1000);
+  const [valorMeta, setValorMeta] = useState<number>(0);
+  const [valorAcumulado, setValorAcumulado] = useState<number>(0);
   const [prazoMeses, setPrazoMeses] = useState<number>(12);
   const [categoria, setCategoria] = useState<'Viagem' | 'Veículo' | 'Reserva' | 'Equipamento' | 'Imóvel' | 'Outro'>('Viagem');
 

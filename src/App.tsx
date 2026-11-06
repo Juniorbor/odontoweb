@@ -1,42 +1,38 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Dashboard } from './components/Dashboard';
-import { Agenda } from './components/Agenda';
-import { Pacientes } from './components/Pacientes';
-import { PerfilPaciente } from './components/PerfilPaciente';
-import { AnamneseView } from './components/AnamneseView';
-import { Odontograma } from './components/Odontograma';
-import { RadiografiaViewer } from './components/RadiografiaViewer';
-import { FotografiasGaleria } from './components/FotografiasGaleria';
-import { Producao } from './components/Producao';
-import { AIAssistant } from './components/AIAssistant';
-import { Financeiro } from './components/Financeiro';
-import { Relatorios } from './components/Relatorios';
-import { Configuracoes } from './components/Configuracoes';
 import { Login } from './components/Login';
 import { Sidebar } from './components/Sidebar';
 import { HeaderBar } from './components/HeaderBar';
 import { CentralNotificacoes } from './components/CentralNotificacoes';
-import { BancoDeDadosBackup } from './components/BancoDeDadosBackup';
-import { AgendaInteligenteMain } from './components/agenda/AgendaInteligenteMain';
-import { PainelRetornosPendentes } from './components/agenda/PainelRetornosPendentes';
-import { ConfiguracaoWhatsAppPainel } from './components/agenda/ConfiguracaoWhatsAppPainel';
-import { PaginaAgendamentoOnlinePublico } from './components/agenda/PaginaAgendamentoOnlinePublico';
-import { PainelDentistas } from './components/agenda/PainelDentistas';
 import { registrarSessaoDispositivoAtual } from './services/securityService';
 import { ModalPlanoEExpiracao } from './components/ModalPlanoEExpiracao';
 import { ModalSenhaFinanceiro } from './components/ModalSenhaFinanceiro';
 import { ToastContainer, type ToastMessage } from './components/Toast';
 import LOGO_BASE64 from './assets/logoData';
 
+// Lazy-loaded heavy modules for fast initial load & code splitting
+const Agenda = lazy(() => import('./components/Agenda').then((m) => ({ default: m.Agenda })));
+const Pacientes = lazy(() => import('./components/Pacientes').then((m) => ({ default: m.Pacientes })));
+const PerfilPaciente = lazy(() => import('./components/PerfilPaciente').then((m) => ({ default: m.PerfilPaciente })));
+const AnamneseView = lazy(() => import('./components/AnamneseView').then((m) => ({ default: m.AnamneseView })));
+const Odontograma = lazy(() => import('./components/Odontograma').then((m) => ({ default: m.Odontograma })));
+const RadiografiaViewer = lazy(() => import('./components/RadiografiaViewer').then((m) => ({ default: m.RadiografiaViewer })));
+const FotografiasGaleria = lazy(() => import('./components/FotografiasGaleria').then((m) => ({ default: m.FotografiasGaleria })));
+const Producao = lazy(() => import('./components/Producao').then((m) => ({ default: m.Producao })));
+const AIAssistant = lazy(() => import('./components/AIAssistant').then((m) => ({ default: m.AIAssistant })));
+const Financeiro = lazy(() => import('./components/Financeiro').then((m) => ({ default: m.Financeiro })));
+const Relatorios = lazy(() => import('./components/Relatorios').then((m) => ({ default: m.Relatorios })));
+const Configuracoes = lazy(() => import('./components/Configuracoes').then((m) => ({ default: m.Configuracoes })));
+const BancoDeDadosBackup = lazy(() => import('./components/BancoDeDadosBackup').then((m) => ({ default: m.BancoDeDadosBackup })));
+const AgendaInteligenteMain = lazy(() => import('./components/agenda/AgendaInteligenteMain').then((m) => ({ default: m.AgendaInteligenteMain })));
+const PainelRetornosPendentes = lazy(() => import('./components/agenda/PainelRetornosPendentes').then((m) => ({ default: m.PainelRetornosPendentes })));
+const ConfiguracaoWhatsAppPainel = lazy(() => import('./components/agenda/ConfiguracaoWhatsAppPainel').then((m) => ({ default: m.ConfiguracaoWhatsAppPainel })));
+const PaginaAgendamentoOnlinePublico = lazy(() => import('./components/agenda/PaginaAgendamentoOnlinePublico').then((m) => ({ default: m.PaginaAgendamentoOnlinePublico })));
+const PainelDentistas = lazy(() => import('./components/agenda/PainelDentistas').then((m) => ({ default: m.PainelDentistas })));
+
 import {
-  mockConsultas,
-  mockPacientes,
-  mockTransacoes,
   dentesIniciaisMock,
   mockAnamneseDetalhada,
-  mockRadiografias,
-  mockFotografias,
-  mockTimeline,
   mockMensagensIA
 } from './data/mockData';
 
@@ -53,15 +49,15 @@ import type {
   MensagemIA
 } from './types';
 
-import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, KEYS, getItemJSON, getUserKeys, type UsuarioOnlineInfo } from './services/cloudSync';
+import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, KEYS, getItemJSON, getUserKeys, ensureCleanSlateV10, type UsuarioOnlineInfo } from './services/cloudSync';
 import { type UsuarioSistema, getNotificacoesNovosClientesAdmin, type NotificacaoNovoClienteAdmin, registrarHeartbeatLocal, getUsuariosOnlineCombinados } from './services/authService';
 import { getConfigNotificacaoProducao, gerarTextoRelatorioProducaoDiaria, gerarLinkWhatsAppDirectApi } from './services/whatsappService';
-import { DADOS_PRODUCAO_EXCEL } from './data/dadosProducaoExcel';
 import { MessageSquare, Send, X } from 'lucide-react';
 
 const SESSION_KEY = 'odonto_usuario_sessao_v1';
 
 export function App() {
+  ensureCleanSlateV10();
   // Tema Dark Mode
   const [darkMode, setDarkMode] = useState<boolean>(true);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
@@ -100,16 +96,16 @@ export function App() {
   // Notificações Toast
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  // States da aplicação com Persistência Permanente no Dispositivo Local (localStorage)
-  const [consultas, setConsultas] = useState<Consulta[]>(() => getItemJSON(KEYS.CONSULTAS, mockConsultas));
-  const [pacientes, setPacientes] = useState<Paciente[]>(() => getItemJSON(KEYS.PACIENTES, mockPacientes));
-  const [transacoes] = useState<TransacaoFinanceira[]>(mockTransacoes);
+  // States da aplicação com Persistência Permanente no Dispositivo Local (localStorage) - Inicializados Zerados
+  const [consultas, setConsultas] = useState<Consulta[]>(() => getItemJSON(KEYS.CONSULTAS, []));
+  const [pacientes, setPacientes] = useState<Paciente[]>(() => getItemJSON(KEYS.PACIENTES, []));
+  const [transacoes] = useState<TransacaoFinanceira[]>([]);
   const [dentes, setDentes] = useState<Record<number, DenteInfo>>(dentesIniciaisMock);
   const [pacienteOdontograma, setPacienteOdontograma] = useState<Paciente | null>(null);
   const [anamnese, setAnamnese] = useState<AnamneseDetalhada>(mockAnamneseDetalhada);
-  const [radiografias, setRadiografias] = useState<RadiografiaExame[]>(mockRadiografias);
-  const [fotografias, setFotografias] = useState<FotografiaClinica[]>(() => getItemJSON(KEYS.FOTOGRAFIAS, mockFotografias));
-  const [timeline] = useState<HistoricoTimeline[]>(mockTimeline);
+  const [radiografias, setRadiografias] = useState<RadiografiaExame[]>([]);
+  const [fotografias, setFotografias] = useState<FotografiaClinica[]>(() => getItemJSON(KEYS.FOTOGRAFIAS, []));
+  const [timeline] = useState<HistoricoTimeline[]>([]);
   const [mensagensIA, setMensagensIA] = useState<MensagemIA[]>(mockMensagensIA);
   const [centralNotificacoesAberto, setCentralNotificacoesAberto] = useState<boolean>(false);
 
@@ -186,7 +182,7 @@ export function App() {
       } catch (e) {}
     }
 
-    // 3. Heartbeat e Polling contínuo em tempo real a cada 3 segundos
+    // 3. Heartbeat e Polling leve a cada 20 segundos
     const interval = setInterval(() => {
       registrarHeartbeatLocal({
         id: usuarioLogado.id,
@@ -195,7 +191,7 @@ export function App() {
         role: usuarioLogado.role
       });
       pullFromCloud(syncHandler, false, usuarioLogado.id, userInfo);
-    }, 3000);
+    }, 20000);
 
     const handleFocus = () => {
       registrarHeartbeatLocal({
@@ -242,10 +238,8 @@ export function App() {
         localStorage.setItem('odonto_whatsapp_ultimo_disparo_data', hoje);
 
         const keys = getUserKeys(usuarioLogado?.id);
-        let itensProd: any[] = getItemJSON<any[]>(keys.PRODUCAO, []);
-        if (!Array.isArray(itensProd) || itensProd.length === 0) {
-          itensProd = DADOS_PRODUCAO_EXCEL;
-        }
+        const itensProd: any[] = getItemJSON<any[]>(keys.PRODUCAO, []);
+        if (!Array.isArray(itensProd) || itensProd.length === 0) return;
 
         const textoMensagem = gerarTextoRelatorioProducaoDiaria(itensProd, config);
         const linkDirect = gerarLinkWhatsAppDirectApi(config.telefone, textoMensagem);
@@ -291,7 +285,7 @@ export function App() {
     };
 
     checkWhatsappSchedule();
-    const interval = setInterval(checkWhatsappSchedule, 10000);
+    const interval = setInterval(checkWhatsappSchedule, 30000);
     return () => clearInterval(interval);
   }, [usuarioLogado]);
 
@@ -304,7 +298,7 @@ export function App() {
     }
   }, [darkMode]);
 
-  // Monitoramento em tempo real de novos cadastros de clientes para o Administrador Master
+  // Monitoramento de novos cadastros de clientes para o Administrador Master
   useEffect(() => {
     if (usuarioLogado?.role !== 'admin') return;
 
@@ -327,7 +321,7 @@ export function App() {
     };
 
     checarNovosClientes();
-    const interval = setInterval(checarNovosClientes, 2000);
+    const interval = setInterval(checarNovosClientes, 15000);
 
     const handleBroadcast = (event: MessageEvent) => {
       if (event.data && event.data.type === 'NOVO_CLIENTE_CADASTRADO') {
@@ -367,6 +361,7 @@ export function App() {
 
   // Handlers Login/Logout Persistente
   const handleLoginSuccess = (usuario: UsuarioSistema) => {
+    ensureCleanSlateV10(usuario.id);
     setUsuarioLogado(usuario);
     setIsAutenticado(true);
     setActiveTab('dashboard');
@@ -623,187 +618,195 @@ export function App() {
 
         {/* Dynamic Views */}
         <main className="p-3 sm:p-6 flex-1 box-border w-full max-w-full transition-all">
-          {activeTab === 'dashboard' && (
-            <Dashboard
-              onNavigate={handleNavegarParaAba}
-              darkMode={darkMode}
-              userRole={usuarioLogado?.role || 'admin'}
-              usuarioId={usuarioLogado?.id}
-              onlineUsersCount={onlineUsers.length || 1}
-            />
-          )}
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center p-16 text-teal-400 font-bold text-sm animate-pulse">
+                Carregando módulo...
+              </div>
+            }
+          >
+            {activeTab === 'dashboard' && (
+              <Dashboard
+                onNavigate={handleNavegarParaAba}
+                darkMode={darkMode}
+                userRole={usuarioLogado?.role || 'admin'}
+                usuarioId={usuarioLogado?.id}
+                onlineUsersCount={onlineUsers.length || 1}
+              />
+            )}
 
-          {activeTab === 'pacientes' && (
-            <Pacientes
-              pacientes={pacientes}
-              onAddPaciente={handleAddPaciente}
-              onEditPaciente={handleEditPaciente}
-              onDeletePaciente={handleDeletePaciente}
-              onSelectPacienteParaOdontograma={handleAbrirOdontogramaPaciente}
-              onVerPerfilCompleto={handleVerPerfilPaciente}
-              darkMode={darkMode}
-            />
-          )}
+            {activeTab === 'pacientes' && (
+              <Pacientes
+                pacientes={pacientes}
+                onAddPaciente={handleAddPaciente}
+                onEditPaciente={handleEditPaciente}
+                onDeletePaciente={handleDeletePaciente}
+                onSelectPacienteParaOdontograma={handleAbrirOdontogramaPaciente}
+                onVerPerfilCompleto={handleVerPerfilPaciente}
+                darkMode={darkMode}
+              />
+            )}
 
-          {activeTab === 'perfil_paciente' && pacientePerfilSelecionado && (
-            <PerfilPaciente
-              paciente={pacientePerfilSelecionado}
-              consultas={consultas}
-              procedimentos={[]}
-              dentes={dentes}
-              onUpdateDente={handleUpdateDente}
-              anamnese={anamnese}
-              radiografias={radiografias}
-              fotografias={fotografias}
-              timeline={timeline}
-              onVoltar={() => setActiveTab('pacientes')}
-              onAddRadiografia={handleAddRadiografia}
-              onDeleteRadiografia={handleDeleteRadiografia}
-              onAddFotografia={handleAddFotografia}
-              onDeleteFotografia={handleDeleteFotografia}
-              darkMode={darkMode}
-            />
-          )}
+            {activeTab === 'perfil_paciente' && pacientePerfilSelecionado && (
+              <PerfilPaciente
+                paciente={pacientePerfilSelecionado}
+                consultas={consultas}
+                procedimentos={[]}
+                dentes={dentes}
+                onUpdateDente={handleUpdateDente}
+                anamnese={anamnese}
+                radiografias={radiografias}
+                fotografias={fotografias}
+                timeline={timeline}
+                onVoltar={() => setActiveTab('pacientes')}
+                onAddRadiografia={handleAddRadiografia}
+                onDeleteRadiografia={handleDeleteRadiografia}
+                onAddFotografia={handleAddFotografia}
+                onDeleteFotografia={handleDeleteFotografia}
+                darkMode={darkMode}
+              />
+            )}
 
-          {activeTab === 'producao' && usuarioLogado?.role !== 'cliente' && (
-            <Producao darkMode={darkMode} usuarioId={usuarioLogado?.id} />
-          )}
+            {activeTab === 'producao' && usuarioLogado?.role !== 'cliente' && (
+              <Producao darkMode={darkMode} usuarioId={usuarioLogado?.id} />
+            )}
 
-          {activeTab === 'odontograma' && (
-            <Odontograma
-              pacienteNome={pacienteOdontograma ? pacienteOdontograma.nome : undefined}
-              dentes={dentes}
-              onUpdateDente={handleUpdateDente}
-              darkMode={darkMode}
-            />
-          )}
+            {activeTab === 'odontograma' && (
+              <Odontograma
+                pacienteNome={pacienteOdontograma ? pacienteOdontograma.nome : undefined}
+                dentes={dentes}
+                onUpdateDente={handleUpdateDente}
+                darkMode={darkMode}
+              />
+            )}
 
-          {activeTab === 'anamnese' && (
-            <AnamneseView
-              anamnese={anamnese}
-              pacienteNome={pacienteOdontograma?.nome}
-              onSalvarAnamnese={setAnamnese}
-              darkMode={darkMode}
-            />
-          )}
+            {activeTab === 'anamnese' && (
+              <AnamneseView
+                anamnese={anamnese}
+                pacienteNome={pacienteOdontograma?.nome}
+                onSalvarAnamnese={setAnamnese}
+                darkMode={darkMode}
+              />
+            )}
 
-          {activeTab === 'radiografias' && (
-            <RadiografiaViewer
-              exames={radiografias}
-              pacienteNome={pacienteOdontograma?.nome}
-              onAddRadiografia={handleAddRadiografia}
-              onDeleteRadiografia={handleDeleteRadiografia}
-              darkMode={darkMode}
-            />
-          )}
+            {activeTab === 'radiografias' && (
+              <RadiografiaViewer
+                exames={radiografias}
+                pacienteNome={pacienteOdontograma?.nome}
+                onAddRadiografia={handleAddRadiografia}
+                onDeleteRadiografia={handleDeleteRadiografia}
+                darkMode={darkMode}
+              />
+            )}
 
-          {activeTab === 'fotografias' && (
-            <FotografiasGaleria
-              fotografias={fotografias}
-              pacienteNome={pacienteOdontograma?.nome}
-              onAddFotografia={handleAddFotografia}
-              onDeleteFotografia={handleDeleteFotografia}
-              darkMode={darkMode}
-            />
-          )}
+            {activeTab === 'fotografias' && (
+              <FotografiasGaleria
+                fotografias={fotografias}
+                pacienteNome={pacienteOdontograma?.nome}
+                onAddFotografia={handleAddFotografia}
+                onDeleteFotografia={handleDeleteFotografia}
+                darkMode={darkMode}
+              />
+            )}
 
-          {activeTab === 'ia' && (
-            <AIAssistant
-              mensagens={mensagensIA}
-              onEnviarMensagem={handleEnviarMensagemIA}
-              pacientes={pacientes}
-              darkMode={darkMode}
-            />
-          )}
+            {activeTab === 'ia' && (
+              <AIAssistant
+                mensagens={mensagensIA}
+                onEnviarMensagem={handleEnviarMensagemIA}
+                pacientes={pacientes}
+                darkMode={darkMode}
+              />
+            )}
 
-          {activeTab === 'financeiro' && (
-            <Financeiro
-              darkMode={darkMode}
-              userRole={usuarioLogado?.role || 'admin'}
-              usuarioId={usuarioLogado?.id}
-              onTrancarFinanceiro={() => {
-                setFinanceiroDesbloqueado(false);
-                setActiveTab('dashboard');
-              }}
-            />
-          )}
+            {activeTab === 'financeiro' && (
+              <Financeiro
+                darkMode={darkMode}
+                userRole={usuarioLogado?.role || 'admin'}
+                usuarioId={usuarioLogado?.id}
+                onTrancarFinanceiro={() => {
+                  setFinanceiroDesbloqueado(false);
+                  setActiveTab('dashboard');
+                }}
+              />
+            )}
 
-          {activeTab === 'agenda' && (
-            <Agenda
-              darkMode={darkMode}
-              usuarioId={usuarioLogado?.id}
-            />
-          )}
+            {activeTab === 'agenda' && (
+              <Agenda
+                darkMode={darkMode}
+                usuarioId={usuarioLogado?.id}
+              />
+            )}
 
-          {activeTab === 'relatorios' && (
-            <Relatorios
-              darkMode={darkMode}
-              userRole={usuarioLogado?.role || 'admin'}
-              usuarioId={usuarioLogado?.id}
-            />
-          )}
+            {activeTab === 'relatorios' && (
+              <Relatorios
+                darkMode={darkMode}
+                userRole={usuarioLogado?.role || 'admin'}
+                usuarioId={usuarioLogado?.id}
+              />
+            )}
 
-          {activeTab === 'agendainteligente' && (
-            <AgendaInteligenteMain
-              darkMode={darkMode}
-              usuarioId={usuarioLogado?.id}
-              pacientesExistentes={pacientes}
-              onNavigateToProntuario={(pId) => {
-                const p = pacientes.find((pac) => pac.id === pId);
-                if (p) {
-                  setPacientePerfilSelecionado(p);
-                  setActiveTab('prontuario');
-                } else {
-                  setActiveTab('pacientes');
-                }
-              }}
-              onNavigateToAgendamentoOnline={() => setActiveTab('agendamentoonline')}
-            />
-          )}
+            {activeTab === 'agendainteligente' && (
+              <AgendaInteligenteMain
+                darkMode={darkMode}
+                usuarioId={usuarioLogado?.id}
+                pacientesExistentes={pacientes}
+                onNavigateToProntuario={(pId) => {
+                  const p = pacientes.find((pac) => pac.id === pId);
+                  if (p) {
+                    setPacientePerfilSelecionado(p);
+                    setActiveTab('prontuario');
+                  } else {
+                    setActiveTab('pacientes');
+                  }
+                }}
+                onNavigateToAgendamentoOnline={() => setActiveTab('agendamentoonline')}
+              />
+            )}
 
-          {activeTab === 'retornos' && (
-            <PainelRetornosPendentes
-              darkMode={darkMode}
-              usuarioId={usuarioLogado?.id}
-            />
-          )}
+            {activeTab === 'retornos' && (
+              <PainelRetornosPendentes
+                darkMode={darkMode}
+                usuarioId={usuarioLogado?.id}
+              />
+            )}
 
-          {activeTab === 'whatsapp' && (
-            <ConfiguracaoWhatsAppPainel
-              darkMode={darkMode}
-              usuarioId={usuarioLogado?.id}
-            />
-          )}
+            {activeTab === 'whatsapp' && (
+              <ConfiguracaoWhatsAppPainel
+                darkMode={darkMode}
+                usuarioId={usuarioLogado?.id}
+              />
+            )}
 
-          {activeTab === 'agendamentoonline' && (
-            <PaginaAgendamentoOnlinePublico
-              darkMode={darkMode}
-              usuarioId={usuarioLogado?.id}
-              onConcluido={() => setActiveTab('agendainteligente')}
-            />
-          )}
+            {activeTab === 'agendamentoonline' && (
+              <PaginaAgendamentoOnlinePublico
+                darkMode={darkMode}
+                usuarioId={usuarioLogado?.id}
+                onConcluido={() => setActiveTab('agendainteligente')}
+              />
+            )}
 
-          {activeTab === 'dentistas' && (
-            <PainelDentistas
-              darkMode={darkMode}
-              usuarioId={usuarioLogado?.id}
-            />
-          )}
+            {activeTab === 'dentistas' && (
+              <PainelDentistas
+                darkMode={darkMode}
+                usuarioId={usuarioLogado?.id}
+              />
+            )}
 
-          {activeTab === 'bancodedados' && (
-            <BancoDeDadosBackup
-              darkMode={darkMode}
-              usuarioId={usuarioLogado?.id}
-            />
-          )}
+            {activeTab === 'bancodedados' && (
+              <BancoDeDadosBackup
+                darkMode={darkMode}
+                usuarioId={usuarioLogado?.id}
+              />
+            )}
 
-          {activeTab === 'configuracoes' && (
-            <Configuracoes
-              darkMode={darkMode}
-              onToggleDarkMode={() => setDarkMode(!darkMode)}
-              usuarioLogado={usuarioLogado}
-            />
-          )}
+            {activeTab === 'configuracoes' && (
+              <Configuracoes
+                darkMode={darkMode}
+                onToggleDarkMode={() => setDarkMode(!darkMode)}
+                usuarioLogado={usuarioLogado}
+              />
+            )}
+          </Suspense>
         </main>
 
         {/* Footer */}

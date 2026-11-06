@@ -33,6 +33,7 @@ export interface CloudDataPayload {
   onlineUsers?: UsuarioOnlineInfo[];
   updatedAt?: number;
   updatedBy?: string;
+  resetAllValues?: boolean;
 }
 
 let isSyncing = false;
@@ -90,6 +91,64 @@ export function getProducaoComoTransacoes(usuarioId?: string): any[] {
 }
 
 /**
+ * Executa a limpeza 100% de todos os valores adicionados (localStorage + Nuvem) para iniciar novo ciclo com alta performance
+ */
+export function ensureCleanSlateV10(usuarioId?: string) {
+  const RESET_TAG = 'odonto_clean_slate_all_zero_v10';
+  if (typeof window === 'undefined') return;
+  if (localStorage.getItem(RESET_TAG) === 'true') return;
+
+  localStorage.setItem(RESET_TAG, 'true');
+  const keys = getUserKeys(usuarioId);
+  const emptyStr = JSON.stringify([]);
+
+  // Zera Produção Ativa
+  localStorage.setItem(keys.PRODUCAO, emptyStr);
+  localStorage.setItem('odonto_producao_backup_permanent', emptyStr);
+  localStorage.setItem('odonto_producao_registros_usr_admin_master', emptyStr);
+  localStorage.setItem('odonto_producao_registros_v2', emptyStr);
+  localStorage.setItem('odonto_producao_registros', emptyStr);
+
+  // Zera Lançamentos Financeiros (Entradas e Despesas)
+  localStorage.setItem(keys.FINANCEIRO, emptyStr);
+  localStorage.setItem('odonto_financeiro_backup_permanent', emptyStr);
+  localStorage.setItem('odonto_financeiro_pessoal_usr_admin_master', emptyStr);
+  localStorage.setItem('odonto_financeiro_pessoal_v1', emptyStr);
+  localStorage.setItem('odonto_financeiro_pessoal', emptyStr);
+
+  // Zera Saldo em Conta Pessoal
+  localStorage.setItem(keys.SALDO_CONTA_PESSOAL, '0');
+  localStorage.setItem('odonto_saldo_conta_pessoal_v1', '0');
+  localStorage.setItem('odonto_saldo_conta_pessoal_usr_admin_master', '0');
+
+  // Zera Agenda, Pacientes, Consultas e Metas
+  localStorage.setItem(`odonto_agenda_compromissos_${usuarioId || 'usr-admin-master'}`, emptyStr);
+  localStorage.setItem(KEYS.PACIENTES, emptyStr);
+  localStorage.setItem(KEYS.CONSULTAS, emptyStr);
+  localStorage.setItem(KEYS.FOTOGRAFIAS, emptyStr);
+
+  const nowTs = Date.now();
+  localStorage.setItem(keys.LAST_UPDATE, nowTs.toString());
+
+  // Envia ordem de limpeza para a nuvem também
+  fetch(getCloudEndpoint(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      usuarioId: usuarioId || 'usr-admin-master',
+      resetAllValues: true,
+      producao: [],
+      financeiro: [],
+      pacientes: [],
+      consultas: [],
+      fotografias: [],
+      saldoContaPessoal: 0,
+      updatedAt: nowTs
+    })
+  }).catch(() => {});
+}
+
+/**
  * Envia as alterações para o localStorage local e para a nuvem isoladas por Usuário + Heartbeat de Presença
  */
 export async function pushToCloud(
@@ -101,28 +160,33 @@ export async function pushToCloud(
     const timestamp = Date.now();
     const keys = getUserKeys(usuarioId);
 
-    // Salva imediatamente em localStorage local no repositório isolado do usuário + Backup Permanente de Quad-Redundância
-    if (Array.isArray(data.producao) && data.producao.length > 0) {
+    // Salva imediatamente em localStorage local (inclusive quando o array for vazio [] após zerar/fechar)
+    if (Array.isArray(data.producao)) {
       const str = JSON.stringify(data.producao);
       localStorage.setItem(keys.PRODUCAO, str);
       localStorage.setItem('odonto_producao_backup_permanent', str);
       localStorage.setItem('odonto_producao_registros_usr_admin_master', str);
       localStorage.setItem('odonto_producao_registros_v2', str);
       localStorage.setItem('odonto_producao_registros', str);
-    } else if (Array.isArray(data.producao)) {
-      localStorage.setItem(keys.PRODUCAO, JSON.stringify(data.producao));
     }
 
-    if (Array.isArray(data.financeiro) && data.financeiro.length > 0) {
+    if (Array.isArray(data.fechamentos)) {
+      localStorage.setItem(keys.FECHAMENTOS, JSON.stringify(data.fechamentos));
+    }
+
+    if (Array.isArray(data.financeiro)) {
       const str = JSON.stringify(data.financeiro);
       localStorage.setItem(keys.FINANCEIRO, str);
       localStorage.setItem('odonto_financeiro_backup_permanent', str);
       localStorage.setItem('odonto_financeiro_pessoal_usr_admin_master', str);
       localStorage.setItem('odonto_financeiro_pessoal_v1', str);
       localStorage.setItem('odonto_financeiro_pessoal', str);
-    } else if (Array.isArray(data.financeiro)) {
-      localStorage.setItem(keys.FINANCEIRO, JSON.stringify(data.financeiro));
     }
+
+    if (typeof data.saldoContaPessoal === 'number') {
+      localStorage.setItem(keys.SALDO_CONTA_PESSOAL, String(data.saldoContaPessoal));
+    }
+
     if (Array.isArray(data.pacientes)) {
       localStorage.setItem(KEYS.PACIENTES, JSON.stringify(data.pacientes));
     }
@@ -138,10 +202,12 @@ export async function pushToCloud(
     const payload: CloudDataPayload & { heartbeat?: any } = {
       usuarioId: usuarioId || 'usr-admin-master',
       producao: data.producao !== undefined ? data.producao : getItemJSON(keys.PRODUCAO, []),
+      fechamentos: data.fechamentos !== undefined ? data.fechamentos : getItemJSON(keys.FECHAMENTOS, []),
       financeiro: data.financeiro !== undefined ? data.financeiro : getItemJSON(keys.FINANCEIRO, []),
       pacientes: data.pacientes !== undefined ? data.pacientes : getItemJSON(KEYS.PACIENTES, []),
       consultas: data.consultas !== undefined ? data.consultas : getItemJSON(KEYS.CONSULTAS, []),
       fotografias: data.fotografias !== undefined ? data.fotografias : getItemJSON(KEYS.FOTOGRAFIAS, []),
+      saldoContaPessoal: data.saldoContaPessoal !== undefined ? data.saldoContaPessoal : Number(localStorage.getItem(keys.SALDO_CONTA_PESSOAL) || '0'),
       updatedAt: timestamp,
       updatedBy: typeof window !== 'undefined' && window.innerWidth < 768 ? 'Celular (Android/iOS)' : 'Notebook/PC'
     };
@@ -156,9 +222,12 @@ export async function pushToCloud(
       };
     }
 
-    // Notifica apenas abas do mesmo usuário via BroadcastChannel
+    // Notifica abas e componentes na mesma janela instantaneamente
     if (broadcastChannel) {
       broadcastChannel.postMessage({ type: 'SYNC_UPDATE', payload });
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('odonto_local_sync', { detail: payload }));
     }
 
     const res = await fetch(getCloudEndpoint(), {
@@ -241,7 +310,7 @@ export async function pullFromCloud(
       return true;
     }
 
-    // Se o timestamp remoto for mais recente que o local, adota integralmente os dados atualizados da nuvem (incluindo exclusões efetuadas em outro dispositivo)
+    // Se o timestamp remoto for mais recente que o local, adota integralmente os dados atualizados da nuvem (incluindo exclusões/zeragens)
     if (remoteTimestamp > localTimestamp) {
       if (Array.isArray(cloudData.producao)) {
         const str = JSON.stringify(cloudData.producao);
@@ -249,6 +318,7 @@ export async function pullFromCloud(
         localStorage.setItem('odonto_producao_backup_permanent', str);
         localStorage.setItem('odonto_producao_registros_usr_admin_master', str);
         localStorage.setItem('odonto_producao_registros_v2', str);
+        localStorage.setItem('odonto_producao_registros', str);
       }
       if (Array.isArray(cloudData.financeiro)) {
         const str = JSON.stringify(cloudData.financeiro);
@@ -256,6 +326,10 @@ export async function pullFromCloud(
         localStorage.setItem('odonto_financeiro_backup_permanent', str);
         localStorage.setItem('odonto_financeiro_pessoal_usr_admin_master', str);
         localStorage.setItem('odonto_financeiro_pessoal_v1', str);
+        localStorage.setItem('odonto_financeiro_pessoal', str);
+      }
+      if (typeof cloudData.saldoContaPessoal === 'number') {
+        localStorage.setItem(keys.SALDO_CONTA_PESSOAL, String(cloudData.saldoContaPessoal));
       }
       localStorage.setItem(keys.LAST_UPDATE, remoteTimestamp.toString());
       onUpdate(cloudData);
@@ -283,7 +357,27 @@ export async function pullFromCloud(
 }
 
 export function subscribeLocalBroadcast(onUpdate: (payload: CloudDataPayload) => void, usuarioId?: string) {
-  if (!broadcastChannel) return () => {};
+  const handleCustomEvent = (event: Event) => {
+    const customEv = event as CustomEvent<CloudDataPayload>;
+    if (customEv.detail) {
+      const payload = customEv.detail;
+      if (!usuarioId || !payload.usuarioId || payload.usuarioId === usuarioId) {
+        onUpdate(payload);
+      }
+    }
+  };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('odonto_local_sync', handleCustomEvent);
+  }
+
+  if (!broadcastChannel) {
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('odonto_local_sync', handleCustomEvent);
+      }
+    };
+  }
 
   const handleMessage = (event: MessageEvent) => {
     if (event.data && event.data.type === 'SYNC_UPDATE') {
@@ -297,6 +391,9 @@ export function subscribeLocalBroadcast(onUpdate: (payload: CloudDataPayload) =>
   broadcastChannel.addEventListener('message', handleMessage);
   return () => {
     broadcastChannel.removeEventListener('message', handleMessage);
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('odonto_local_sync', handleCustomEvent);
+    }
   };
 }
 

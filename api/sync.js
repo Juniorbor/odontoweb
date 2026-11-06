@@ -9,10 +9,13 @@ function getUserStore(usuarioId) {
     userStores[key] = {
       usuarioId: key,
       producao: [],
+      fechamentos: [],
       financeiro: [],
       pacientes: [],
       consultas: [],
       fotografias: [],
+      saldoContaPessoal: 0,
+      bancoNomePessoal: 'Conta Bancária Pessoal',
       updatedAt: 0,
       updatedBy: ''
     };
@@ -53,6 +56,25 @@ export default function handler(req, res) {
     try {
       const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
       const usuarioId = body.usuarioId || req.query?.usuarioId || 'usr-admin-master';
+
+      // Comando de Reset / Limpeza Global na Nuvem
+      if (body.resetAllValues === true) {
+        userStores[usuarioId] = {
+          usuarioId,
+          producao: [],
+          fechamentos: Array.isArray(body.fechamentos) ? body.fechamentos : (userStores[usuarioId]?.fechamentos || []),
+          financeiro: [],
+          pacientes: [],
+          consultas: [],
+          fotografias: [],
+          saldoContaPessoal: 0,
+          bancoNomePessoal: 'Conta Bancária Pessoal',
+          updatedAt: Date.now(),
+          updatedBy: 'Sistema (Reset Global)'
+        };
+        return res.status(200).json({ success: true, data: userStores[usuarioId] });
+      }
+
       const store = getUserStore(usuarioId);
 
       if (body.heartbeat) {
@@ -60,10 +82,13 @@ export default function handler(req, res) {
       }
 
       if (Array.isArray(body.producao)) store.producao = body.producao;
+      if (Array.isArray(body.fechamentos)) store.fechamentos = body.fechamentos;
       if (Array.isArray(body.financeiro)) store.financeiro = body.financeiro;
       if (Array.isArray(body.pacientes)) store.pacientes = body.pacientes;
       if (Array.isArray(body.consultas)) store.consultas = body.consultas;
       if (Array.isArray(body.fotografias)) store.fotografias = body.fotografias;
+      if (typeof body.saldoContaPessoal === 'number') store.saldoContaPessoal = body.saldoContaPessoal;
+      if (typeof body.bancoNomePessoal === 'string') store.bancoNomePessoal = body.bancoNomePessoal;
 
       store.updatedAt = body.updatedAt || Date.now();
       store.updatedBy = body.updatedBy || 'Dispositivo';

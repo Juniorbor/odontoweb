@@ -11,7 +11,7 @@ export const CartoesEMetas: React.FC<CartoesEMetasProps> = ({
   transacoesFinanceiras,
   darkMode
 }) => {
-  const [limiteCartao, setLimiteCartao] = useState<number>(15000);
+  const [limiteCartao, setLimiteCartao] = useState<number>(0);
   const [diaFechamento] = useState<number>(5);
   const [mesesReserva, setMesesReserva] = useState<number>(6);
 
@@ -26,7 +26,7 @@ export const CartoesEMetas: React.FC<CartoesEMetasProps> = ({
   const limiteDisponivel = Math.max(0, limiteCartao - totalFaturaUsada);
   const usoPct = limiteCartao > 0 ? Math.round((totalFaturaUsada / limiteCartao) * 100) : 0;
 
-  const reservaEmergenciaIdeal = totalDespesasFixas > 0 ? totalDespesasFixas * mesesReserva : 18000;
+  const reservaEmergenciaIdeal = totalDespesasFixas > 0 ? totalDespesasFixas * mesesReserva : 0;
 
   return (
     <div className="space-y-6 font-sans animate-fadeIn">

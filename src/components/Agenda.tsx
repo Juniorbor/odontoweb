@@ -105,54 +105,7 @@ const getHojeIso = (): string => {
   return `${year}-${month}-${day}`;
 };
 
-const INITIAL_MOCK_COMPROMISSOS: ItemAgendaCompromisso[] = [
-  {
-    id: 'comp-1',
-    data: getHojeIso(),
-    horario: '08:30',
-    duracaoMinutos: 45,
-    titulo: 'Levar os filhos na escola e reunião escolar',
-    categoria: 'Responsabilidade Familiar',
-    responsavel: 'Família',
-    status: 'Finalizado',
-    observacoes: 'Acompanhar horário da natação às 16h'
-  },
-  {
-    id: 'comp-2',
-    data: getHojeIso(),
-    horario: '10:00',
-    duracaoMinutos: 60,
-    titulo: 'Consulta Odontológica e Tomografia - CARLOS ALBERTO',
-    categoria: 'Profissional / Clínica',
-    responsavel: 'Fernando',
-    pacienteNome: 'CARLOS ALBERTO',
-    pacienteTelefone: '(69) 99364-9158',
-    status: 'Confirmado',
-    observacoes: 'Tomografia Max OU Mand / Ariquemes'
-  },
-  {
-    id: 'comp-3',
-    data: getHojeIso(),
-    horario: '14:00',
-    duracaoMinutos: 30,
-    titulo: 'Pagamento de fornecedores e balanço quinzenal',
-    categoria: 'Compromisso Financeiro',
-    responsavel: 'Bernardo',
-    status: 'Agendado',
-    observacoes: 'Verificar comprovantes da clínica de Ji-Paraná'
-  },
-  {
-    id: 'comp-4',
-    data: getHojeIso(),
-    horario: '17:30',
-    duracaoMinutos: 60,
-    titulo: 'Jantar em família e compras da semana',
-    categoria: 'Responsabilidade Familiar',
-    responsavel: 'Família',
-    status: 'Agendado',
-    observacoes: 'Supermercado e compromisso pessoal'
-  }
-];
+const INITIAL_MOCK_COMPROMISSOS: ItemAgendaCompromisso[] = [];
 
 export const Agenda: React.FC<AgendaProps> = ({
   darkMode,

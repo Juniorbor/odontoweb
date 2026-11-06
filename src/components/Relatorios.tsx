@@ -17,7 +17,7 @@ import {
   Tag
 } from 'lucide-react';
 
-import { getUserKeys, getProducaoComoTransacoes } from '../services/cloudSync';
+import { getUserKeys, getProducaoComoTransacoes, ensureCleanSlateV10 } from '../services/cloudSync';
 
 interface RelatoriosProps {
   darkMode?: boolean;
@@ -26,6 +26,7 @@ interface RelatoriosProps {
 }
 
 export const Relatorios: React.FC<RelatoriosProps> = ({ darkMode, usuarioId }) => {
+  ensureCleanSlateV10(usuarioId);
   const userKeys = getUserKeys(usuarioId);
   const chaveFinanceiro = userKeys.FINANCEIRO;
 
@@ -55,11 +56,11 @@ export const Relatorios: React.FC<RelatoriosProps> = ({ darkMode, usuarioId }) =
 
     atualizar();
     window.addEventListener('storage', atualizar);
-    const interval = setInterval(atualizar, 1000);
+    window.addEventListener('odonto_local_sync', atualizar);
 
     return () => {
       window.removeEventListener('storage', atualizar);
-      clearInterval(interval);
+      window.removeEventListener('odonto_local_sync', atualizar);
     };
   }, [chaveFinanceiro]);
 

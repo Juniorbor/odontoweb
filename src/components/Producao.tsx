@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { ItemProducaoTomo, FechamentoProducao } from '../types';
-import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, getUserKeys, getItemJSON } from '../services/cloudSync';
+import { pushToCloud, pullFromCloud, subscribeLocalBroadcast, getUserKeys, getItemJSON, ensureCleanSlateV10 } from '../services/cloudSync';
 import { WhatsappNotificacoes } from './WhatsappNotificacoes';
 import {
   BarChart3,
@@ -37,36 +37,19 @@ interface ProducaoProps {
 const CLINICAS_FERNANDO = ['Ariquemes', 'Machadinho', 'Cacoal', 'Porto Velho'] as const;
 const CLINICAS_BERNARDO = ['Rolim de Moura', 'Ouro Preto', 'Ji-Paraná'] as const;
 
-// Função de fusão inteligente para garantir que exames adicionados localmente NUNCA sejam sobrescritos por respostas antigas do servidor
-const smartMergeProducao = (local: ItemProducaoTomo[], remote: ItemProducaoTomo[]): ItemProducaoTomo[] => {
-  if (!Array.isArray(remote) || remote.length === 0) return local;
-  if (!Array.isArray(local) || local.length === 0) return remote;
-
-  const remoteIds = new Set(remote.map((i) => i && i.id));
-  const missingLocals = local.filter((i) => i && i.id && !remoteIds.has(i.id));
-
-  return [...missingLocals, ...remote];
+// Função de atualização direta respeitando exclusões e zeragens sincronizadas
+const syncProducaoState = (remote: ItemProducaoTomo[]): ItemProducaoTomo[] => {
+  if (!Array.isArray(remote)) return [];
+  return remote;
 };
 
 export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
+  ensureCleanSlateV10(usuarioId);
   const userKeys = getUserKeys(usuarioId);
   const STORAGE_KEY = userKeys.PRODUCAO;
 
   // Inicializa a lista de registros de produção em aberto (zerada por padrão para novos ciclos)
   const [itens, setItens] = useState<ItemProducaoTomo[]>(() => {
-    const CLEANUP_TAG = 'odonto_clean_legacy_mock_entradas_v1';
-    if (!localStorage.getItem(CLEANUP_TAG)) {
-      localStorage.setItem(CLEANUP_TAG, 'true');
-      const emptyStr = JSON.stringify([]);
-      localStorage.setItem(STORAGE_KEY, emptyStr);
-      localStorage.setItem('odonto_producao_backup_permanent', emptyStr);
-      localStorage.setItem('odonto_producao_registros_usr_admin_master', emptyStr);
-      localStorage.setItem('odonto_producao_registros_v2', emptyStr);
-      localStorage.setItem('odonto_producao_registros', emptyStr);
-      pushToCloud({ producao: [] }, usuarioId);
-      return [];
-    }
-
     const salvo = getItemJSON<ItemProducaoTomo[] | null>(STORAGE_KEY, null);
     if (Array.isArray(salvo)) {
       return salvo;
@@ -129,15 +112,15 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
 
     const mergeEAtualizar = (payloadProducao: ItemProducaoTomo[]) => {
       if (!Array.isArray(payloadProducao)) return;
-      setItens((localAtual) => {
-        const merged = smartMergeProducao(localAtual, payloadProducao);
-        const str = JSON.stringify(merged);
+      setItens(() => {
+        const updated = syncProducaoState(payloadProducao);
+        const str = JSON.stringify(updated);
         localStorage.setItem(STORAGE_KEY, str);
         localStorage.setItem('odonto_producao_backup_permanent', str);
         localStorage.setItem('odonto_producao_registros_usr_admin_master', str);
         localStorage.setItem('odonto_producao_registros_v2', str);
         localStorage.setItem('odonto_producao_registros', str);
-        return merged;
+        return updated;
       });
     };
 
@@ -145,12 +128,18 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
       if (Array.isArray(payload.producao)) {
         mergeEAtualizar(payload.producao);
       }
+      if (Array.isArray(payload.fechamentos)) {
+        setFechamentos(payload.fechamentos);
+      }
       setSincronizando(false);
     }, true, usuarioId);
 
     const unsubscribeBroadcast = subscribeLocalBroadcast((payload) => {
       if (Array.isArray(payload.producao)) {
         mergeEAtualizar(payload.producao);
+      }
+      if (Array.isArray(payload.fechamentos)) {
+        setFechamentos(payload.fechamentos);
       }
     }, usuarioId);
 
@@ -160,7 +149,7 @@ export const Producao: React.FC<ProducaoProps> = ({ darkMode, usuarioId }) => {
           mergeEAtualizar(payload.producao);
         }
       }, false, usuarioId);
-    }, 3000);
+    }, 15000);
 
     const handleFocus = () => {
       pullFromCloud((payload) => {
