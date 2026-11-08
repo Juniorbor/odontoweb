@@ -1,49 +1,25 @@
 @import "tailwindcss";
 
-body {
-  margin: 0;
-  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background-color: #060911;
-  background-image:
-    radial-gradient(at 0% 0%, rgba(20, 184, 166, 0.08) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
-    radial-gradient(at 50% 100%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
-  background-attachment: fixed;
-  color: #f8fafc;
-}
+/* ==========================================================================
+   SISTEMA DESIGN UI/UX CORPORATIVO DE SAÚDE & ODONTOLOGIA (ODONTOWEB PRO)
+   1. Tipografia: Plus Jakarta Sans & Inter (Alta Nitidez e Contraste)
+   2. Paleta: Azul-Petróleo Profundo (#0B2545 / #0E4D64), Branco Puro (#FFFFFF),
+      Cinza Clínico Suave (#F4F7FA / #F8FAFC) e Destaque Azul Royal / Verde-Água
+   ========================================================================== */
 
-/* Efeito Glow para Cards e Botoes */
-.glow-teal {
-  box-shadow: 0 0 28px rgba(20, 184, 166, 0.22);
-}
-
-.glow-emerald {
-  box-shadow: 0 0 28px rgba(16, 185, 129, 0.22);
-}
-
-.glow-purple {
-  box-shadow: 0 0 28px rgba(168, 85, 247, 0.22);
-}
-
-.card-cyber {
-  background: linear-gradient(145deg, rgba(15, 23, 42, 0.88) 0%, rgba(9, 13, 22, 0.96) 100%);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
-  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.card-cyber:hover {
-  border-color: rgba(20, 184, 166, 0.45);
-  box-shadow: 0 20px 42px -12px rgba(20, 184, 166, 0.18), inset 0 1px 0 0 rgba(255, 255, 255, 0.14);
-  transform: translateY(-2px);
-}
-
-.bento-glass {
-  background: linear-gradient(160deg, rgba(15, 23, 42, 0.82) 0%, rgba(10, 15, 28, 0.94) 100%);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(255, 255, 255, 0.07);
+:root {
+  --font-heading: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --color-navy-deep: #0b2545;
+  --color-petroleum: #0e4d64;
+  --color-teal-medical: #0d9488;
+  --color-royal-cta: #0284c7;
+  --color-bg-canvas: #f4f7fa;
+  --color-surface-white: #ffffff;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #1e293b;
+  --color-text-muted: #334155;
+  --color-border-subtle: #dbe4ee;
 }
 
 *, ::before, ::after {
@@ -52,10 +28,39 @@ body {
 
 html, body {
   -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   width: 100%;
   max-width: 100vw;
   margin: 0;
   padding: 0;
+  font-family: var(--font-sans);
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+}
+
+body {
+  background-color: var(--color-bg-canvas);
+  color: var(--color-text-primary);
+}
+
+html.dark body {
+  background-color: #070d19;
+  color: #f8fafc;
+}
+
+/* Hierarquia Tipográfica Clara e Legível */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+  font-weight: 800;
+}
+
+p, li, td, th, label, input, select, textarea, button {
+  font-family: var(--font-sans);
+  line-height: 1.5;
 }
 
 #root {
@@ -63,6 +68,254 @@ html, body {
   width: 100%;
   max-width: 100vw;
   overflow-x: hidden;
+}
+
+/* ==========================================================================
+   COMPONENTES DE SUPERFÍCIE, CARDS E SOMBRAS DE CAMADAS (ELEVAÇÃO SUAVE)
+   ========================================================================== */
+
+/* Banner Executivo Azul-Petróleo Profundo (Mantém texto branco nítido em ambos os temas) */
+.hero-executive {
+  background: linear-gradient(135deg, #0b2545 0%, #0e4d64 55%, #0f766e 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 16px 36px -8px rgba(11, 37, 69, 0.22), 0 4px 12px -2px rgba(11, 37, 69, 0.12);
+}
+
+/* Cards Clínicos / Corporativos Padrão */
+.card-cyber,
+.bento-glass,
+.card-clinical {
+  background: #ffffff;
+  border: 1px solid #dbe4ee;
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 20px -2px rgba(11, 37, 69, 0.05), 0 2px 6px -1px rgba(11, 37, 69, 0.03);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-cyber:hover,
+.card-clinical:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 12px 28px -4px rgba(2, 132, 199, 0.10), 0 4px 10px -2px rgba(11, 37, 69, 0.05);
+  transform: translateY(-2px);
+}
+
+html.dark .card-cyber,
+html.dark .bento-glass,
+html.dark .card-clinical {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.94) 0%, rgba(11, 18, 32, 0.98) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.55);
+}
+
+html.dark .card-cyber:hover,
+html.dark .card-clinical:hover {
+  border-color: rgba(14, 165, 233, 0.45);
+  box-shadow: 0 20px 42px -12px rgba(14, 165, 233, 0.18);
+}
+
+/* Efeitos de Destaque Sutil */
+.glow-teal {
+  box-shadow: 0 8px 24px -4px rgba(13, 148, 136, 0.22);
+}
+
+.glow-emerald {
+  box-shadow: 0 8px 24px -4px rgba(5, 150, 105, 0.22);
+}
+
+.glow-purple {
+  box-shadow: 0 8px 24px -4px rgba(2, 132, 199, 0.22);
+}
+
+/* ==========================================================================
+   PADRONIZAÇÃO DE ALTO CONTRASTE E PALETA CLÍNICA NO TEMA CORPORATIVO CLARO
+   Garante que nenhum texto fique apagado ou cinza-claro sobre fundos claros
+   em qualquer módulo do sistema (Produção, Financeiro, Relatórios, Agenda, etc.)
+   ========================================================================== */
+html:not(.dark) {
+  color-scheme: light;
+}
+
+/* Conversão de superfícies escuras herdadas para Branco Puro / Cinza Clínico Suave */
+html:not(.dark) .bg-slate-950:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-950\/90:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-950\/80:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-950\/70:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-950\/60:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-950\/50:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-950\/40:not(.hero-executive):not(.hero-executive *) {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+html:not(.dark) .bg-slate-900:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-900\/95:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-900\/90:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-900\/80:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-900\/70:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-900\/60:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-900\/50:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-900\/40:not(.hero-executive):not(.hero-executive *) {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 12px -2px rgba(11, 37, 69, 0.05);
+}
+
+html:not(.dark) .bg-slate-800:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-800\/90:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-800\/80:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-800\/70:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-800\/60:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-800\/50:not(.hero-executive):not(.hero-executive *),
+html:not(.dark) .bg-slate-800\/40:not(.hero-executive):not(.hero-executive *) {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Gradientes escuros herdados convertidos para superfícies clínicas claras e elegantes */
+html:not(.dark) .from-slate-900:not(.hero-executive),
+html:not(.dark) .from-slate-950:not(.hero-executive),
+html:not(.dark) .via-slate-900:not(.hero-executive),
+html:not(.dark) .via-slate-950:not(.hero-executive) {
+  background-image: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%) !important;
+  color: #0f172a !important;
+}
+
+/* Bordas sutis e bem definidas no tema claro */
+html:not(.dark) .border-slate-800:not(.hero-executive *),
+html:not(.dark) .border-slate-800\/80:not(.hero-executive *),
+html:not(.dark) .border-slate-800\/70:not(.hero-executive *),
+html:not(.dark) .border-slate-800\/60:not(.hero-executive *),
+html:not(.dark) .border-slate-800\/50:not(.hero-executive *),
+html:not(.dark) .border-slate-700:not(.hero-executive *),
+html:not(.dark) .border-slate-700\/80:not(.hero-executive *),
+html:not(.dark) .border-slate-700\/60:not(.hero-executive *),
+html:not(.dark) .border-slate-700\/50:not(.hero-executive *) {
+  border-color: #cbd5e1 !important;
+}
+
+html:not(.dark) .divide-slate-800 > :not([hidden]) ~ :not([hidden]),
+html:not(.dark) .divide-slate-800\/60 > :not([hidden]) ~ :not([hidden]),
+html:not(.dark) .divide-slate-800\/80 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #e2e8f0 !important;
+}
+
+/* Contraste Máximo de Textos: Elimina qualquer cinza-claro ou branco apagado sobre fundo claro */
+html:not(.dark) .text-slate-500:not(.hero-executive *),
+html:not(.dark) .text-slate-400:not(.hero-executive *) {
+  color: #334155 !important; /* Slate-700 nítido */
+  font-weight: 600;
+}
+
+html:not(.dark) .text-slate-300:not(.hero-executive *),
+html:not(.dark) .text-slate-200:not(.hero-executive *) {
+  color: #1e293b !important; /* Slate-800 forte */
+}
+
+/* Preserva texto branco em botões coloridos/CTAs, mas converte títulos e textos brancos soltos em Azul-Profundo (#0F172A) */
+html:not(.dark) h1.text-white:not(.hero-executive *),
+html:not(.dark) h2.text-white:not(.hero-executive *),
+html:not(.dark) h3.text-white:not(.hero-executive *),
+html:not(.dark) h4.text-white:not(.hero-executive *),
+html:not(.dark) p.text-white:not(.hero-executive *),
+html:not(.dark) td.text-white:not(.hero-executive *),
+html:not(.dark) th.text-white:not(.hero-executive *),
+html:not(.dark) strong.text-white:not(.hero-executive *),
+html:not(.dark) b.text-white:not(.hero-executive *),
+html:not(.dark) label.text-white:not(.hero-executive *),
+html:not(.dark) div.text-white:not(.hero-executive):not(.hero-executive *):not([class*="bg-teal-"]):not([class*="bg-emerald-"]):not([class*="bg-sky-"]):not([class*="bg-blue-"]):not([class*="bg-indigo-"]):not([class*="bg-rose-"]):not([class*="bg-amber-"]):not([class*="bg-purple-"]):not([class*="from-"]),
+html:not(.dark) span.text-white:not(button *):not(a *):not(.hero-executive *):not([class*="bg-teal-"]):not([class*="bg-emerald-"]):not([class*="bg-sky-"]):not([class*="bg-blue-"]):not([class*="bg-indigo-"]):not([class*="bg-rose-"]):not([class*="bg-amber-"]):not([class*="bg-purple-"]):not([class*="from-"]) {
+  color: #0f172a !important;
+}
+
+/* Estados de Hover Refinados no Tema Corporativo Claro */
+html:not(.dark) .hover\:bg-slate-900:not(.hero-executive *):hover,
+html:not(.dark) .hover\:bg-slate-800:not(.hero-executive *):hover,
+html:not(.dark) .hover\:bg-slate-700:not(.hero-executive *):hover {
+  background-color: #e0f2fe !important;
+  color: #0b2545 !important;
+}
+
+html:not(.dark) .hover\:text-white:not(.hero-executive *):not([class*="bg-teal-"]):not([class*="bg-emerald-"]):not([class*="bg-sky-"]):not([class*="bg-blue-"]):not([class*="bg-indigo-"]):not([class*="bg-rose-"]):not([class*="bg-amber-"]):not([class*="bg-purple-"]):not([class*="from-"]):hover {
+  color: #0b2545 !important;
+}
+
+/* Cores de Acento Vibrantes com Contraste Clínico Perfeito sobre Fundo Claro */
+html:not(.dark) .text-teal-300:not(.hero-executive *),
+html:not(.dark) .text-teal-400:not(.hero-executive *) {
+  color: #0f766e !important; /* Teal-700 profundo */
+}
+
+html:not(.dark) .text-emerald-300:not(.hero-executive *),
+html:not(.dark) .text-emerald-400:not(.hero-executive *) {
+  color: #047857 !important; /* Emerald-700 nítido */
+}
+
+html:not(.dark) .text-sky-300:not(.hero-executive *),
+html:not(.dark) .text-sky-400:not(.hero-executive *) {
+  color: #0369a1 !important; /* Sky-700 corporativo */
+}
+
+html:not(.dark) .text-indigo-300:not(.hero-executive *),
+html:not(.dark) .text-indigo-400:not(.hero-executive *) {
+  color: #1d4ed8 !important; /* Royal Blue 700 */
+}
+
+html:not(.dark) .text-purple-300:not(.hero-executive *),
+html:not(.dark) .text-purple-400:not(.hero-executive *) {
+  color: #6d28d9 !important; /* Violet-700 */
+}
+
+html:not(.dark) .text-amber-300:not(.hero-executive *),
+html:not(.dark) .text-amber-400:not(.hero-executive *) {
+  color: #b45309 !important; /* Amber-700 legível */
+}
+
+html:not(.dark) .text-rose-300:not(.hero-executive *),
+html:not(.dark) .text-rose-400:not(.hero-executive *) {
+  color: #be123c !important; /* Rose-700 clínico */
+}
+
+/* Inputs, Selects e Textareas sempre nítidos e elegantes */
+html:not(.dark) input:not([type="checkbox"]):not([type="radio"]):not(.hero-executive *),
+html:not(.dark) select:not(.hero-executive *),
+html:not(.dark) textarea:not(.hero-executive *) {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+  font-weight: 600;
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+}
+
+html:not(.dark) input::placeholder,
+html:not(.dark) textarea::placeholder {
+  color: #64748b !important;
+  font-weight: 500;
+}
+
+html:not(.dark) input:focus,
+html:not(.dark) select:focus,
+html:not(.dark) textarea:focus {
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.16) !important;
+}
+
+/* Tabelas Clínicas e Financeiras com Cabeçalho Corporativo e Linhas Limpas */
+html:not(.dark) thead th {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  border-bottom: 2px solid #cbd5e1 !important;
+  letter-spacing: 0.03em;
+}
+
+html:not(.dark) tbody tr {
+  border-bottom: 1px solid #e2e8f0;
+  transition: background-color 0.15s ease;
+}
+
+html:not(.dark) tbody tr:hover {
+  background-color: #f0f9ff !important;
 }
 
 /* Otimização de rolagem tátil para tabelas e containers em celulares */
@@ -74,71 +327,35 @@ html, body {
    ESTILO PADRÃO DA BARRA DE ROLAGEM (SCROLLBAR) DO SITE ODONTOWEB
    ========================================================================== */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
+  background: #e2e8f0;
   border-radius: 9999px;
 }
 
+html.dark ::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+
 ::-webkit-scrollbar-thumb {
-  background: #0d9488; /* Teal-600 oficial OdontoWeb */
+  background: #0284c7;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #14b8a6; /* Teal-500 hover */
+  background: #0369a1;
 }
 
-/* Compatibilidade com Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #0d9488 rgba(15, 23, 42, 0.5);
-}
-
-.scrollbar-thin::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.4);
-  border-radius: 9999px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #0d9488;
-  border-radius: 9999px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: #14b8a6;
-}
-
-.scrollbar-custom::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.scrollbar-custom::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.4);
-  border-radius: 9999px;
-}
-
-.scrollbar-custom::-webkit-scrollbar-thumb {
-  background: #0d9488;
-  border-radius: 9999px;
-}
-
-.scrollbar-custom::-webkit-scrollbar-thumb:hover {
-  background: #14b8a6;
+  scrollbar-color: #0284c7 #e2e8f0;
 }
 
 /* ==========================================================================
    CONFIGURAÇÃO PROFISSIONAL PARA IMPRESSÃO DE EXTRATO E RELATÓRIOS (PDF)
-   Corrige cortes laterais, oculta menus/botões, ajusta margens A4 e cores claras.
    ========================================================================== */
 @media print {
   @page {
@@ -146,7 +363,6 @@ html, body {
     margin: 10mm 12mm 10mm 12mm;
   }
 
-  /* Ocultar elementos de navegação, modais, botões e barras que não devem sair no PDF */
   aside,
   header,
   footer,
@@ -156,7 +372,6 @@ html, body {
     display: none !important;
   }
 
-  /* Resetar container principal para ocupação de 100% da folha A4 sem margens esquerdas da sidebar */
   body,
   #root,
   main {
@@ -171,7 +386,6 @@ html, body {
     color: #0f172a !important;
   }
 
-  /* Zerar margem esquerda provocada pela barra lateral md:ml-64 */
   div.md\:ml-64,
   div.md\:ml-20 {
     margin-left: 0 !important;
@@ -180,68 +394,21 @@ html, body {
     max-width: 100% !important;
   }
 
-  /* Resetar cores de fundo escuras (bg-slate-900 / dark mode) para economia de tinta e legibilidade total no PDF */
   .bg-slate-900,
   .bg-slate-950,
   .bg-slate-800,
-  .bg-slate-950\/60,
-  .bg-slate-950\/80,
-  .bg-slate-900\/95,
-  .bg-slate-900\/90 {
+  .hero-executive {
     background-color: #ffffff !important;
     background: #ffffff !important;
     color: #0f172a !important;
     border-color: #cbd5e1 !important;
   }
 
-  /* Garantir que títulos, dados e textos fiquem pretos / azul escuro nítidos */
   h1, h2, h3, h4, h5, h6, p, span, td, th, label {
     color: #0f172a !important;
     text-shadow: none !important;
   }
 
-  .text-slate-400,
-  .text-slate-500,
-  .text-slate-300 {
-    color: #475569 !important;
-  }
-
-  .text-emerald-400,
-  .text-emerald-300,
-  .text-emerald-500 {
-    color: #047857 !important;
-  }
-
-  .text-sky-400,
-  .text-sky-300,
-  .text-sky-500 {
-    color: #0369a1 !important;
-  }
-
-  .text-rose-400,
-  .text-rose-300,
-  .text-rose-500 {
-    color: #b91c1c !important;
-  }
-
-  .text-indigo-400,
-  .text-indigo-300 {
-    color: #4338ca !important;
-  }
-
-  .text-teal-400,
-  .text-teal-500 {
-    color: #0d9488 !important;
-  }
-
-  /* Remover transparências e gradientes na impressão */
-  .bg-gradient-to-r,
-  .bg-gradient-to-br {
-    background: #f1f5f9 !important;
-    color: #0f172a !important;
-  }
-
-  /* Tabelas sem cortes horizontais (overflow visível) */
   .overflow-x-auto,
   .overflow-y-auto,
   .overflow-hidden {
@@ -279,36 +446,5 @@ html, body {
   tr {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-  }
-
-  /* Cards e Grids responsivos no PDF */
-  .grid {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 12px !important;
-  }
-
-  .grid > div {
-    flex: 1 1 45% !important;
-    box-sizing: border-box !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 12px !important;
-    padding: 12px !important;
-    background: #ffffff !important;
-  }
-
-  /* Badges e tags legíveis */
-  .rounded-full,
-  .rounded-md,
-  .rounded-2xl,
-  .rounded-3xl {
-    border-radius: 6px !important;
-  }
-
-  span.border {
-    border: 1px solid #cbd5e1 !important;
-    background: #f8fafc !important;
-    color: #0f172a !important;
-    padding: 2px 6px !important;
   }
 }

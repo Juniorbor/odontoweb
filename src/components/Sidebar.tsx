@@ -10,7 +10,7 @@ import {
   Database,
   Calendar,
   X,
-  Sparkles
+  ShieldCheck
 } from 'lucide-react';
 
 import LOGO_BASE64 from '../assets/logoData';
@@ -48,25 +48,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       title: 'Principal',
       items: [
-        { id: 'dashboard', label: 'Visão Geral', sub: 'Painel & Resumo', icon: Activity, color: 'text-teal-400', activeBg: 'from-teal-500/20 to-emerald-500/10 border-teal-500/40 text-teal-300' },
-        { id: 'agenda', label: 'Minha Agenda', sub: 'Compromissos', icon: Calendar, color: 'text-sky-400', activeBg: 'from-sky-500/20 to-indigo-500/10 border-sky-500/40 text-sky-300' },
+        { id: 'dashboard', label: 'Visão Geral', sub: 'Painel & Indicadores', icon: Activity, iconColor: 'text-sky-600' },
+        { id: 'agenda', label: 'Minha Agenda', sub: 'Compromissos & Rotina', icon: Calendar, iconColor: 'text-teal-600' }
       ]
     },
     {
       title: 'Operação & Finanças',
       items: [
         ...(userRole !== 'cliente'
-          ? [{ id: 'producao', label: 'Produção', sub: 'Exames & Fechamentos', icon: FileSpreadsheet, color: 'text-indigo-400', activeBg: 'from-indigo-500/20 to-purple-500/10 border-indigo-500/40 text-indigo-300' }]
+          ? [{ id: 'producao', label: 'Produção Clínica', sub: 'Exames & Fechamentos', icon: FileSpreadsheet, iconColor: 'text-blue-600' }]
           : []),
-        { id: 'financeiro', label: 'Financeiro', sub: 'Contas do Lar', icon: DollarSign, color: 'text-emerald-400', activeBg: 'from-emerald-500/20 to-teal-500/10 border-emerald-500/40 text-emerald-300', badge: badgeCounts?.pendentes ? `! ${badgeCounts.pendentes}` : undefined },
-        { id: 'relatorios', label: 'Relatórios', sub: 'Extratos & Análises', icon: BarChart3, color: 'text-amber-400', activeBg: 'from-amber-500/20 to-orange-500/10 border-amber-500/40 text-amber-300' },
+        {
+          id: 'financeiro',
+          label: 'Financeiro',
+          sub: 'Contas do Lar & Renda',
+          icon: DollarSign,
+          iconColor: 'text-emerald-600',
+          badge: badgeCounts?.pendentes ? `! ${badgeCounts.pendentes}` : undefined
+        },
+        { id: 'relatorios', label: 'Relatórios', sub: 'Extratos & Análises PDF', icon: BarChart3, iconColor: 'text-amber-600' }
       ]
     },
     {
       title: 'Sistema & Segurança',
       items: [
-        { id: 'bancodedados', label: 'Banco de Dados', sub: 'Nuvem & Backups', icon: Database, color: 'text-purple-400', activeBg: 'from-purple-500/20 to-pink-500/10 border-purple-500/40 text-purple-300', badge: 'ON' },
-        { id: 'configuracoes', label: 'Configurações', sub: 'Preferências', icon: Settings, color: 'text-slate-400', activeBg: 'from-slate-700/40 to-slate-800/40 border-slate-600 text-white' },
+        { id: 'bancodedados', label: 'Banco de Dados', sub: 'Nuvem & Backups', icon: Database, iconColor: 'text-indigo-600', badge: 'ON' },
+        { id: 'configuracoes', label: 'Configurações', sub: 'Perfil & Preferências', icon: Settings, iconColor: 'text-slate-600' }
       ]
     }
   ];
@@ -84,45 +91,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {isMobileOpen && (
         <div
           onClick={onCloseMobile}
-          className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-40 md:hidden transition-opacity"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 md:hidden transition-opacity"
         />
       )}
 
       <aside
-        className={`fixed left-0 top-0 h-screen z-50 transition-all duration-300 flex flex-col justify-between border-r select-none backdrop-blur-2xl ${
+        className={`fixed left-0 top-0 h-screen z-50 transition-all duration-300 flex flex-col justify-between border-r select-none ${
           darkMode
-            ? 'bg-[#070b14]/95 border-slate-800/70 text-slate-200 shadow-[10px_0_40px_rgba(0,0,0,0.6)]'
-            : 'bg-white/95 border-slate-200/80 text-slate-700 shadow-xl'
+            ? 'bg-[#080e1c] border-slate-800 text-slate-100 shadow-2xl'
+            : 'bg-white border-slate-200/90 text-slate-900 shadow-[4px_0_24px_rgba(11,37,69,0.05)]'
         } ${isCollapsed ? 'w-20' : 'w-64'} ${
           isMobileOpen ? 'translate-x-0 w-72 max-w-[85vw]' : '-translate-x-full md:translate-x-0'
         }`}
       >
-        {/* Header do Logo e Fechar no Mobile */}
-        <div className="p-3.5 flex items-center justify-between border-b border-slate-800/50">
+        {/* Header da Marca OdontoWeb PRO */}
+        <div className={`p-4 flex items-center justify-between border-b ${darkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
           <div
             onClick={() => handleItemClick('dashboard')}
-            className={`flex items-center gap-3 px-2.5 py-2 rounded-2xl border transition-all cursor-pointer overflow-hidden shrink-0 ${
-              darkMode
-                ? 'bg-gradient-to-r from-slate-900 via-slate-900 to-teal-950/50 border-slate-800 hover:border-teal-500/40 text-white shadow-lg'
-                : 'bg-slate-100 border-slate-200 hover:bg-slate-200/80 text-slate-800 shadow-sm'
-            }`}
+            className="hero-executive flex items-center gap-3 px-3 py-2.5 rounded-2xl transition-all cursor-pointer overflow-hidden shrink-0 shadow-md"
           >
             <div className="relative shrink-0 flex items-center justify-center">
               <img
                 src={LOGO_BASE64}
                 alt="OdontoWeb - Finanças Logo"
-                className="w-8 h-8 object-contain rounded-xl border border-teal-500/60 bg-white p-0.5 shrink-0 shadow-md"
+                className="w-8 h-8 object-contain rounded-xl border border-white/40 bg-white p-0.5 shrink-0 shadow-xs"
               />
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 border-2 border-slate-950 rounded-full"></span>
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 border-2 border-[#0b2545] rounded-full"></span>
             </div>
 
             {(!isCollapsed || isMobileOpen) && (
               <div className="transition-opacity duration-300 flex flex-col justify-center leading-tight pr-1">
-                <span className="font-extrabold text-xs tracking-tight text-slate-900 dark:text-white flex items-center gap-1 whitespace-nowrap">
-                  OdontoWeb <span className="text-teal-400 font-black">PRO</span>
+                <span className="font-extrabold text-xs tracking-tight text-white flex items-center gap-1 whitespace-nowrap">
+                  OdontoWeb <span className="text-teal-300 font-black">PRO</span>
                 </span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1 mt-0.5">
-                  <Sparkles className="w-2.5 h-2.5 text-amber-400" /> Finanças & Produção
+                <span className="text-[10px] font-semibold text-sky-100 tracking-wide mt-0.5">
+                  Saúde & Finanças
                 </span>
               </div>
             )}
@@ -131,7 +134,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Botão de Fechar no Mobile */}
           <button
             onClick={onCloseMobile}
-            className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white md:hidden cursor-pointer"
+            className={`p-2 rounded-xl md:hidden cursor-pointer ${
+              darkMode ? 'bg-slate-800 text-slate-200' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
             aria-label="Fechar Menu"
           >
             <X className="w-5 h-5" />
@@ -140,10 +145,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Botão de recolher/expandir sidebar no Desktop */}
           <button
             onClick={onToggleCollapse}
-            className={`p-1.5 rounded-xl border transition-all hidden md:flex items-center justify-center cursor-pointer ${
+            className={`p-2 rounded-xl border transition-all hidden md:flex items-center justify-center cursor-pointer ${
               darkMode
-                ? 'bg-slate-900 border-slate-800 text-slate-400 hover:text-teal-400 hover:border-teal-500/40'
-                : 'bg-slate-100 border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-200'
+                ? 'bg-slate-900 border-slate-800 text-slate-300 hover:text-sky-400'
+                : 'bg-slate-50 border-slate-200 text-slate-700 hover:text-[#0b2545] hover:bg-slate-100'
             }`}
             title={isCollapsed ? 'Expandir Menu' : 'Recolher Menu'}
           >
@@ -151,12 +156,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         </div>
 
-        {/* Lista de Navegação Categorizada Estilo Bento/SaaS */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 space-y-5 scrollbar-thin">
+        {/* Lista de Navegação Categorizada com Alto Contraste */}
+        <div className="flex-1 overflow-y-auto px-3 py-5 space-y-6 scrollbar-thin">
           {sections.map((section) => (
             <div key={section.title} className="space-y-1.5">
               {(!isCollapsed || isMobileOpen) && (
-                <p className="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-500">
+                <p className={`px-3 text-[11px] font-extrabold uppercase tracking-wider ${
+                  darkMode ? 'text-slate-400' : 'text-slate-600'
+                }`}>
                   {section.title}
                 </p>
               )}
@@ -167,35 +174,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <button
                     key={item.id}
                     onClick={() => handleItemClick(item.id)}
-                    className={`w-full group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl text-xs font-semibold transition-all duration-200 cursor-pointer min-h-[46px] border ${
+                    className={`w-full group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all duration-200 cursor-pointer min-h-[48px] border ${
                       isActive
-                        ? `bg-gradient-to-r ${item.activeBg} shadow-lg`
+                        ? 'hero-executive border-transparent shadow-md'
                         : darkMode
-                        ? 'border-transparent text-slate-400 hover:text-white hover:bg-slate-900/80 hover:border-slate-800/80'
-                        : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                        ? 'border-transparent text-slate-300 hover:text-white hover:bg-slate-900'
+                        : 'border-transparent text-slate-800 hover:text-[#0b2545] hover:bg-sky-50/80 hover:border-sky-200/70'
                     }`}
                     title={isCollapsed ? `${item.label} — ${item.sub}` : undefined}
                   >
-                    {isActive && (
-                      <span className="absolute left-0 top-2.5 bottom-2.5 w-1 bg-teal-400 rounded-r-full shadow-[0_0_10px_#14b8a6]" />
-                    )}
-
-                    <div className={`p-2 rounded-xl transition-transform group-hover:scale-110 shrink-0 ${
-                      isActive
-                        ? 'bg-slate-950/60 shadow-inner'
-                        : darkMode
-                        ? 'bg-slate-900/90 border border-slate-800/80'
-                        : 'bg-slate-100'
-                    }`}>
-                      <Icon className={`w-4 h-4 ${isActive ? item.color : `${item.color} opacity-80 group-hover:opacity-100`}`} />
+                    <div
+                      className={`p-2 rounded-xl transition-transform group-hover:scale-105 shrink-0 ${
+                        isActive
+                          ? 'bg-white/15 text-white'
+                          : darkMode
+                          ? 'bg-slate-900 border border-slate-800 text-sky-400'
+                          : `bg-slate-100 border border-slate-200/80 ${item.iconColor} group-hover:bg-white`
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
                     </div>
 
                     {(!isCollapsed || isMobileOpen) && (
                       <div className="flex-1 text-left truncate">
-                        <span className={`block truncate font-bold leading-tight ${isActive ? 'text-white' : ''}`}>
+                        <span
+                          className={`block truncate text-[13px] font-extrabold leading-tight ${
+                            isActive ? 'text-white' : darkMode ? 'text-slate-100' : 'text-slate-900'
+                          }`}
+                        >
                           {item.label}
                         </span>
-                        <span className="block truncate text-[10px] text-slate-500 font-medium mt-0.5">
+                        <span
+                          className={`block truncate text-[11px] font-semibold mt-0.5 ${
+                            isActive ? 'text-sky-100' : darkMode ? 'text-slate-400' : 'text-slate-600'
+                          }`}
+                        >
                           {item.sub}
                         </span>
                       </div>
@@ -203,12 +216,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                     {(!isCollapsed || isMobileOpen) && item.badge !== undefined && (
                       <span
-                        className={`text-[9px] font-black px-2 py-0.5 rounded-full shrink-0 border ${
+                        className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full shrink-0 border ${
                           isActive
-                            ? 'bg-teal-500/20 text-teal-300 border-teal-500/40'
-                            : darkMode
-                            ? 'bg-slate-900 text-teal-400 border-slate-800'
-                            : 'bg-teal-100 text-teal-800 border-teal-200'
+                            ? 'bg-white/20 text-white border-white/30'
+                            : 'bg-sky-50 text-sky-800 border-sky-200'
                         }`}
                       >
                         {item.badge}
@@ -222,14 +233,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Footer com Status & Botão Sair */}
-        <div className="p-3 border-t border-slate-800/60 space-y-2">
+        <div className={`p-3.5 border-t space-y-2.5 ${darkMode ? 'border-slate-800' : 'border-slate-200/80'}`}>
           {(!isCollapsed || isMobileOpen) && (
-            <div className="px-3 py-2 rounded-2xl bg-slate-900/70 border border-slate-800/80 flex items-center justify-between text-[10px] text-slate-400">
-              <span className="flex items-center gap-1.5 font-semibold">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <div
+              className={`px-3.5 py-2.5 rounded-xl border flex items-center justify-between text-[11px] font-bold ${
+                darkMode
+                  ? 'bg-slate-900 border-slate-800 text-slate-300'
+                  : 'bg-slate-50 border-slate-200 text-slate-700'
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                 Nuvem Sincronizada
               </span>
-              <span className="font-mono text-teal-400 font-bold">v2.5</span>
+              <span className="font-mono text-sky-700 font-extrabold">v2.5</span>
             </div>
           )}
 
@@ -238,10 +255,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               if (onLogout) onLogout();
               if (onCloseMobile) onCloseMobile();
             }}
-            className={`w-full flex items-center justify-center sm:justify-start gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer min-h-[42px] border ${
+            className={`w-full flex items-center justify-center sm:justify-start gap-3 px-3.5 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer min-h-[42px] border ${
               darkMode
-                ? 'border-rose-500/20 bg-rose-500/5 text-rose-400 hover:bg-rose-500/15 hover:border-rose-500/40 hover:text-rose-300'
-                : 'border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100'
+                ? 'border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
+                : 'border-rose-200 bg-rose-50/80 text-rose-700 hover:bg-rose-100 hover:border-rose-300'
             }`}
             title="Encerrar Sessão"
           >

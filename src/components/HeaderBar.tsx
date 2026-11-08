@@ -72,20 +72,20 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
   return (
     <header
-      className={`sticky top-0 z-20 h-16 border-b transition-colors backdrop-blur-xl px-3 sm:px-6 flex items-center justify-between gap-2.5 ${
+      className={`sticky top-0 z-20 h-16 border-b transition-colors backdrop-blur-md px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3 ${
         darkMode
-          ? 'bg-[#070b14]/85 border-slate-800/70 text-white'
-          : 'bg-white/90 border-slate-200/80 text-slate-800'
+          ? 'bg-[#080e1c]/95 border-slate-800 text-white'
+          : 'bg-white/95 border-slate-200/90 text-slate-900 shadow-[0_2px_12px_rgba(11,37,69,0.04)]'
       }`}
     >
       {/* Botão Menu Hamburger para Celulares + Logo + Busca Global */}
-      <div className="flex items-center gap-2.5 flex-1 max-w-lg">
+      <div className="flex items-center gap-3 flex-1 max-w-xl">
         <button
           onClick={onToggleMobileMenu}
           className={`p-2 rounded-xl border md:hidden flex items-center justify-center cursor-pointer transition-all shrink-0 ${
             darkMode
-              ? 'bg-slate-900 border-slate-800 text-teal-400 hover:bg-slate-800'
-              : 'bg-slate-100 border-slate-200 text-teal-600 hover:bg-slate-200'
+              ? 'bg-slate-900 border-slate-800 text-sky-400 hover:bg-slate-800'
+              : 'bg-slate-50 border-slate-200 text-[#0b2545] hover:bg-slate-100'
           }`}
           aria-label="Abrir Menu de Navegação"
         >
@@ -97,37 +97,37 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           onClick={() => onNavigate('dashboard')}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all cursor-pointer shrink-0 ${
             darkMode
-              ? 'bg-slate-900/90 border-slate-800 hover:border-teal-500/40 text-white shadow-sm'
-              : 'bg-slate-100 border-slate-200 hover:bg-slate-200/80 text-slate-800 shadow-sm'
+              ? 'bg-slate-900 border-slate-800 hover:border-sky-500/40 text-white'
+              : 'bg-slate-50 border-slate-200/90 hover:bg-sky-50 hover:border-sky-200 text-slate-900'
           }`}
         >
           <img
             src={LOGO_BASE64}
             alt="OdontoWeb - Finanças Logo"
-            className="w-6 h-6 object-contain rounded-lg border border-teal-500/50 bg-white p-0.5 shrink-0"
+            className="w-6 h-6 object-contain rounded-lg border border-sky-600/40 bg-white p-0.5 shrink-0"
           />
-          <span className="font-bold text-xs tracking-tight text-slate-900 dark:text-white flex items-center gap-1">
-            OdontoWeb <span className="text-teal-400 font-extrabold hidden sm:inline">PRO</span>
+          <span className="font-extrabold text-xs tracking-tight flex items-center gap-1">
+            OdontoWeb <span className="text-sky-700 font-black hidden sm:inline">PRO</span>
           </span>
         </div>
 
         {/* Campo de Busca Inteligente */}
         <div className="relative flex-1">
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-2.5" />
             <input
               type="text"
-              placeholder="Buscar paciente ou registro..."
+              placeholder="Buscar paciente, CPF ou registro..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setSearchOpen(true);
               }}
               onFocus={() => setSearchOpen(true)}
-              className={`w-full pl-8 pr-3 py-2 text-xs rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-teal-500/50 ${
+              className={`w-full pl-9 pr-3.5 py-2 text-xs font-semibold rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-sky-500/30 ${
                 darkMode
-                  ? 'bg-slate-900/90 border-slate-800 text-white placeholder-slate-500 focus:border-teal-500/50'
-                  : 'bg-slate-100/80 border-slate-200 text-slate-800 placeholder-slate-400'
+                  ? 'bg-slate-900 border-slate-800 text-white placeholder-slate-400'
+                  : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-500 focus:bg-white focus:border-sky-600'
               }`}
             />
           </div>
@@ -136,7 +136,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           {searchOpen && searchQuery.trim().length > 0 && (
             <div
               className={`absolute left-0 top-full mt-2 w-full max-w-md rounded-2xl border shadow-2xl p-2 z-50 space-y-1 max-h-64 overflow-y-auto ${
-                darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+                darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
               }`}
             >
               {resultadosBusca.length > 0 ? (
@@ -149,20 +149,20 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                       setSearchQuery('');
                     }}
                     className={`p-2.5 rounded-xl cursor-pointer transition-colors flex items-center justify-between text-xs ${
-                      darkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'
+                      darkMode ? 'hover:bg-slate-800' : 'hover:bg-sky-50'
                     }`}
                   >
                     <div>
-                      <p className="font-bold text-slate-900 dark:text-white">{p.nome}</p>
-                      <p className="text-[10px] text-slate-400">CPF: {p.cpf} • Tel: {p.telefone}</p>
+                      <p className="font-extrabold text-slate-900">{p.nome}</p>
+                      <p className="text-[11px] font-semibold text-slate-600">CPF: {p.cpf} • Tel: {p.telefone}</p>
                     </div>
-                    <span className="text-[10px] font-bold text-teal-500 bg-teal-500/10 px-2 py-0.5 rounded-md">
+                    <span className="text-[10px] font-extrabold text-sky-700 bg-sky-50 border border-sky-200 px-2.5 py-1 rounded-lg">
                       Ver Prontuário
                     </span>
                   </div>
                 ))
               ) : (
-                <div className="p-3 text-center text-xs text-slate-400">
+                <div className="p-3 text-center text-xs font-semibold text-slate-600">
                   Nenhum registro localizado para "{searchQuery}".
                 </div>
               )}
@@ -172,40 +172,40 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
       </div>
 
       {/* Ações Rápidas & Perfil da Direita */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 sm:gap-2.5">
         {/* Atalhos Rápidos no Topo (Desktop) */}
-        <div className="hidden lg:flex items-center gap-1.5 mr-1">
+        <div className="hidden lg:flex items-center gap-2 mr-1">
           <button
             onClick={() => onNavigate('producao')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 transition-all cursor-pointer"
           >
-            <PlusCircle className="w-3.5 h-3.5" /> Produção
+            <PlusCircle className="w-3.5 h-3.5 text-sky-700" /> Produção
           </button>
           <button
             onClick={() => onNavigate('financeiro')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-teal-500/10 hover:bg-teal-500/20 text-teal-400 border border-teal-500/25 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 transition-all cursor-pointer"
           >
-            <Wallet className="w-3.5 h-3.5" /> Financeiro
+            <Wallet className="w-3.5 h-3.5 text-teal-700" /> Financeiro
           </button>
         </div>
 
-        {/* Indicador de Presença de Usuários Online em Tempo Real (EXCLUSIVO PARA O ADMIN MASTER) */}
+        {/* Indicador de Presença de Usuários Online em Tempo Real (ADMIN MASTER) */}
         {usuarioLogado?.role === 'admin' && (
           <div className="relative group">
-            <div className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-extrabold px-2.5 py-1.5 rounded-xl text-[11px] flex items-center gap-1.5 border border-emerald-500/25 transition-all cursor-pointer shadow-sm">
-              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-ping shrink-0"></span>
-              <Users className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <div className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-extrabold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 border border-emerald-200 transition-all cursor-pointer">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping shrink-0"></span>
+              <Users className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
               <span className="hidden sm:inline font-mono">{onlineUsers.length || 1} Online</span>
               <span className="sm:hidden font-mono">{onlineUsers.length || 1}</span>
             </div>
 
-            {/* Tooltip com a lista dos usuários conectados em tempo real */}
-            <div className="absolute right-0 top-full mt-2 w-60 p-3 rounded-2xl bg-slate-950 border border-slate-800 text-white shadow-2xl text-xs space-y-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-50">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
-                <span className="font-extrabold text-[10px] uppercase text-emerald-400 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span> Conectados Agora
+            {/* Tooltip com a lista dos usuários conectados */}
+            <div className="absolute right-0 top-full mt-2 w-64 p-3.5 rounded-2xl bg-white border border-slate-200 text-slate-900 shadow-2xl text-xs space-y-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto z-50">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                <span className="font-extrabold text-[10px] uppercase text-emerald-700 flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full"></span> Conectados Agora
                 </span>
-                <span className="text-[10px] text-slate-400 font-mono">{onlineUsers.length || 1} ativo(s)</span>
+                <span className="text-[10px] text-slate-600 font-bold">{onlineUsers.length || 1} ativo(s)</span>
               </div>
               <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
                 {(onlineUsers.length > 0 ? onlineUsers : [
@@ -217,13 +217,13 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                     timestamp: Date.now()
                   }
                 ]).map((u) => (
-                  <div key={u.usuarioId} className="flex items-center justify-between py-1 text-[11px] border-b border-slate-900 last:border-0">
+                  <div key={u.usuarioId} className="flex items-center justify-between py-1.5 text-xs border-b border-slate-100 last:border-0">
                     <div className="truncate pr-2">
-                      <span className="font-bold text-white block truncate">{u.nome}</span>
-                      <span className="text-[9px] text-slate-400 block truncate">{u.email}</span>
+                      <span className="font-extrabold text-slate-900 block truncate">{u.nome}</span>
+                      <span className="text-[10px] font-medium text-slate-600 block truncate">{u.email}</span>
                     </div>
-                    <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase shrink-0 border ${
-                      u.role === 'admin' ? 'bg-amber-500/10 text-amber-300 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold uppercase shrink-0 border ${
+                      u.role === 'admin' ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'
                     }`}>
                       {u.role === 'admin' ? 'Admin' : 'Cliente'}
                     </span>
@@ -240,9 +240,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
           className={`p-2 rounded-xl border transition-all cursor-pointer ${
             darkMode
               ? 'bg-slate-900 border-slate-800 text-amber-400 hover:bg-slate-800'
-              : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
+              : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
           }`}
-          title={darkMode ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}
+          title={darkMode ? 'Alternar para Modo Claro Corporativo' : 'Alternar para Modo Escuro'}
         >
           {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
@@ -268,18 +268,18 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                 }}
                 className={`p-2 rounded-xl border transition-all cursor-pointer relative ${
                   darkMode
-                    ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
-                    : 'bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-slate-900 border-slate-800 text-slate-200 hover:bg-slate-800'
+                    : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                 }`}
                 title="Central de Notificações"
               >
-                <Bell className="w-4 h-4 text-teal-400" />
+                <Bell className="w-4 h-4 text-sky-700" />
                 {naoLidosCount > 0 ? (
-                  <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white font-black text-[9px] w-4 h-4 rounded-full border border-slate-900 flex items-center justify-center animate-bounce shadow-md">
+                  <span className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white font-black text-[9px] w-4 h-4 rounded-full border border-white flex items-center justify-center animate-bounce shadow-sm">
                     {naoLidosCount}
                   </span>
                 ) : (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-teal-400 rounded-full border border-slate-900"></span>
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-sky-600 rounded-full border border-white"></span>
                 )}
               </button>
             );
@@ -287,28 +287,28 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
           {notifOpen && (
             <div
-              className={`absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-2xl border shadow-2xl p-3 z-50 space-y-2 ${
-                darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+              className={`absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-2xl border shadow-2xl p-3.5 z-50 space-y-2.5 ${
+                darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
               }`}
             >
-              <div className="flex justify-between items-center pb-2 border-b border-slate-800/30">
-                <span className="font-bold text-xs uppercase text-slate-400 tracking-wider">Notificações</span>
-                <span className="text-[10px] text-teal-500 font-semibold cursor-pointer">Marcar lidas</span>
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+                <span className="font-extrabold text-xs uppercase text-slate-700 tracking-wider">Notificações</span>
+                <span className="text-[11px] text-sky-700 font-bold cursor-pointer">Marcar lidas</span>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {notificacoes.map((n) => (
                   <div
                     key={n.id}
-                    className={`p-2.5 rounded-xl border text-xs space-y-1 transition-colors ${
-                      darkMode ? 'bg-slate-800/50 border-slate-800' : 'bg-slate-50 border-slate-100'
+                    className={`p-3 rounded-xl border text-xs space-y-1 transition-colors ${
+                      darkMode ? 'bg-slate-800/50 border-slate-800' : 'bg-slate-50 border-slate-200/80'
                     }`}
                   >
-                    <div className="flex justify-between font-bold">
-                      <span className="text-slate-900 dark:text-white">{n.titulo}</span>
-                      <span className="text-[10px] text-slate-400">{n.hora}</span>
+                    <div className="flex justify-between font-extrabold">
+                      <span className="text-slate-900">{n.titulo}</span>
+                      <span className="text-[10px] font-bold text-sky-700">{n.hora}</span>
                     </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{n.desc}</p>
+                    <p className="text-[11px] font-medium text-slate-700">{n.desc}</p>
                   </div>
                 ))}
               </div>
@@ -326,31 +326,31 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             className={`flex items-center gap-2 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl border transition-all cursor-pointer ${
               darkMode
                 ? 'bg-slate-900 border-slate-800 hover:bg-slate-800'
-                : 'bg-slate-100 border-slate-200 hover:bg-slate-200'
+                : 'bg-slate-50 border-slate-200/90 hover:bg-slate-100'
             }`}
           >
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-teal-600 to-cyan-500 flex items-center justify-center text-[11px] font-extrabold text-white shadow shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-[#0b2545] to-[#0284c7] flex items-center justify-center text-[11px] font-extrabold text-white shadow-xs shrink-0">
               {iniciais}
             </div>
 
             <div className="hidden md:block text-left">
-              <p className="text-xs font-bold leading-tight">{usuarioLogado?.nome || 'Crenilto Junior'}</p>
+              <p className="text-xs font-extrabold text-slate-900 leading-tight">{usuarioLogado?.nome || 'Crenilto Junior'}</p>
             </div>
 
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
+            <ChevronDown className="w-3.5 h-3.5 text-slate-600 hidden sm:block" />
           </button>
 
           {/* Menu Dropdown do Perfil */}
           {profileOpen && (
             <div
-              className={`absolute right-0 top-full mt-2 w-56 rounded-2xl border shadow-2xl p-2 z-50 space-y-1 ${
-                darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-800'
+              className={`absolute right-0 top-full mt-2 w-60 rounded-2xl border shadow-2xl p-2.5 z-50 space-y-1 ${
+                darkMode ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
               }`}
             >
-              <div className="p-3 border-b border-slate-800/30 text-xs">
-                <p className="font-bold text-slate-900 dark:text-white">{usuarioLogado?.nome || 'Crenilto Junior'}</p>
-                <p className="text-[11px] text-slate-400">{usuarioLogado?.email || 'juniorbor1986@gmail.com'}</p>
-                <span className="inline-block mt-1 text-[10px] font-semibold text-teal-500 bg-teal-500/10 px-2 py-0.5 rounded-md">
+              <div className="p-3 border-b border-slate-200 text-xs">
+                <p className="font-extrabold text-slate-900">{usuarioLogado?.nome || 'Crenilto Junior'}</p>
+                <p className="text-[11px] font-medium text-slate-600 mt-0.5">{usuarioLogado?.email || 'juniorbor1986@gmail.com'}</p>
+                <span className="inline-block mt-1.5 text-[10px] font-extrabold text-sky-800 bg-sky-50 border border-sky-200 px-2.5 py-0.5 rounded-md">
                   {usuarioLogado?.funcao || 'Administrador Master'}
                 </span>
               </div>
@@ -360,16 +360,14 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                   onNavigate('configuracoes');
                   setProfileOpen(false);
                 }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
-                  darkMode ? 'hover:bg-slate-800 text-slate-200' : 'hover:bg-slate-100 text-slate-700'
-                }`}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
               >
-                <User className="w-4 h-4 text-teal-500" /> Meu Perfil & Clínica
+                <User className="w-4 h-4 text-sky-700" /> Meu Perfil & Clínica
               </button>
 
               <button
                 onClick={onLogout}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
               >
                 <LogOut className="w-4 h-4" /> Sair da Conta
               </button>

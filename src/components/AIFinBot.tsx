@@ -8,8 +8,7 @@ interface AIFinBotProps {
 }
 
 export const AIFinBot: React.FC<AIFinBotProps> = ({
-  transacoesFinanceiras,
-  darkMode
+  transacoesFinanceiras
 }) => {
   const [analisando, setAnalisando] = useState<boolean>(false);
 
@@ -35,29 +34,27 @@ export const AIFinBot: React.FC<AIFinBotProps> = ({
   };
 
   return (
-    <div className={`p-6 rounded-3xl border shadow-xl space-y-4 font-sans ${
-      darkMode ? 'bg-gradient-to-r from-slate-900 via-slate-950 to-teal-950/80 border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
-    }`}>
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="card-clinical p-6 sm:p-7 space-y-5 font-sans">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-200">
         <div className="flex items-center gap-3.5">
-          <div className="p-3 bg-teal-500/10 text-teal-400 rounded-2xl border border-teal-500/20 shrink-0">
-            <Bot className="w-7 h-7" />
+          <div className="p-3 bg-sky-50 text-sky-700 rounded-2xl border border-sky-200 shrink-0">
+            <Bot className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-[10px] font-extrabold text-teal-400 bg-teal-500/10 px-2.5 py-0.5 rounded-full border border-teal-500/30 uppercase tracking-widest flex items-center gap-1 w-fit">
-              <Sparkles className="w-3 h-3 text-amber-400" /> Inteligência Preditiva de Finanças
+            <span className="text-[10px] font-extrabold text-sky-800 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200 uppercase tracking-wider inline-flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-amber-600" /> Inteligência Preditiva
             </span>
-            <h3 className="text-xl font-bold mt-1 flex items-center gap-2 text-white">
-              Assistente FinBot & Diagnóstico de Saúde Orçamentária
+            <h3 className="text-base sm:text-lg font-extrabold mt-1 text-slate-900">
+              Assistente FinBot & Diagnóstico Orçamentário
             </h3>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <span className="text-[10px] text-slate-400 uppercase font-semibold block">Score da Sua Saúde Financial</span>
-            <span className={`text-2xl font-black ${
-              scoreSaude >= 80 ? 'text-emerald-400' : scoreSaude >= 50 ? 'text-amber-400' : 'text-rose-400'
+            <span className="text-[10px] text-slate-600 uppercase font-extrabold block">Score Financeiro</span>
+            <span className={`text-xl font-extrabold ${
+              scoreSaude >= 80 ? 'text-emerald-700' : scoreSaude >= 50 ? 'text-amber-700' : 'text-rose-700'
             }`}>
               {scoreSaude} / 100 PTS
             </span>
@@ -66,7 +63,7 @@ export const AIFinBot: React.FC<AIFinBotProps> = ({
           <button
             onClick={reanalisar}
             disabled={analisando}
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-teal-400 rounded-2xl border border-slate-700 cursor-pointer transition-all"
+            className="p-2.5 bg-slate-50 hover:bg-sky-50 text-sky-700 rounded-xl border border-slate-200 cursor-pointer transition-all"
             title="Recalcular Análise de IA"
           >
             <RefreshCw className={`w-4 h-4 ${analisando ? 'animate-spin' : ''}`} />
@@ -74,33 +71,33 @@ export const AIFinBot: React.FC<AIFinBotProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-normal">
-        <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-1">
-          <div className="flex items-center gap-1.5 text-teal-400 font-bold">
-            <TrendingUp className="w-4 h-4" /> Balanço Atual do Lar
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs">
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 space-y-1.5">
+          <div className="flex items-center gap-1.5 text-teal-800 font-extrabold">
+            <TrendingUp className="w-4 h-4 text-teal-700" /> Balanço Atual do Lar
           </div>
-          <p className="text-slate-300">
-            Você possui um saldo líquido de <strong className={saldoLiquido >= 0 ? 'text-emerald-400' : 'text-rose-400'}>R$ {saldoLiquido.toLocaleString('pt-BR')}</strong> no mês atual.
+          <p className="text-slate-700 font-medium leading-relaxed">
+            Saldo líquido de <strong className={`font-extrabold ${saldoLiquido >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>R$ {saldoLiquido.toLocaleString('pt-BR')}</strong> no mês atual.
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-1">
-          <div className="flex items-center gap-1.5 text-amber-400 font-bold">
-            <AlertTriangle className="w-4 h-4" /> Comprometimento de Renda
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 space-y-1.5">
+          <div className="flex items-center gap-1.5 text-amber-800 font-extrabold">
+            <AlertTriangle className="w-4 h-4 text-amber-600" /> Comprometimento
           </div>
-          <p className="text-slate-300">
-            Seus custos fixos e variáveis comprometem <strong className="text-amber-400">{comprometimentoPct}%</strong> das suas entradas cadastradas.
+          <p className="text-slate-700 font-medium leading-relaxed">
+            Custos fixos e variáveis comprometem <strong className="text-amber-800 font-extrabold">{comprometimentoPct}%</strong> das entradas.
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-1">
-          <div className="flex items-center gap-1.5 text-purple-400 font-bold">
-            <Lightbulb className="w-4 h-4" /> Recomendação Inteligente
+        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/90 space-y-1.5">
+          <div className="flex items-center gap-1.5 text-sky-800 font-extrabold">
+            <Lightbulb className="w-4 h-4 text-sky-700" /> Recomendação
           </div>
-          <p className="text-slate-300">
+          <p className="text-slate-700 font-medium leading-relaxed">
             {comprometimentoPct > 70
-              ? 'Considere renegociar despesas fixas ou limitar compras parceladas no cartão de crédito.'
-              : 'Excelente controle financeiro! Mantenha aportes na sua reserva de emergência.'}
+              ? 'Considere renegociar despesas fixas ou limitar compras parceladas.'
+              : 'Excelente controle financeiro! Mantenha aportes na reserva.'}
           </p>
         </div>
       </div>

@@ -58,8 +58,8 @@ const SESSION_KEY = 'odonto_usuario_sessao_v1';
 
 export function App() {
   ensureCleanSlateV10();
-  // Tema Dark Mode
-  const [darkMode, setDarkMode] = useState<boolean>(true);
+  // Tema Corporativo Limpo (Light Mode por padrão para máxima legibilidade clínica e corporativa)
+  const [darkMode, setDarkMode] = useState<boolean>(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
@@ -532,7 +532,7 @@ export function App() {
 
   return (
     <div className={`min-h-screen font-sans transition-colors duration-300 ${
-      darkMode ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'
+      darkMode ? 'bg-slate-950 text-slate-100' : 'bg-[#f4f7fa] text-slate-900'
     }`}>
       {/* Banner / Tela de Bloqueio por Teste Expirado (7 Dias) */}
       <ModalPlanoEExpiracao usuarioLogado={usuarioLogado} darkMode={darkMode} />
@@ -617,10 +617,10 @@ export function App() {
         )}
 
         {/* Dynamic Views */}
-        <main className="p-3 sm:p-6 flex-1 box-border w-full max-w-full transition-all">
+        <main className="p-4 sm:p-6 lg:p-8 flex-1 box-border w-full max-w-full transition-all">
           <Suspense
             fallback={
-              <div className="flex items-center justify-center p-16 text-teal-400 font-bold text-sm animate-pulse">
+              <div className="flex items-center justify-center p-16 text-sky-700 font-bold text-sm animate-pulse">
                 Carregando módulo...
               </div>
             }
@@ -810,11 +810,11 @@ export function App() {
         </main>
 
         {/* Footer */}
-        <footer className={`p-4 border-t text-center text-xs transition-colors flex items-center justify-center gap-2 ${
-          darkMode ? 'bg-slate-900 border-slate-800 text-slate-400' : 'bg-white border-slate-200 text-slate-600'
+        <footer className={`py-5 px-6 border-t text-center text-xs font-semibold transition-colors flex items-center justify-center gap-2.5 ${
+          darkMode ? 'bg-slate-900 border-slate-800 text-slate-300' : 'bg-white border-slate-200/90 text-slate-700'
         }`}>
-          <img src={LOGO_BASE64} alt="OdontoWeb - Finanças Logo" className="w-5 h-5 object-contain rounded-full bg-white p-0.5 border border-teal-500/40 inline-block" />
-          <span>OdontoWeb - Finanças Platform &copy; {new Date().getFullYear()} • Gestão Financeira & Produção</span>
+          <img src={LOGO_BASE64} alt="OdontoWeb - Finanças Logo" className="w-5 h-5 object-contain rounded-full bg-white p-0.5 border border-sky-600/40 inline-block shadow-xs" />
+          <span>OdontoWeb PRO &copy; {new Date().getFullYear()} • Plataforma Corporativa de Gestão Odontológica & Finanças</span>
         </footer>
       </div>
 
